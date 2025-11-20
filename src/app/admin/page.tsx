@@ -44,30 +44,39 @@ export default function AdminPage() {
     }
     setIsLoading(true);
     setTrainingResponse("");
-    const response = await trainAI({ trainingData });
-    if (response.success && response.result) {
-      setTrainingResponse(response.result);
-      setTrainingData("");
-      toast({
-        title: "प्रशिक्षण प्रस्तुत किया गया",
-        description: "अदिति मैडम को नई जानकारी मिल गई है।",
-      });
-    } else {
-      toast({
+    try {
+      const response = await trainAI({ trainingData });
+      if (response.success && response.result) {
+        setTrainingResponse(response.result);
+        setTrainingData("");
+        toast({
+          title: "प्रशिक्षण प्रस्तुत किया गया",
+          description: "अदिति मैडम को नई जानकारी मिल गई है।",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "प्रशिक्षण विफल",
+          description: response.error || "एक अज्ञात त्रुटि हुई।",
+        });
+      }
+    } catch (error) {
+       toast({
         variant: "destructive",
         title: "प्रशिक्षण विफल",
-        description: response.error || "एक अज्ञात त्रुटि हुई।",
+        description: "एक अप्रत्याशित त्रुटि हुई।",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   if (!isLoggedIn) {
     return (
-      <div className="flex items-center justify-center p-4 min-h-[80vh]">
-        <Card className="w-full max-w-sm">
+      <div className="flex items-center justify-center p-4 min-h-[calc(100vh-8rem)]">
+        <Card className="w-full max-w-sm border-2 border-primary/20 shadow-lg">
           <CardHeader>
-            <CardTitle className="font-headline text-2xl">एडमिन लॉगिन</CardTitle>
+            <CardTitle className="font-headline text-2xl text-primary">एडमिन लॉगिन</CardTitle>
             <CardDescription>प्रशिक्षण पैनल तक पहुंचने के लिए 6-अंकीय सुरक्षा कोड दर्ज करें।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -95,33 +104,33 @@ export default function AdminPage() {
 
   return (
     <div className="p-4 md:p-8">
-      <Card>
+      <Card className="w-full max-w-4xl mx-auto border-2 border-primary/20 shadow-lg">
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">अदिति मैडम को प्रशिक्षित करें</CardTitle>
+          <CardTitle className="font-headline text-3xl text-primary">अदिति मैडम को प्रशिक्षित करें</CardTitle>
           <CardDescription>
             एआई मेंटर के लिए नई जानकारी प्रदान करें। एआई आपके इनपुट से सीखेगा और अपनी समझ की पुष्टि करेगा।
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="training-data">प्रशिक्षण डेटा</Label>
+            <Label htmlFor="training-data" className="text-base">प्रशिक्षण डेटा</Label>
             <Textarea
               id="training-data"
               placeholder="जैसे, 'अदिति लर्निंग प्लेटफॉर्म एक अभिनव डेवलपर द्वारा बनाया गया था जो शिक्षा के प्रति जुनूनी है...'"
-              className="min-h-[150px]"
+              className="min-h-[150px] text-base"
               value={trainingData}
               onChange={(e) => setTrainingData(e.target.value)}
             />
           </div>
           {trainingResponse && (
-            <div className="p-4 bg-secondary rounded-md border">
-              <p className="font-semibold text-secondary-foreground">अदिति की प्रतिक्रिया:</p>
-              <p className="text-sm text-muted-foreground">{trainingResponse}</p>
+            <div className="p-4 bg-primary/10 rounded-md border border-primary/30">
+              <p className="font-semibold text-primary">अदिति की प्रतिक्रिया:</p>
+              <p className="text-sm text-foreground/80">{trainingResponse}</p>
             </div>
           )}
         </CardContent>
         <CardFooter>
-          <Button onClick={handleTrain} disabled={isLoading}>
+          <Button onClick={handleTrain} disabled={isLoading} size="lg">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             अदिति को प्रशिक्षित करें
           </Button>

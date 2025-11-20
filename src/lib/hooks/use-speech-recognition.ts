@@ -23,7 +23,6 @@ declare global {
   }
 }
 
-// Hook को फिर से बनाया गया ताकि state प्रबंधन और इवेंट हैंडलिंग बेहतर हो सके
 export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions = {}): SpeechRecognitionHook => {
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -31,7 +30,6 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // onSpeechEnd को useCallback में रैप करें ताकि यह स्थिर रहे
   const stableOnSpeechEnd = useCallback((finalTranscript: string) => {
     if (onSpeechEnd) {
       onSpeechEnd(finalTranscript);
@@ -55,20 +53,19 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     recognition.lang = 'hi-IN';
 
     recognition.onresult = (event) => {
-      let finalTranscript = '';
-      let interimTranscript = '';
+      let final_transcript = '';
+      let interim_transcript = '';
 
-      for (let i = 0; i < event.results.length; i++) {
-        const transcriptPart = event.results[i][0].transcript;
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          finalTranscript += transcriptPart;
+          final_transcript += event.results[i][0].transcript;
         } else {
-          interimTranscript += transcriptPart;
+          interim_transcript += event.results[i][0].transcript;
         }
       }
-      setTranscript(finalTranscript.trim() + ' ' + interimTranscript.trim());
+      
+      setTranscript(prev => (final_transcript ? (prev + final_transcript) : prev) + interim_transcript);
 
-      // बोलने के रुकने का पता लगाने के लिए टाइमआउट रीसेट करें
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -76,7 +73,7 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
         if(isListening){
             stopListening();
         }
-      }, 1500); // 1.5 सेकंड की चुप्पी के बाद रुकें
+      }, 1500);
     };
 
     recognition.onerror = (event) => {
@@ -93,7 +90,6 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     
     recognition.onend = () => {
       setIsListening(false);
-      // सुनिश्चित करें कि onend पर speechEnd कॉलबैक को कॉल करें
       const finalTranscript = transcript.trim();
       if(finalTranscript){
           stableOnSpeechEnd(finalTranscript);
@@ -130,7 +126,7 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
   const stopListening = useCallback(() => {
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
-      setIsListening(false); // तुरंत स्थिति अपडेट करें
+      setIsListening(false); 
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }

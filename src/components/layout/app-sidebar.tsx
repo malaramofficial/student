@@ -9,14 +9,16 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarFooter
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { ModeToggle } from "../mode-toggle";
 
 const menuItems = [
   { href: "/", label: "डैशबोर्ड", icon: Home },
+  { href: "/ai-teacher", label: "एआई शिक्षक", icon: Bot },
   { href: "/mock-tests", label: "मॉक टेस्ट", icon: ClipboardCheck },
   { href: "/progress-tracker", label: "प्रगति ट्रैकर", icon: LineChart },
-  { href: "/ai-teacher", label: "एआई शिक्षक", icon: Bot },
   { href: "/speech-generator", label: "भाषण जनरेटर", icon: MicVocal },
   { href: "/admin", label: "एडमिन", icon: Lock },
 ];
@@ -28,8 +30,8 @@ export function AppSidebar() {
     <>
       <SidebarHeader>
         <Link href="/" className="flex items-center gap-2.5 px-2">
-          <BookOpenCheck className="w-7 h-7 text-primary" />
-          <span className="font-bold text-lg font-headline text-primary-foreground group-data-[collapsible=icon]:hidden">
+          <BookOpenCheck className="w-8 h-8 text-sidebar-primary" />
+          <span className="font-bold text-xl font-headline text-sidebar-foreground group-data-[collapsible=icon]:hidden">
             अदिति लर्निंग
           </span>
         </Link>
@@ -55,6 +57,9 @@ export function AppSidebar() {
           ))}
         </SidebarMenu>
       </SidebarContent>
+      <SidebarFooter className="items-center group-data-[collapsible=icon]:-ml-2">
+        <ModeToggle />
+      </SidebarFooter>
     </>
   );
 }

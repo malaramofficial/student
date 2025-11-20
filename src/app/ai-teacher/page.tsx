@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 type Message = {
   role: 'user' | 'assistant';
   content: string;
+  isInterim?: boolean;
 };
 
 export default function AITeacherPage() {
@@ -28,19 +29,14 @@ export default function AITeacherPage() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError } = useSpeechRecognition();
+  const { transcript, interimTranscript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition();
+  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const aditiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
 
   useEffect(() => {
     setIsClient(true);
   }, []);
-
-  useEffect(() => {
-    if (transcript) {
-      setInput(transcript);
-    }
-  }, [transcript]);
   
   useEffect(() => {
     if(speechError) {
@@ -59,6 +55,66 @@ export default function AITeacherPage() {
       audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
     }
   }, [audioUrl]);
+
+  const handleAIResponse = useCallback(async (query: string) => {
+    if (!query.trim() || isLoading) return;
+
+    setIsLoading(true);
+    setAudioUrl(null); // Clear previous audio
+
+    const chatHistory = messages.filter(m => !m.isInterim).map(msg => ({ role: msg.role, content: msg.content }));
+    const response = await getAIResponse({ question: query, chatHistory });
+
+    if (response.success && response.answer) {
+      const assistantMessage: Message = { role: 'assistant', content: response.answer };
+      setMessages(prev => [...prev, assistantMessage]);
+      await playAudioForMessage(response.answer);
+    } else {
+      toast({ variant: 'destructive', title: 'AI Error', description: response.error });
+      const errorMessage: Message = { role: 'assistant', content: "क्षमा करें, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया पुन: प्रयास करें।" };
+      setMessages(prev => [...prev, errorMessage]);
+    }
+    setIsLoading(false);
+  }, [messages, isLoading, toast]);
+
+
+  useEffect(() => {
+    const fullTranscript = transcript + interimTranscript;
+    if (isListening && fullTranscript) {
+      setMessages(prev => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage && lastMessage.role === 'user' && lastMessage.isInterim) {
+          const newMessages = [...prev];
+          newMessages[newMessages.length - 1] = { ...lastMessage, content: fullTranscript };
+          return newMessages;
+        }
+        return [...prev, { role: 'user', content: fullTranscript, isInterim: true }];
+      });
+    }
+
+    if (speechTimeoutRef.current) {
+      clearTimeout(speechTimeoutRef.current);
+    }
+    
+    if (transcript && !isListening) { // User has finished speaking
+        setMessages(prev => prev.map(m => m.isInterim ? { ...m, isInterim: false } : m));
+        handleAIResponse(transcript);
+        resetTranscript();
+    } else if (interimTranscript) { // User is actively speaking
+       speechTimeoutRef.current = setTimeout(() => {
+        if (!isListening) return;
+        stopListening(); // Stop listening if there's a 10s pause
+      }, 10000);
+    }
+
+    return () => {
+      if (speechTimeoutRef.current) {
+        clearTimeout(speechTimeoutRef.current);
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transcript, interimTranscript, isListening]);
+
 
   const playAudioForMessage = async (text: string) => {
     setIsAudioLoading(true);
@@ -79,22 +135,17 @@ export default function AITeacherPage() {
     stopListening();
     const userMessage: Message = { role: 'user', content: input };
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput('');
-    setIsLoading(true);
-
-    const chatHistory = messages.map(msg => ({ role: msg.role, content: msg.content }));
-    const response = await getAIResponse({ question: input, chatHistory });
-
-    if (response.success && response.answer) {
-      const assistantMessage: Message = { role: 'assistant', content: response.answer };
-      setMessages(prev => [...prev, assistantMessage]);
-      await playAudioForMessage(response.answer);
+    await handleAIResponse(currentInput);
+  };
+  
+  const toggleListening = () => {
+    if (isListening) {
+      stopListening();
     } else {
-      toast({ variant: 'destructive', title: 'AI Error', description: response.error });
-      const errorMessage: Message = { role: 'assistant', content: "क्षमा करें, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया पुन: प्रयास करें।" };
-      setMessages(prev => [...prev, errorMessage]);
+      startListening();
     }
-    setIsLoading(false);
   };
 
   return (
@@ -121,7 +172,8 @@ export default function AITeacherPage() {
               <div className={cn("max-w-[75%] rounded-lg p-3 text-sm", 
                 message.role === 'user' 
                   ? 'bg-primary text-primary-foreground' 
-                  : 'bg-muted'
+                  : 'bg-muted',
+                message.isInterim && 'opacity-70'
               )}>
                 <p className="whitespace-pre-wrap text-muted-foreground">{message.content}</p>
                  {message.role === 'assistant' && index === messages.length -1 && (
@@ -155,12 +207,12 @@ export default function AITeacherPage() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={isListening ? "सुन रही हूँ..." : "अपना प्रश्न टाइप करें..."}
+            placeholder={isListening ? "सुन रही हूँ..." : "अपना प्रश्न टाइप करें या माइक का उपयोग करें"}
             disabled={isLoading}
             className="flex-1"
           />
           {isClient && hasRecognitionSupport && (
-            <Button type="button" size="icon" variant={isListening ? "destructive" : "outline"} onClick={isListening ? stopListening : startListening}>
+            <Button type="button" size="icon" variant={isListening ? "destructive" : "outline"} onClick={toggleListening}>
               {isListening ? <StopCircle /> : <Mic />}
             </Button>
           )}

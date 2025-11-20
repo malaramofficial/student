@@ -4,11 +4,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 type SpeechRecognitionHook = {
   transcript: string;
+  interimTranscript: string;
   isListening: boolean;
   startListening: () => void;
   stopListening: () => void;
   hasRecognitionSupport: boolean;
   error: string | null;
+  resetTranscript: () => void;
 };
 
 // Extend the global Window interface to include webkitSpeechRecognition
@@ -21,10 +23,10 @@ declare global {
 
 export const useSpeechRecognition = (): SpeechRecognitionHook => {
   const [transcript, setTranscript] = useState('');
+  const [interimTranscript, setInterimTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const finalTranscriptRef = useRef('');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -38,24 +40,24 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = 'hi-IN'; // Set language to Hindi (India)
+    recognition.lang = 'hi-IN';
 
     recognition.onresult = (event) => {
-      let interimTranscript = '';
-      finalTranscriptRef.current = '';
+      let final = '';
+      let interim = '';
       for (let i = 0; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          finalTranscriptRef.current += event.results[i][0].transcript;
+          final += event.results[i][0].transcript;
         } else {
-          interimTranscript += event.results[i][0].transcript;
+          interim += event.results[i][0].transcript;
         }
       }
-       setTranscript(finalTranscriptRef.current + interimTranscript);
+      setTranscript(final);
+      setInterimTranscript(interim);
     };
     
     recognition.onerror = (event) => {
         if (event.error === 'no-speech') {
-            // Ignore no-speech errors, as they are common
             return;
         }
         setError(`स्पीच रिकग्निशन त्रुटि: ${event.error}`);
@@ -64,8 +66,6 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
 
     recognition.onend = () => {
         setIsListening(false);
-        // We update the transcript one last time with the final version.
-        setTranscript(finalTranscriptRef.current);
     };
 
     recognitionRef.current = recognition;
@@ -80,7 +80,7 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
   const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
       setTranscript('');
-      finalTranscriptRef.current = '';
+      setInterimTranscript('');
       recognitionRef.current.start();
       setIsListening(true);
       setError(null);
@@ -94,12 +94,19 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
     }
   }, [isListening]);
 
+  const resetTranscript = useCallback(() => {
+    setTranscript('');
+    setInterimTranscript('');
+  }, []);
+
   return {
     transcript,
+    interimTranscript,
     isListening,
     startListening,
     stopListening,
     hasRecognitionSupport: !!(typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)),
     error,
+    resetTranscript,
   };
 };

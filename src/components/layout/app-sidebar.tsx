@@ -1,8 +1,9 @@
+
 "use client"
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpenCheck, Bot, ClipboardCheck, FileText, Home, LineChart, Lock, MicVocal, UserSquare } from "lucide-react";
+import { BookOpenCheck, Bot, ClipboardCheck, FileText, Home, LineChart, Lock, Mic, MicVocal, UserSquare } from "lucide-react";
 import {
   SidebarContent,
   SidebarHeader,
@@ -22,6 +23,7 @@ const menuItems = [
   { href: "/visual-teacher", label: "विजुअल टीचर", icon: UserSquare },
   { href: "/progress-tracker", label: "प्रगति ट्रैकर", icon: LineChart },
   { href: "/speech-generator", label: "भाषण जनरेटर", icon: MicVocal },
+  { href: "/text-to-speech", label: "टेक्स्ट-टू-स्पीच", icon: Mic },
   { href: "/admin", label: "एडमिन", icon: Lock },
 ];
 

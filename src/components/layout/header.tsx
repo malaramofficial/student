@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -14,6 +15,7 @@ const pageTitles: { [key: string]: string } = {
   "/admin": "एडमिन पैनल",
   "/results": "परीक्षा परिणाम",
   "/visual-teacher": "विजुअल टीचर",
+  "/text-to-speech": "टेक्स्ट-टू-स्पीच"
 };
 
 export function Header() {

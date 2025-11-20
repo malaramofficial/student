@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
+type SpeechRecognitionOptions = {
+  onSpeechEnd?: (finalTranscript: string) => void;
+};
+
 type SpeechRecognitionHook = {
   transcript: string;
-  interimTranscript: string;
   isListening: boolean;
   startListening: () => void;
   stopListening: () => void;
@@ -13,7 +16,6 @@ type SpeechRecognitionHook = {
   resetTranscript: () => void;
 };
 
-// Extend the global Window interface to include webkitSpeechRecognition
 declare global {
   interface Window {
     SpeechRecognition: typeof SpeechRecognition;
@@ -21,12 +23,13 @@ declare global {
   }
 }
 
-export const useSpeechRecognition = (): SpeechRecognitionHook => {
+export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions = {}): SpeechRecognitionHook => {
   const [transcript, setTranscript] = useState('');
-  const [interimTranscript, setInterimTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const finalTranscriptRef = useRef('');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -43,21 +46,29 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
     recognition.lang = 'hi-IN';
 
     recognition.onresult = (event) => {
-      let final = '';
       let interim = '';
+      finalTranscriptRef.current = '';
+
       for (let i = 0; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          final += event.results[i][0].transcript;
+          finalTranscriptRef.current += event.results[i][0].transcript;
         } else {
           interim += event.results[i][0].transcript;
         }
       }
-      setTranscript(final);
-      setInterimTranscript(interim);
+      setTranscript(finalTranscriptRef.current + interim);
+
+      if (speechTimeoutRef.current) {
+        clearTimeout(speechTimeoutRef.current);
+      }
+      speechTimeoutRef.current = setTimeout(() => {
+        stopListening();
+      }, 1500); // 1.5 second pause before stopping
     };
     
     recognition.onerror = (event) => {
-        if (event.error === 'no-speech') {
+        if (event.error === 'no-speech' || event.error === 'audio-capture') {
+            // These errors can be ignored as they are not critical.
             return;
         }
         setError(`स्पीच रिकग्निशन त्रुटि: ${event.error}`);
@@ -66,6 +77,12 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
 
     recognition.onend = () => {
         setIsListening(false);
+        if (speechTimeoutRef.current) {
+          clearTimeout(speechTimeoutRef.current);
+        }
+        if (onSpeechEnd && finalTranscriptRef.current.trim()) {
+          onSpeechEnd(finalTranscriptRef.current.trim());
+        }
     };
 
     recognitionRef.current = recognition;
@@ -74,13 +91,17 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
+      if (speechTimeoutRef.current) {
+        clearTimeout(speechTimeoutRef.current);
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
-      setTranscript('');
-      setInterimTranscript('');
+      resetTranscript();
+      finalTranscriptRef.current = '';
       recognitionRef.current.start();
       setIsListening(true);
       setError(null);
@@ -91,17 +112,19 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
+      if (speechTimeoutRef.current) {
+        clearTimeout(speechTimeoutRef.current);
+      }
     }
   }, [isListening]);
 
   const resetTranscript = useCallback(() => {
     setTranscript('');
-    setInterimTranscript('');
+    finalTranscriptRef.current = '';
   }, []);
 
   return {
     transcript,
-    interimTranscript,
     isListening,
     startListening,
     stopListening,

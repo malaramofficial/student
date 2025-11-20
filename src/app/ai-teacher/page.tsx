@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,8 +29,7 @@ export default function AITeacherPage() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { transcript, interimTranscript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition();
-  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition({ onSpeechEnd: (finalTranscript: string) => handleAIResponse(finalTranscript) });
 
   const aditiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
 
@@ -59,85 +58,79 @@ export default function AITeacherPage() {
   const handleAIResponse = useCallback(async (query: string) => {
     if (!query.trim() || isLoading) return;
 
+    const userMessage: Message = { role: 'user', content: query };
+    setMessages(prev => {
+        // Remove previous interim message if it exists
+        const filtered = prev.filter(m => !m.isInterim);
+        return [...filtered, userMessage];
+    });
+    
     setIsLoading(true);
-    setAudioUrl(null); // Clear previous audio
+    setAudioUrl(null);
+    resetTranscript();
 
     const chatHistory = messages.filter(m => !m.isInterim).map(msg => ({ role: msg.role, content: msg.content }));
-    const response = await getAIResponse({ question: query, chatHistory });
+    
+    // Kick off both AI response and audio generation at the same time
+    const aiResponsePromise = getAIResponse({ question: query, chatHistory });
+    const audioResponsePromise = aiResponsePromise.then(response => {
+        if (response.success && response.answer) {
+            return getAudioResponse({ text: response.answer });
+        }
+        return null;
+    });
 
-    if (response.success && response.answer) {
-      const assistantMessage: Message = { role: 'assistant', content: response.answer };
-      setMessages(prev => [...prev, assistantMessage]);
-      await playAudioForMessage(response.answer);
-    } else {
-      toast({ variant: 'destructive', title: 'AI Error', description: response.error });
-      const errorMessage: Message = { role: 'assistant', content: "क्षमा करें, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया पुन: प्रयास करें।" };
-      setMessages(prev => [...prev, errorMessage]);
+    try {
+        const aiResponse = await aiResponsePromise;
+        
+        if (aiResponse.success && aiResponse.answer) {
+            const assistantMessage: Message = { role: 'assistant', content: aiResponse.answer };
+            setMessages(prev => [...prev, assistantMessage]);
+
+            setIsAudioLoading(true);
+            const audioResponse = await audioResponsePromise;
+            if (audioResponse && audioResponse.success && audioResponse.audio) {
+                setAudioUrl(audioResponse.audio);
+            } else {
+                 toast({ variant: 'destructive', title: 'Audio Error', description: audioResponse?.error || 'Failed to generate audio.' });
+            }
+            setIsAudioLoading(false);
+
+        } else {
+            toast({ variant: 'destructive', title: 'AI Error', description: aiResponse.error });
+            const errorMessage: Message = { role: 'assistant', content: "क्षमा करें, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया पुन: प्रयास करें।" };
+            setMessages(prev => [...prev, errorMessage]);
+        }
+    } catch(e) {
+        toast({ variant: 'destructive', title: 'An unexpected error occurred.', description: (e as Error).message });
+    } finally {
+        setIsLoading(false);
     }
-    setIsLoading(false);
-  }, [messages, isLoading, toast]);
+  }, [messages, isLoading, toast, resetTranscript]);
 
 
   useEffect(() => {
-    const fullTranscript = transcript + interimTranscript;
-    if (isListening && fullTranscript) {
+    if (isListening && transcript) {
       setMessages(prev => {
         const lastMessage = prev[prev.length - 1];
         if (lastMessage && lastMessage.role === 'user' && lastMessage.isInterim) {
           const newMessages = [...prev];
-          newMessages[newMessages.length - 1] = { ...lastMessage, content: fullTranscript };
+          newMessages[newMessages.length - 1] = { ...lastMessage, content: transcript };
           return newMessages;
         }
-        return [...prev, { role: 'user', content: fullTranscript, isInterim: true }];
+        return [...prev, { role: 'user', content: transcript, isInterim: true }];
       });
     }
-
-    if (speechTimeoutRef.current) {
-      clearTimeout(speechTimeoutRef.current);
-    }
-    
-    if (transcript && !isListening) { // User has finished speaking
-        setMessages(prev => prev.map(m => m.isInterim ? { ...m, isInterim: false } : m));
-        handleAIResponse(transcript);
-        resetTranscript();
-    } else if (interimTranscript) { // User is actively speaking
-       speechTimeoutRef.current = setTimeout(() => {
-        if (!isListening) return;
-        stopListening(); // Stop listening if there's a 10s pause
-      }, 10000);
-    }
-
-    return () => {
-      if (speechTimeoutRef.current) {
-        clearTimeout(speechTimeoutRef.current);
-      }
-    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transcript, interimTranscript, isListening]);
+  }, [transcript, isListening]);
 
-
-  const playAudioForMessage = async (text: string) => {
-    setIsAudioLoading(true);
-    setAudioUrl(null);
-    const audioResponse = await getAudioResponse({ text });
-    if (audioResponse.success && audioResponse.audio) {
-      setAudioUrl(audioResponse.audio);
-    } else {
-      toast({ variant: 'destructive', title: 'Audio Error', description: audioResponse.error });
-    }
-    setIsAudioLoading(false);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-
     stopListening();
-    const userMessage: Message = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMessage]);
-    const currentInput = input;
+    handleAIResponse(input);
     setInput('');
-    await handleAIResponse(currentInput);
   };
   
   const toggleListening = () => {
@@ -189,7 +182,7 @@ export default function AITeacherPage() {
               {message.role === 'user' && <Avatar><AvatarFallback><User /></AvatarFallback></Avatar>}
             </div>
           ))}
-          {isLoading && (
+          {isLoading && !messages.some(m => m.role === 'assistant' && m.content) && (
             <div className="flex items-start gap-4">
               <Avatar className="border-2 border-primary/50">
                   {aditiAvatar && <Image src={aditiAvatar.imageUrl} alt="Aditi Madam" width={40} height={40} data-ai-hint={aditiAvatar.imageHint} />}
@@ -221,7 +214,7 @@ export default function AITeacherPage() {
           </Button>
         </form>
       </div>
-      {audioUrl && <audio ref={audioRef} src={audioUrl} className="hidden" />}
+      {audioUrl && <audio ref={audioRef} src={audioUrl} className="hidden" onEnded={() => { /* can add logic here if needed */}} />}
     </div>
   );
 }

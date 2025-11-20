@@ -23,14 +23,15 @@ declare global {
   }
 }
 
+// Hook को फिर से बनाया गया ताकि state प्रबंधन और इवेंट हैंडलिंग बेहतर हो सके
 export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions = {}): SpeechRecognitionHook => {
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  
-  const finalTranscriptRef = useRef('');
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // onSpeechEnd को useCallback में रैप करें ताकि यह स्थिर रहे
   const stableOnSpeechEnd = useCallback((finalTranscript: string) => {
     if (onSpeechEnd) {
       onSpeechEnd(finalTranscript);
@@ -47,28 +48,39 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     }
 
     const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'hi-IN';
 
     recognition.onresult = (event) => {
+      let finalTranscript = '';
       let interimTranscript = '';
-      
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
+
+      for (let i = 0; i < event.results.length; i++) {
+        const transcriptPart = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscriptRef.current += event.results[i][0].transcript;
+          finalTranscript += transcriptPart;
         } else {
-          interimTranscript += event.results[i][0].transcript;
+          interimTranscript += transcriptPart;
         }
       }
-      setTranscript(finalTranscriptRef.current + interimTranscript);
-    };
-    
-    recognition.onerror = (event) => {
-      if (event.error === 'no-speech' || event.error === 'audio-capture') {
-        // इन सामान्य त्रुटियों को अनदेखा करें।
-        return;
+      setTranscript(finalTranscript.trim() + ' ' + interimTranscript.trim());
+
+      // बोलने के रुकने का पता लगाने के लिए टाइमआउट रीसेट करें
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
+      timeoutRef.current = setTimeout(() => {
+        if(isListening){
+            stopListening();
+        }
+      }, 1500); // 1.5 सेकंड की चुप्पी के बाद रुकें
+    };
+
+    recognition.onerror = (event) => {
+      if (event.error === 'no-speech' || event.error === 'audio-capture') return;
       if (event.error === 'not-allowed') {
         setError("माइक्रोफ़ोन की अनुमति आवश्यक है।");
       } else if (event.error === 'network') {
@@ -78,25 +90,28 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
       }
       setIsListening(false);
     };
-
+    
     recognition.onend = () => {
       setIsListening(false);
-      const finalContent = finalTranscriptRef.current.trim();
-      if (finalContent) {
-        stableOnSpeechEnd(finalContent);
+      // सुनिश्चित करें कि onend पर speechEnd कॉलबैक को कॉल करें
+      const finalTranscript = transcript.trim();
+      if(finalTranscript){
+          stableOnSpeechEnd(finalTranscript);
       }
     };
-
-    recognitionRef.current = recognition;
-
+    
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.onresult = null;
-        recognitionRef.current.onerror = null;
-        recognitionRef.current.onend = null;
-        recognitionRef.current.stop();
-      }
-    }
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+            recognitionRef.current.onresult = null;
+            recognitionRef.current.onerror = null;
+            recognitionRef.current.onend = null;
+        }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stableOnSpeechEnd]);
 
   const startListening = useCallback(() => {
@@ -107,7 +122,6 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
         setIsListening(true);
         setError(null);
       } catch (err) {
-         // यदि start() बहुत जल्दी फिर से कॉल हो जाए तो यह त्रुटि दे सकता है
         console.error("स्पीच रिकग्निशन शुरू करने में त्रुटि:", err);
       }
     }
@@ -116,13 +130,15 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
   const stopListening = useCallback(() => {
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
-      // onend इवेंट isListening को false पर सेट कर देगा
+      setIsListening(false); // तुरंत स्थिति अपडेट करें
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     }
   }, [isListening]);
 
   const resetTranscript = useCallback(() => {
     setTranscript('');
-    finalTranscriptRef.current = '';
   }, []);
 
   return {

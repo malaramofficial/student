@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils";
 type Message = {
   role: 'user' | 'assistant';
   content: string;
-  isInterim?: boolean;
 };
 
 export default function AITeacherPage() {
@@ -29,7 +28,15 @@ export default function AITeacherPage() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition({ onSpeechEnd: (finalTranscript: string) => handleAIResponse(finalTranscript) });
+  
+  // onSpeechEnd कॉलबैक को सीधे handleAIResponse पर सेट करें
+  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition({ 
+    onSpeechEnd: (finalTranscript: string) => {
+        if (finalTranscript) {
+            handleAIResponse(finalTranscript);
+        }
+    } 
+  });
 
   const aditiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
 
@@ -55,23 +62,25 @@ export default function AITeacherPage() {
     }
   }, [audioUrl]);
 
+  // जब isListening बदलता है, तो इनपुट को अपडेट करें
+  useEffect(() => {
+    setInput(transcript);
+  }, [transcript]);
+
+
   const handleAIResponse = useCallback(async (query: string) => {
     if (!query.trim() || isLoading) return;
 
     const userMessage: Message = { role: 'user', content: query };
-    setMessages(prev => {
-        // Remove previous interim message if it exists
-        const filtered = prev.filter(m => !m.isInterim);
-        return [...filtered, userMessage];
-    });
+    setMessages(prev => [...prev, userMessage]);
     
     setIsLoading(true);
     setAudioUrl(null);
-    resetTranscript();
+    resetTranscript(); // AI प्रतिक्रिया प्राप्त करने के बाद ट्रांसक्रिप्ट रीसेट करें
+    setInput(''); // इनपुट फ़ील्ड साफ़ करें
 
-    const chatHistory = messages.filter(m => !m.isInterim).map(msg => ({ role: msg.role, content: msg.content }));
+    const chatHistory = [...messages, userMessage].map(msg => ({ role: msg.role, content: msg.content }));
     
-    // Kick off both AI response and audio generation at the same time
     const aiResponsePromise = getAIResponse({ question: query, chatHistory });
     const audioResponsePromise = aiResponsePromise.then(response => {
         if (response.success && response.answer) {
@@ -106,31 +115,14 @@ export default function AITeacherPage() {
     } finally {
         setIsLoading(false);
     }
-  }, [messages, isLoading, toast, resetTranscript]);
-
-
-  useEffect(() => {
-    if (isListening && transcript) {
-      setMessages(prev => {
-        const lastMessage = prev[prev.length - 1];
-        if (lastMessage && lastMessage.role === 'user' && lastMessage.isInterim) {
-          const newMessages = [...prev];
-          newMessages[newMessages.length - 1] = { ...lastMessage, content: transcript };
-          return newMessages;
-        }
-        return [...prev, { role: 'user', content: transcript, isInterim: true }];
-      });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transcript, isListening]);
+  }, [isLoading, toast, resetTranscript, messages]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-    stopListening();
+    stopListening(); // मैन्युअल सबमिट पर सुनना बंद करें
     handleAIResponse(input);
-    setInput('');
   };
   
   const toggleListening = () => {
@@ -165,8 +157,7 @@ export default function AITeacherPage() {
               <div className={cn("max-w-[75%] rounded-lg p-3 text-sm", 
                 message.role === 'user' 
                   ? 'bg-primary text-primary-foreground' 
-                  : 'bg-muted',
-                message.isInterim && 'opacity-70'
+                  : 'bg-muted'
               )}>
                 <p className="whitespace-pre-wrap text-muted-foreground">{message.content}</p>
                  {message.role === 'assistant' && index === messages.length -1 && (
@@ -182,7 +173,7 @@ export default function AITeacherPage() {
               {message.role === 'user' && <Avatar><AvatarFallback><User /></AvatarFallback></Avatar>}
             </div>
           ))}
-          {isLoading && !messages.some(m => m.role === 'assistant' && m.content) && (
+          {isLoading && messages[messages.length-1]?.role === 'user' && (
             <div className="flex items-start gap-4">
               <Avatar className="border-2 border-primary/50">
                   {aditiAvatar && <Image src={aditiAvatar.imageUrl} alt="Aditi Madam" width={40} height={40} data-ai-hint={aditiAvatar.imageHint} />}

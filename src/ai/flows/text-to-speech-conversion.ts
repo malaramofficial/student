@@ -33,7 +33,7 @@ const textToSpeechConversionFlow = ai.defineFlow(
   },
   async (input) => {
     const { media } = await ai.generate({
-      model: ai.model('googleai/gemini-2.5-flash-preview-tts'),
+      model: 'googleai/gemini-2.5-flash-preview-tts',
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {
@@ -70,7 +70,7 @@ async function toWav(
       bitDepth: sampleWidth * 8,
     });
 
-    let bufs = [] as any[];
+    const bufs: Buffer[] = [];
     writer.on('error', reject);
     writer.on('data', function (d) {
       bufs.push(d);

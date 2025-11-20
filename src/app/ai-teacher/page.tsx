@@ -116,9 +116,9 @@ export default function AITeacherPage() {
               <div className={cn("max-w-[75%] rounded-lg p-3 text-sm", 
                 message.role === 'user' 
                   ? 'bg-primary text-primary-foreground' 
-                  : 'bg-muted text-muted-foreground'
+                  : 'bg-muted'
               )}>
-                <p className="whitespace-pre-wrap">{message.content}</p>
+                <p className="whitespace-pre-wrap text-muted-foreground">{message.content}</p>
                  {message.role === 'assistant' && index === messages.length -1 && (
                     <div className="mt-2">
                       {isAudioLoading ? (

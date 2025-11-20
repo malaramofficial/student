@@ -1,6 +1,6 @@
 "use server";
 
-import { askAditiMadam, AskAditiMadamInput } from "@/ai/flows/ai-mentor-initial-prompt";
+import { askAditiMadam, AIMentorInput } from "@/ai/ai-mentor-follow-up-questions";
 import { adminTrainAIMentor, AdminTrainAIMentorInput } from "@/ai/flows/admin-train-ai-mentor";
 import { textToSpeechConversion, TextToSpeechConversionInput } from "@/ai/flows/text-to-speech-conversion";
 import { generateSpeech, GenerateSpeechInput } from "@/ai/flows/ai-mentor-speech-flow";
@@ -14,11 +14,16 @@ const getAIResponseSchema = z.object({
   })).optional(),
 });
 
-export async function getAIResponse(input: AskAditiMadamInput) {
+export async function getAIResponse(input: AIMentorInput) {
+  // The schema is slightly different, so we adapt it here.
   const parsedInput = getAIResponseSchema.parse(input);
+  const flowInput = {
+    query: parsedInput.question,
+    chatHistory: parsedInput.chatHistory,
+  };
   try {
-    const result = await askAditiMadam(parsedInput);
-    return { success: true, answer: result.answer };
+    const result = await askAditiMadam(flowInput);
+    return { success: true, answer: result.response };
   } catch (error) {
     console.error(error);
     const errorMessage = error instanceof Error ? error.message : "Failed to get response from AI.";

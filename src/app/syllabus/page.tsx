@@ -53,25 +53,25 @@ export default function SyllabusPage() {
               ))}
             </TabsList>
             {syllabusData.streams.map((stream) => (
-              <TabsContent key={stream.name} value={stream.name} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+              <TabsContent key={stream.name} value={stream.name} className="mt-6">
+                 <Accordion type="single" collapsible className="w-full space-y-4">
                   {stream.subjects.map((subject) => (
-                    <Card key={subject.name}>
-                        <Accordion type="single" collapsible className="w-full">
-                            <AccordionItem value={subject.name} className="border-none">
-                                <AccordionTrigger className="text-lg font-headline hover:no-underline p-4">
-                                    {subject.name}
-                                </AccordionTrigger>
-                                <AccordionContent className="p-4 pt-0">
-                                    <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-                                    {subject.topics.map((topic, index) => (
-                                        <li key={index}>{topic}</li>
-                                    ))}
-                                    </ul>
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
+                    <Card key={subject.name} className="overflow-hidden">
+                        <AccordionItem value={subject.name} className="border-none">
+                            <AccordionTrigger className="text-xl font-headline hover:no-underline p-6 bg-muted/50">
+                                {subject.name}
+                            </AccordionTrigger>
+                            <AccordionContent className="p-6">
+                                <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
+                                {subject.topics.map((topic, index) => (
+                                    <li key={index}>{topic}</li>
+                                ))}
+                                </ul>
+                            </AccordionContent>
+                        </AccordionItem>
                     </Card>
                   ))}
+                 </Accordion>
               </TabsContent>
             ))}
           </Tabs>

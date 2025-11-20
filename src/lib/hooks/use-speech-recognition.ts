@@ -11,56 +11,76 @@ type SpeechRecognitionHook = {
   error: string | null;
 };
 
+// Extend the global Window interface to include webkitSpeechRecognition
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+}
+
 export const useSpeechRecognition = (): SpeechRecognitionHook => {
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const finalTranscriptRef = useRef('');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setError('Speech recognition not supported in this browser.');
+      setError('इस ब्राउज़र में स्पीच रिकग्निशन समर्थित नहीं है।');
       return;
     }
 
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    recognition.lang = 'hi-IN'; // Set language to Hindi (India)
 
     recognition.onresult = (event) => {
-      let finalTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
+      let interimTranscript = '';
+      finalTranscriptRef.current = '';
+      for (let i = 0; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
+          finalTranscriptRef.current += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
         }
       }
-      if (finalTranscript) {
-        setTranscript(prev => prev + finalTranscript + ' ');
-      }
+       setTranscript(finalTranscriptRef.current + interimTranscript);
     };
     
     recognition.onerror = (event) => {
-        setError(`Speech recognition error: ${event.error}`);
+        if (event.error === 'no-speech') {
+            // Ignore no-speech errors, as they are common
+            return;
+        }
+        setError(`स्पीच रिकग्निशन त्रुटि: ${event.error}`);
         setIsListening(false);
     };
 
     recognition.onend = () => {
-        if (isListening) {
-            // If it ends unexpectedly, restart it.
-            recognition.start();
-        }
+        setIsListening(false);
+        // We update the transcript one last time with the final version.
+        setTranscript(finalTranscriptRef.current);
     };
 
     recognitionRef.current = recognition;
-  }, [isListening]);
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    }
+  }, []);
 
   const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
       setTranscript('');
+      finalTranscriptRef.current = '';
       recognitionRef.current.start();
       setIsListening(true);
       setError(null);
@@ -79,7 +99,7 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
     isListening,
     startListening,
     stopListening,
-    hasRecognitionSupport: !!recognitionRef.current,
+    hasRecognitionSupport: !!(typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)),
     error,
   };
 };

@@ -1,0 +1,52 @@
+{
+  "results": [
+    {
+      "rollNumber": "2400001",
+      "name": "आकाश शर्मा",
+      "fatherName": "राजेश शर्मा",
+      "motherName": "सुनीता शर्मा",
+      "school": "राजकीय उच्च माध्यमिक विद्यालय, जयपुर",
+      "results": [
+        { "subject": "हिंदी", "theory": 78, "practical": 0, "total": 78, "grade": "A" },
+        { "subject": "अंग्रेजी", "theory": 85, "practical": 0, "total": 85, "grade": "A" },
+        { "subject": "भौतिक विज्ञान", "theory": 65, "practical": 28, "total": 93, "grade": "A+" },
+        { "subject": "रसायन विज्ञान", "theory": 68, "practical": 29, "total": 97, "grade": "A+" },
+        { "subject": "गणित", "theory": 90, "practical": 0, "total": 90, "grade": "A+" }
+      ],
+      "overallTotal": 443,
+      "finalResult": "PASS"
+    },
+    {
+      "rollNumber": "2400002",
+      "name": "प्रियंका चौधरी",
+      "fatherName": "सुरेश चौधरी",
+      "motherName": "ममता चौधरी",
+      "school": "शारदा विद्या मंदिर, जोधपुर",
+      "results": [
+        { "subject": "हिंदी", "theory": 65, "practical": 0, "total": 65, "grade": "B" },
+        { "subject": "अंग्रेजी", "theory": 72, "practical": 0, "total": 72, "grade": "B" },
+        { "subject": "जीव विज्ञान", "theory": 55, "practical": 25, "total": 80, "grade": "A" },
+        { "subject": "रसायन विज्ञान", "theory": 45, "practical": 22, "total": 67, "grade": "B" },
+        { "subject": "भौतिक विज्ञान", "theory": 40, "practical": 20, "total": 60, "grade": "C" }
+      ],
+      "overallTotal": 344,
+      "finalResult": "PASS"
+    },
+    {
+      "rollNumber": "2400003",
+      "name": "राहुल मीणा",
+      "fatherName": "गोपाल मीणा",
+      "motherName": "शांति मीणा",
+      "school": "आदर्श पब्लिक स्कूल, कोटा",
+      "results": [
+        { "subject": "हिंदी", "theory": 45, "practical": 0, "total": 45, "grade": "D" },
+        { "subject": "अंग्रेजी", "theory": 38, "practical": 0, "total": 38, "grade": "D" },
+        { "subject": "इतिहास", "theory": 25, "practical": 0, "total": 25, "grade": "F" },
+        { "subject": "राजनीति विज्ञान", "theory": 50, "practical": 0, "total": 50, "grade": "C" },
+        { "subject": "अर्थशास्त्र", "theory": 42, "practical": 0, "total": 42, "grade": "D" }
+      ],
+      "overallTotal": 200,
+      "finalResult": "SUPPLEMENTARY"
+    }
+  ]
+}

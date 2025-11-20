@@ -9,7 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { Writer } from 'wav';
+import wav from 'wav';
 
 const TextToSpeechConversionInputSchema = z.object({
   text: z.string().describe('The text to convert to speech (Hindi or English).'),
@@ -64,7 +64,7 @@ async function toWav(
   sampleWidth = 2
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    const writer = new Writer({
+    const writer = new wav.Writer({
       channels,
       sampleRate: rate,
       bitDepth: sampleWidth * 8,

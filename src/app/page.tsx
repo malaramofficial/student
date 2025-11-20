@@ -1,5 +1,5 @@
 import { DashboardCard } from "@/components/dashboard-card";
-import { BookOpenCheck, Bot, ClipboardCheck, LineChart, Lock, AudioLines } from "lucide-react";
+import { BookOpenCheck, Bot, ClipboardCheck, LineChart, Lock } from "lucide-react";
 
 export default function Home() {
   return (
@@ -28,18 +28,12 @@ export default function Home() {
           description="प्रश्न पूछें और अपनी एआई मेंटर अदिति मैडम से तुरंत सहायता प्राप्त करें।"
         />
         <DashboardCard
-          href="/text-to-speech"
-          icon={<AudioLines className="w-8 h-8 text-primary" />}
-          title="टेक्स्ट-टू-स्पीच"
-          description="सुनकर सीखने के लिए टेक्स्ट को हिंदी या अंग्रेजी में ऑडियो में बदलें।"
-        />
-        <DashboardCard
           href="/admin"
           icon={<Lock className="w-8 h-8 text-primary" />}
           title="एडमिन ट्रेनिंग"
           description="एआई मेंटर के प्रशिक्षण और कॉन्फ़िगरेशन के लिए सुरक्षित क्षेत्र।"
         />
-         <div className="col-span-1 md:col-span-2 lg:col-span-1 flex items-center justify-center p-6 bg-card rounded-lg border">
+         <div className="col-span-1 md:col-span-2 flex items-center justify-center p-6 bg-card rounded-lg border">
           <div className="text-center">
             <BookOpenCheck className="w-12 h-12 text-primary mx-auto mb-4" />
             <h3 className="font-headline font-semibold text-lg">अदिति लर्निंग</h3>

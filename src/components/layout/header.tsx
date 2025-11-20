@@ -8,7 +8,6 @@ const pageTitles: { [key: string]: string } = {
   "/mock-tests": "मॉक टेस्ट",
   "/progress-tracker": "प्रगति ट्रैकर",
   "/ai-teacher": "एआई वर्चुअल शिक्षक",
-  "/text-to-speech": "टेक्स्ट-टू-स्पीच यूटिलिटी",
   "/admin": "एडमिन पैनल",
 };
 

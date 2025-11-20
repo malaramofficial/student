@@ -41,7 +41,6 @@ const textToSpeechConversionFlow = ai.defineFlow(
             prebuiltVoiceConfig: { voiceName: 'Achernar' },
           },
         },
-        speakingRate: 1.2,
       },
       prompt: input.text,
     });

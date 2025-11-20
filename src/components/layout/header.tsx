@@ -17,7 +17,8 @@ const pageTitles: { [key: string]: string } = {
   "/admin": "एडमिन पैनल",
   "/results": "परीक्षा परिणाम",
   "/visual-teacher": "विजुअल टीचर",
-  "/text-to-speech": "टेक्स्ट-टू-स्पीच"
+  "/text-to-speech": "टेक्स्ट-टू-स्पीच",
+  "/syllabus": "पाठ्यक्रम"
 };
 
 export function Header() {

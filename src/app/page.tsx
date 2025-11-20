@@ -23,6 +23,12 @@ export default function Home() {
           description="विभिन्न विषयों पर मॉक टेस्ट के साथ अपने ज्ञान का मूल्यांकन करें।"
         />
         <DashboardCard
+          href="/syllabus"
+          icon={<BookOpenCheck className="w-8 h-8 text-primary" />}
+          title="पाठ्यक्रम"
+          description="12वीं कक्षा के लिए राजस्थान बोर्ड का पूरा पाठ्यक्रम देखें।"
+        />
+        <DashboardCard
           href="/results"
           icon={<FileText className="w-8 h-8 text-primary" />}
           title="परीक्षा परिणाम"

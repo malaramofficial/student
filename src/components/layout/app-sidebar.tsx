@@ -19,6 +19,7 @@ const menuItems = [
   { href: "/", label: "डैशबोर्ड", icon: Home },
   { href: "/ai-teacher", label: "एआई शिक्षक", icon: Bot },
   { href: "/mock-tests", label: "मॉक टेस्ट", icon: ClipboardCheck },
+  { href: "/syllabus", label: "पाठ्यक्रम", icon: BookOpenCheck },
   { href: "/results", label: "परीक्षा परिणाम", icon: FileText },
   { href: "/visual-teacher", label: "विजुअल टीचर", icon: UserSquare },
   { href: "/progress-tracker", label: "प्रगति ट्रैकर", icon: LineChart },

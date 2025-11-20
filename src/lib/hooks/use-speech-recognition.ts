@@ -53,17 +53,15 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
 
     recognition.onresult = (event) => {
       let interimTranscript = '';
-      let finalTranscript = '';
-
-      for (let i = 0; i < event.results.length; ++i) {
+      
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
+          finalTranscriptRef.current += event.results[i][0].transcript;
         } else {
           interimTranscript += event.results[i][0].transcript;
         }
       }
-      finalTranscriptRef.current = finalTranscript;
-      setTranscript(finalTranscript + interimTranscript);
+      setTranscript(finalTranscriptRef.current + interimTranscript);
     };
     
     recognition.onerror = (event) => {
@@ -93,6 +91,9 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
 
     return () => {
       if (recognitionRef.current) {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.onend = null;
         recognitionRef.current.stop();
       }
     }

@@ -13,12 +13,12 @@ import {
 import { cn } from "@/lib/utils";
 
 const menuItems = [
-  { href: "/", label: "Dashboard", icon: Home },
-  { href: "/mock-tests", label: "Mock Tests", icon: ClipboardCheck },
-  { href: "/progress-tracker", label: "Progress Tracker", icon: LineChart },
-  { href: "/ai-teacher", label: "AI Teacher", icon: Bot },
-  { href: "/text-to-speech", label: "Text-to-Speech", icon: AudioLines },
-  { href: "/admin", label: "Admin", icon: Lock },
+  { href: "/", label: "डैशबोर्ड", icon: Home },
+  { href: "/mock-tests", label: "मॉक टेस्ट", icon: ClipboardCheck },
+  { href: "/progress-tracker", label: "प्रगति ट्रैकर", icon: LineChart },
+  { href: "/ai-teacher", label: "एआई शिक्षक", icon: Bot },
+  { href: "/text-to-speech", label: "टेक्स्ट-टू-स्पीच", icon: AudioLines },
+  { href: "/admin", label: "एडमिन", icon: Lock },
 ];
 
 export function AppSidebar() {
@@ -30,7 +30,7 @@ export function AppSidebar() {
         <Link href="/" className="flex items-center gap-2.5 px-2">
           <BookOpenCheck className="w-7 h-7 text-primary" />
           <span className="font-bold text-lg font-headline text-primary-foreground group-data-[collapsible=icon]:hidden">
-            Aditi Learning
+            अदिति लर्निंग
           </span>
         </Link>
       </SidebarHeader>

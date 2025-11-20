@@ -20,8 +20,8 @@ export default function TextToSpeechPage() {
     if (!text.trim()) {
       toast({
         variant: 'destructive',
-        title: 'Input Error',
-        description: 'Please enter some text to convert.',
+        title: 'इनपुट त्रुटि',
+        description: 'कृपया बदलने के लिए कुछ टेक्स्ट दर्ज करें।',
       });
       return;
     }
@@ -33,14 +33,14 @@ export default function TextToSpeechPage() {
     if (response.success && response.audio) {
       setAudioUrl(response.audio);
       toast({
-        title: 'Conversion Successful',
-        description: 'Your text has been converted to speech.',
+        title: 'रूपांतरण सफल',
+        description: 'आपका टेक्स्ट भाषण में बदल दिया गया है।',
       });
     } else {
       toast({
         variant: 'destructive',
-        title: 'Conversion Failed',
-        description: response.error || 'An unknown error occurred.',
+        title: 'रूपांतरण विफल',
+        description: response.error || 'एक अज्ञात त्रुटि हुई।',
       });
     }
     setIsLoading(false);
@@ -67,17 +67,17 @@ export default function TextToSpeechPage() {
     <div className="flex justify-center items-center p-4 min-h-[80vh]">
       <Card className="w-full max-w-xl">
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">Text-to-Speech Utility</CardTitle>
+          <CardTitle className="font-headline text-2xl">टेक्स्ट-टू-स्पीच यूटिलिटी</CardTitle>
           <CardDescription>
-            Type or paste text in Hindi or English and convert it to audio.
+            हिंदी या अंग्रेजी में टेक्स्ट टाइप या पेस्ट करें और इसे ऑडियो में बदलें।
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="text-input">Your Text</Label>
+            <Label htmlFor="text-input">आपका टेक्स्ट</Label>
             <Textarea
               id="text-input"
-              placeholder="Enter text here..."
+              placeholder="यहां टेक्स्ट दर्ज करें..."
               className="min-h-[150px]"
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -101,10 +101,10 @@ export default function TextToSpeechPage() {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Converting...
+                बदल रहा है...
               </>
             ) : (
-              'Convert to Speech'
+              'भाषण में बदलें'
             )}
           </Button>
         </CardFooter>

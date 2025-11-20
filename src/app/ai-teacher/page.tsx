@@ -86,7 +86,7 @@ export default function AITeacherPage() {
       await playAudioForMessage(response.answer);
     } else {
       toast({ variant: 'destructive', title: 'AI Error', description: response.error });
-      const errorMessage: Message = { role: 'assistant', content: "Sorry, I couldn't process your request. Please try again." };
+      const errorMessage: Message = { role: 'assistant', content: "क्षमा करें, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया पुन: प्रयास करें।" };
       setMessages(prev => [...prev, errorMessage]);
     }
     setIsLoading(false);
@@ -99,9 +99,9 @@ export default function AITeacherPage() {
           {messages.length === 0 && (
              <div className="text-center p-8 rounded-lg">
                 <Bot className="mx-auto h-16 w-16 text-primary/70" />
-                <h2 className="mt-4 text-2xl font-semibold font-headline">Ask Aditi Madam</h2>
+                <h2 className="mt-4 text-2xl font-semibold font-headline">अदिति मैडम से पूछें</h2>
                 <p className="mt-2 text-muted-foreground">
-                  I am your AI virtual teacher. Ask me anything about your studies!
+                  मैं आपकी एआई वर्चुअल शिक्षक हूँ। अपनी पढ़ाई के बारे में मुझसे कुछ भी पूछें!
                 </p>
              </div>
           )}
@@ -150,7 +150,7 @@ export default function AITeacherPage() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={isListening ? "Listening..." : "Type your question..."}
+            placeholder={isListening ? "सुन रही हूँ..." : "अपना प्रश्न टाइप करें..."}
             disabled={isLoading}
             className="flex-1"
           />

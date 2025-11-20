@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Aditi Learning Platform',
-  description: 'An interactive platform for students to learn and grow.',
+  title: 'अदिति लर्निंग प्लेटफॉर्म',
+  description: 'छात्रों को सीखने और बढ़ने के लिए एक इंटरैक्टिव प्लेटफॉर्म।',
 };
 
 export default function RootLayout({

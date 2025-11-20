@@ -95,8 +95,8 @@ export default function MockTestsPage() {
       <div className="flex justify-center items-center p-4 min-h-[80vh]">
         <Card className="w-full max-w-lg text-center">
           <CardHeader>
-            <CardTitle className="font-headline text-2xl">Test Result: {result.subject}</CardTitle>
-            <CardDescription>Here's how you performed.</CardDescription>
+            <CardTitle className="font-headline text-2xl">परीक्षा परिणाम: {result.subject}</CardTitle>
+            <CardDescription>यहां आपका प्रदर्शन है।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="relative mx-auto h-40 w-40">
@@ -111,12 +111,12 @@ export default function MockTestsPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-muted rounded-lg"><p className="text-sm text-muted-foreground">Correct</p><p className="text-2xl font-bold flex items-center justify-center gap-2"><CheckCircle className="text-green-500"/>{result.score}</p></div>
-              <div className="p-4 bg-muted rounded-lg"><p className="text-sm text-muted-foreground">Incorrect</p><p className="text-2xl font-bold flex items-center justify-center gap-2"><XCircle className="text-red-500"/>{result.total - result.score}</p></div>
+              <div className="p-4 bg-muted rounded-lg"><p className="text-sm text-muted-foreground">सही</p><p className="text-2xl font-bold flex items-center justify-center gap-2"><CheckCircle className="text-green-500"/>{result.score}</p></div>
+              <div className="p-4 bg-muted rounded-lg"><p className="text-sm text-muted-foreground">गलत</p><p className="text-2xl font-bold flex items-center justify-center gap-2"><XCircle className="text-red-500"/>{result.total - result.score}</p></div>
             </div>
           </CardContent>
           <CardFooter>
-            <Button onClick={resetTest} className="w-full">Take Another Test</Button>
+            <Button onClick={resetTest} className="w-full">दूसरी परीक्षा दें</Button>
           </CardFooter>
         </Card>
       </div>
@@ -127,8 +127,8 @@ export default function MockTestsPage() {
     return (
       <div className="p-4 md:p-8">
         <div className="text-center mb-8">
-            <h1 className="font-headline text-3xl font-bold">Choose a Subject</h1>
-            <p className="text-muted-foreground">Select a test to start evaluating your skills.</p>
+            <h1 className="font-headline text-3xl font-bold">एक विषय चुनें</h1>
+            <p className="text-muted-foreground">अपने कौशल का मूल्यांकन शुरू करने के लिए एक परीक्षा चुनें।</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {subjects.map((s) => (
@@ -138,10 +138,10 @@ export default function MockTestsPage() {
                 <Book className="w-6 h-6 text-primary"/>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">{s.questions.length} questions to test your knowledge.</p>
+                <p className="text-sm text-muted-foreground">{s.questions.length} प्रश्न आपके ज्ञान का परीक्षण करने के लिए।</p>
               </CardContent>
               <CardFooter>
-                <Button onClick={() => handleSelectSubject(s)} className="w-full">Start Test</Button>
+                <Button onClick={() => handleSelectSubject(s)} className="w-full">परीक्षा शुरू करें</Button>
               </CardFooter>
             </Card>
           ))}
@@ -157,8 +157,8 @@ export default function MockTestsPage() {
     <div className="flex justify-center items-center p-4 min-h-[80vh]">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">{selectedSubject.subject} Test</CardTitle>
-          <CardDescription>Question {currentQuestionIndex + 1} of {selectedSubject.questions.length}</CardDescription>
+          <CardTitle className="font-headline text-2xl">{selectedSubject.subject} परीक्षा</CardTitle>
+          <CardDescription>प्रश्न {currentQuestionIndex + 1} / {selectedSubject.questions.length}</CardDescription>
           <Progress value={progress} className="mt-2" />
         </CardHeader>
         <CardContent className="space-y-6">
@@ -173,11 +173,11 @@ export default function MockTestsPage() {
           </RadioGroup>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => setSelectedSubject(null)}>Change Subject</Button>
+          <Button variant="outline" onClick={() => setSelectedSubject(null)}>विषय बदलें</Button>
           {currentQuestionIndex < selectedSubject.questions.length - 1 ? (
-            <Button onClick={handleNext} disabled={!selectedOption}>Next Question</Button>
+            <Button onClick={handleNext} disabled={!selectedOption}>अगला प्रश्न</Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={!selectedOption}>Finish & See Results</Button>
+            <Button onClick={handleSubmit} disabled={!selectedOption}>समाप्त करें और परिणाम देखें</Button>
           )}
         </CardFooter>
       </Card>

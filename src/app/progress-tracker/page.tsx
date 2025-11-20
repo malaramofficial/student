@@ -58,14 +58,14 @@ export default function ProgressTrackerPage() {
       <div className="flex flex-col items-center justify-center text-center p-4 min-h-[80vh]">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="font-headline">No Progress to Show Yet</CardTitle>
+            <CardTitle className="font-headline">दिखाने के लिए कोई प्रगति नहीं है</CardTitle>
             <CardDescription>
-              Complete a mock test to start tracking your progress. Your results will appear here.
+              अपनी प्रगति को ट्रैक करना शुरू करने के लिए एक मॉक टेस्ट पूरा करें। आपके परिणाम यहां दिखाई देंगे।
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/mock-tests">
-              <Button>Take a Mock Test</Button>
+              <Button>मॉक टेस्ट दें</Button>
             </Link>
           </CardContent>
         </Card>
@@ -77,9 +77,9 @@ export default function ProgressTrackerPage() {
     <div className="p-4 md:p-8">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">Your Performance Overview</CardTitle>
+          <CardTitle className="font-headline text-2xl">आपके प्रदर्शन का अवलोकन</CardTitle>
           <CardDescription>
-            This chart shows your latest score compared to your average score in each subject.
+            यह चार्ट प्रत्येक विषय में आपके औसत स्कोर की तुलना में आपका नवीनतम स्कोर दिखाता है।
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -94,8 +94,8 @@ export default function ProgressTrackerPage() {
                   content={<ChartTooltipContent />}
                 />
                 <Legend />
-                <Bar dataKey="score" name="Latest Score" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="averageScore" name="Average Score" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="score" name="नवीनतम स्कोर" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="averageScore" name="औसत स्कोर" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -23,12 +23,12 @@ export default function AdminPage() {
   const handleLogin = () => {
     if (code === ADMIN_CODE) {
       setIsLoggedIn(true);
-      toast({ title: "Login Successful", description: "Welcome, Admin!" });
+      toast({ title: "लॉगिन सफल", description: "आपका स्वागत है, एडमिन!" });
     } else {
       toast({
         variant: "destructive",
-        title: "Login Failed",
-        description: "Incorrect security code.",
+        title: "लॉगिन विफल",
+        description: "गलत सुरक्षा कोड।",
       });
     }
   };
@@ -37,8 +37,8 @@ export default function AdminPage() {
     if (!trainingData.trim()) {
       toast({
         variant: "destructive",
-        title: "Training Failed",
-        description: "Training data cannot be empty.",
+        title: "प्रशिक्षण विफल",
+        description: "प्रशिक्षण डेटा खाली नहीं हो सकता।",
       });
       return;
     }
@@ -49,14 +49,14 @@ export default function AdminPage() {
       setTrainingResponse(response.result);
       setTrainingData("");
       toast({
-        title: "Training Submitted",
-        description: "Aditi Madam has received the new information.",
+        title: "प्रशिक्षण प्रस्तुत किया गया",
+        description: "अदिति मैडम को नई जानकारी मिल गई है।",
       });
     } else {
       toast({
         variant: "destructive",
-        title: "Training Failed",
-        description: response.error || "An unknown error occurred.",
+        title: "प्रशिक्षण विफल",
+        description: response.error || "एक अज्ञात त्रुटि हुई।",
       });
     }
     setIsLoading(false);
@@ -67,12 +67,12 @@ export default function AdminPage() {
       <div className="flex items-center justify-center p-4 min-h-[80vh]">
         <Card className="w-full max-w-sm">
           <CardHeader>
-            <CardTitle className="font-headline text-2xl">Admin Login</CardTitle>
-            <CardDescription>Enter the 6-digit security code to access the training panel.</CardDescription>
+            <CardTitle className="font-headline text-2xl">एडमिन लॉगिन</CardTitle>
+            <CardDescription>प्रशिक्षण पैनल तक पहुंचने के लिए 6-अंकीय सुरक्षा कोड दर्ज करें।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="code">Security Code</Label>
+              <Label htmlFor="code">सुरक्षा कोड</Label>
               <Input
                 id="code"
                 type="password"
@@ -85,7 +85,7 @@ export default function AdminPage() {
           </CardContent>
           <CardFooter>
             <Button className="w-full" onClick={handleLogin}>
-              Authenticate
+              प्रमाणित करें
             </Button>
           </CardFooter>
         </Card>
@@ -97,17 +97,17 @@ export default function AdminPage() {
     <div className="p-4 md:p-8">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">Train Aditi Madam</CardTitle>
+          <CardTitle className="font-headline text-2xl">अदिति मैडम को प्रशिक्षित करें</CardTitle>
           <CardDescription>
-            Provide new information for the AI mentor. The AI will learn from your input and confirm its understanding.
+            एआई मेंटर के लिए नई जानकारी प्रदान करें। एआई आपके इनपुट से सीखेगा और अपनी समझ की पुष्टि करेगा।
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="training-data">Training Data</Label>
+            <Label htmlFor="training-data">प्रशिक्षण डेटा</Label>
             <Textarea
               id="training-data"
-              placeholder="e.g., 'The Aditi Learning Platform was created by an innovative developer passionate about education...'"
+              placeholder="जैसे, 'अदिति लर्निंग प्लेटफॉर्म एक अभिनव डेवलपर द्वारा बनाया गया था जो शिक्षा के प्रति जुनूनी है...'"
               className="min-h-[150px]"
               value={trainingData}
               onChange={(e) => setTrainingData(e.target.value)}
@@ -115,7 +115,7 @@ export default function AdminPage() {
           </div>
           {trainingResponse && (
             <div className="p-4 bg-secondary rounded-md border">
-              <p className="font-semibold text-secondary-foreground">Aditi's Response:</p>
+              <p className="font-semibold text-secondary-foreground">अदिति की प्रतिक्रिया:</p>
               <p className="text-sm text-muted-foreground">{trainingResponse}</p>
             </div>
           )}
@@ -123,7 +123,7 @@ export default function AdminPage() {
         <CardFooter>
           <Button onClick={handleTrain} disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Train Aditi
+            अदिति को प्रशिक्षित करें
           </Button>
         </CardFooter>
       </Card>

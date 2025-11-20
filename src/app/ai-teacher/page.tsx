@@ -24,12 +24,17 @@ export default function AITeacherPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError } = useSpeechRecognition();
 
   const aditiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (transcript) {
@@ -154,7 +159,7 @@ export default function AITeacherPage() {
             disabled={isLoading}
             className="flex-1"
           />
-          {hasRecognitionSupport && (
+          {isClient && hasRecognitionSupport && (
             <Button type="button" size="icon" variant={isListening ? "destructive" : "outline"} onClick={isListening ? stopListening : startListening}>
               {isListening ? <StopCircle /> : <Mic />}
             </Button>

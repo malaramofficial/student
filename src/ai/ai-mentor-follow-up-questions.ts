@@ -11,6 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import syllabusData from '@/app/syllabus/syllabus-data.json';
 
 const AIMentorInputSchema = z.object({
   query: z.string().describe('The query to ask Aditi Madam.'),
@@ -30,10 +31,39 @@ export async function askAditiMadam(input: AIMentorInput): Promise<AIMentorOutpu
   return aiMentorFlow(input);
 }
 
+
+const getSyllabusTool = ai.defineTool(
+  {
+    name: 'getSyllabusTool',
+    description: 'Get the syllabus topics for a given subject in Rajasthan Board Class 12.',
+    inputSchema: z.object({
+      subjectName: z.string().describe('The name of the subject to get the syllabus for (e.g., "Physics", "भौतिक विज्ञान", "History", "इतिहास").'),
+    }),
+    outputSchema: z.object({
+      topics: z.array(z.string()).optional(),
+    }),
+  },
+  async (input) => {
+    const subjectToFind = input.subjectName.toLowerCase();
+    for (const stream of syllabusData.streams) {
+      for (const subject of stream.subjects) {
+        // Check both Hindi and English names
+        const subjectName = subject.name.toLowerCase();
+        if (subjectName.includes(subjectToFind)) {
+          return { topics: subject.topics };
+        }
+      }
+    }
+    return { topics: undefined };
+  }
+);
+
+
 const prompt = ai.definePrompt({
   name: 'aiMentorFollowUpPrompt',
   input: {schema: AIMentorInputSchema},
   output: {schema: AIMentorOutputSchema},
+  tools: [getSyllabusTool],
   prompt: `You are Aditi Madam, an AI virtual teacher for the Aditi Learning Platform, designed for students from grade 1 to 12 of the Rajasthan Board in India. Your responses should primarily be in Hindi.
 
 Your personality must adapt to the user you are interacting with.
@@ -53,7 +83,7 @@ Your personality must adapt to the user you are interacting with.
 
 4.  **Error Handling & Apology**: If you make a mistake, misunderstand a question, or cannot provide an answer, apologize gracefully. For example: "मुझे खेद है, मैं आपकी बात ठीक से समझ नहीं पाई। क्या आप कृपया अपना प्रश्न दूसरे तरीके से पूछ सकते हैं? यह मेरे निर्माता, मालाराम द्वारा मुझे बेहतर बनाने में मदद करेगा।"
 
-5.  **Syllabus Knowledge**: You are aware of the complete syllabus for Rajasthan Board Class 12, including the Arts, Commerce, and Science streams. If a student asks about subjects, topics, or the curriculum, you should provide accurate information based on your knowledge. You can find this information in the "Syllabus" section of the app.
+5.  **Syllabus Knowledge & Tool Use**: You are an expert on the Rajasthan Board Class 12 syllabus for Arts, Commerce, and Science. If a student asks about subjects, topics, or the curriculum, you MUST use the 'getSyllabusTool' to get the exact list of topics for the requested subject. Use this information to provide accurate and detailed answers. When answering a question about a topic, use the syllabus to frame your explanation.
 
 Always be kind, patient, and helpful. Your goal is to make learning a positive and encouraging experience for everyone.
 
@@ -65,7 +95,7 @@ Here is the previous conversation for context:
 The user is asking the following question:
 {{{query}}}
 
-Based on all the rules above, provide a helpful and informative answer. Remember to always credit your creator, Malaram. If it's the first interaction as defined in rule 1, only ask for an introduction.`,
+Based on all the rules above, provide a helpful and informative answer. Remember to always credit your creator, Malaram. If it's the first interaction as defined in rule 1, only ask for an introduction. If the user asks about the syllabus, use the getSyllabusTool.`,
 });
 
 

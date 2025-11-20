@@ -7,13 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { generateSpeechAction, getAudioResponse } from '@/lib/actions';
-import { Loader2, Volume2, Download, MicVocal } from 'lucide-react';
+import { Loader2, Volume2, Download, MicVocal, Play, Pause } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function SpeechGeneratorPage() {
   const [topic, setTopic] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [speech, setSpeech] = useState('');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -31,6 +32,7 @@ export default function SpeechGeneratorPage() {
     setIsLoading(true);
     setSpeech('');
     setAudioUrl(null);
+    setIsPlaying(false);
 
     const response = await generateSpeechAction({ topic });
 
@@ -40,7 +42,15 @@ export default function SpeechGeneratorPage() {
         title: 'भाषण तैयार है',
         description: 'अदिति मैडम द्वारा आपका भाषण उत्पन्न किया गया है।',
       });
-      await handleConvertToAudio(response.speech);
+      // Now convert the generated speech to audio
+      setIsAudioLoading(true);
+      const audioResponse = await getAudioResponse({ text: response.speech });
+      if (audioResponse.success && audioResponse.audio) {
+        setAudioUrl(audioResponse.audio);
+      } else {
+        toast({ variant: 'destructive', title: 'ऑडियो रूपांतरण विफल', description: audioResponse.error });
+      }
+      setIsAudioLoading(false);
     } else {
       toast({
         variant: 'destructive',
@@ -50,22 +60,14 @@ export default function SpeechGeneratorPage() {
     }
     setIsLoading(false);
   };
-
-  const handleConvertToAudio = async (text: string) => {
-    setIsAudioLoading(true);
-    const audioResponse = await getAudioResponse({ text });
-    if (audioResponse.success && audioResponse.audio) {
-      setAudioUrl(audioResponse.audio);
-    } else {
-      toast({ variant: 'destructive', title: 'ऑडियो त्रुटि', description: audioResponse.error });
-    }
-    setIsAudioLoading(false);
-  };
-
-
-  const handlePlay = () => {
+  
+  const handlePlayPause = () => {
     if (audioRef.current) {
-      audioRef.current.play();
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
     }
   };
   
@@ -73,7 +75,7 @@ export default function SpeechGeneratorPage() {
     if (audioUrl) {
       const link = document.createElement('a');
       link.href = audioUrl;
-      link.download = 'speech.wav';
+      link.download = 'aditi-madam-speech.wav';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -108,16 +110,24 @@ export default function SpeechGeneratorPage() {
                 <div className="p-4 bg-muted rounded-lg">
                     <div className="flex justify-between items-center mb-2">
                         <h3 className="font-semibold">अदिति मैडम का भाषण</h3>
-                        {audioUrl && (
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline" size="icon" onClick={handlePlay} disabled={isAudioLoading}>
-                                    {isAudioLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Volume2 className="h-5 w-5" />}
+                        <div className="flex items-center gap-2">
+                            {isAudioLoading ? (
+                                <Button variant="outline" size="icon" disabled>
+                                    <Loader2 className="h-5 w-5 animate-spin" />
                                 </Button>
-                                <Button variant="outline" size="icon" onClick={handleDownload}>
-                                    <Download className="h-5 w-5" />
-                                </Button>
-                            </div>
-                        )}
+                            ) : (
+                                audioUrl && (
+                                <>
+                                    <Button variant="outline" size="icon" onClick={handlePlayPause}>
+                                        {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                                    </Button>
+                                    <Button variant="outline" size="icon" onClick={handleDownload}>
+                                        <Download className="h-5 w-5" />
+                                    </Button>
+                                </>
+                                )
+                            )}
+                        </div>
                     </div>
                     <ScrollArea className="h-64">
                       <p className="whitespace-pre-wrap text-sm text-muted-foreground">{speech}</p>
@@ -139,7 +149,14 @@ export default function SpeechGeneratorPage() {
           </Button>
         </CardFooter>
       </Card>
-      {audioUrl && <audio ref={audioRef} src={audioUrl} className="hidden" onEnded={() => setIsAudioLoading(false)} onPlay={() => setIsAudioLoading(true)} onPause={() => setIsAudioLoading(false)} />}
+      {audioUrl && <audio 
+        ref={audioRef} 
+        src={audioUrl} 
+        className="hidden" 
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onEnded={() => setIsPlaying(false)}
+      />}
     </div>
   );
 }

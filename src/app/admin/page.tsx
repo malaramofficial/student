@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { trainAI } from "@/lib/actions";
 import { Loader2 } from "lucide-react";
 
-const ADMIN_CODE = "123456";
+const ADMIN_CODE = "772697";
 
 export default function AdminPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

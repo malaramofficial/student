@@ -73,6 +73,8 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
       }
       if (event.error === 'not-allowed') {
         setError("माइक्रोफ़ोन की अनुमति आवश्यक है।");
+      } else if (event.error === 'network') {
+        setError("स्पीच सेवा से कनेक्ट नहीं हो सका। कृपया अपना इंटरनेट कनेक्शन जांचें।");
       } else {
         setError(`स्पीच रिकग्निशन त्रुटि: ${event.error}`);
       }

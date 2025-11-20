@@ -20,7 +20,8 @@ export async function getAIResponse(input: AskAditiMadamInput) {
     return { success: true, answer: result.answer };
   } catch (error) {
     console.error(error);
-    return { success: false, error: "Failed to get response from AI." };
+    const errorMessage = error instanceof Error ? error.message : "Failed to get response from AI.";
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -35,7 +36,8 @@ export async function getAudioResponse(input: TextToSpeechConversionInput) {
     return { success: true, audio: result.media };
   } catch (error) {
     console.error(error);
-    return { success: false, error: "Failed to convert text to speech." };
+    const errorMessage = error instanceof Error ? error.message : "Failed to convert text to speech.";
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -50,6 +52,7 @@ export async function trainAI(input: AdminTrainAIMentorInput) {
     return { success: true, result: result.result };
   } catch (error) {
     console.error(error);
-    return { success: false, error: "Failed to train AI." };
+    const errorMessage = error instanceof Error ? error.message : "Failed to train AI.";
+    return { success: false, error: errorMessage };
   }
 }

@@ -14,10 +14,10 @@ const getAIResponseSchema = z.object({
   })).optional(),
 });
 
-export async function getAIResponse(input: AIMentorInput) {
+export async function getAIResponse(input: { question: string; chatHistory?: { role: 'user' | 'assistant'; content: string }[] }) {
   // The schema is slightly different, so we adapt it here.
   const parsedInput = getAIResponseSchema.parse(input);
-  const flowInput = {
+  const flowInput: AIMentorInput = {
     query: parsedInput.question,
     chatHistory: parsedInput.chatHistory,
   };

@@ -3,6 +3,7 @@
 import { askAditiMadam, AskAditiMadamInput } from "@/ai/flows/ai-mentor-initial-prompt";
 import { adminTrainAIMentor, AdminTrainAIMentorInput } from "@/ai/flows/admin-train-ai-mentor";
 import { textToSpeechConversion, TextToSpeechConversionInput } from "@/ai/flows/text-to-speech-conversion";
+import { generateSpeech, GenerateSpeechInput } from "@/ai/flows/ai-mentor-speech-flow";
 import { z } from "zod";
 
 const getAIResponseSchema = z.object({
@@ -53,6 +54,22 @@ export async function trainAI(input: AdminTrainAIMentorInput) {
   } catch (error) {
     console.error(error);
     const errorMessage = error instanceof Error ? error.message : "Failed to train AI.";
+    return { success: false, error: errorMessage };
+  }
+}
+
+const generateSpeechSchema = z.object({
+  topic: z.string(),
+});
+
+export async function generateSpeechAction(input: GenerateSpeechInput) {
+  const parsedInput = generateSpeechSchema.parse(input);
+  try {
+    const result = await generateSpeech(parsedInput);
+    return { success: true, speech: result.speech };
+  } catch (error) {
+    console.error(error);
+    const errorMessage = error instanceof Error ? error.message : "Failed to generate speech.";
     return { success: false, error: errorMessage };
   }
 }

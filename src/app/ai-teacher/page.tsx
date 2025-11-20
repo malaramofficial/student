@@ -9,7 +9,7 @@ import { Bot, Loader2, Mic, Send, User, Volume2, StopCircle } from "lucide-react
 import { getAIResponse, getAudioResponse } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { placeHolderImages } from "@/lib/placeholder-images";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +29,7 @@ export default function AITeacherPage() {
   const { toast } = useToast();
   const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError } = useSpeechRecognition();
 
-  const aditiAvatar = PlaceHolderImages.find(img => img.id === 'aditi-avatar');
+  const aditiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
 
   useEffect(() => {
     if (transcript) {

@@ -7,9 +7,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import mockResults from './mock-results.json';
 import { Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getBoardResult } from '@/lib/actions';
 
 type SubjectResult = {
   subject: string;
@@ -27,18 +27,18 @@ type StudentResult = {
   school: string;
   results: SubjectResult[];
   overallTotal: number;
-  finalResult: 'PASS' | 'SUPPLEMENTARY' | 'FAIL';
+  finalResult: string;
 };
 
 export default function ResultsPage() {
-  const [rollNumber, setRollNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<StudentResult | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleSearch = () => {
-    if (!rollNumber.trim()) {
+  const handleSearch = async (formData: FormData) => {
+    const rollNumber = formData.get('rollNumber') as string;
+     if (!rollNumber.trim()) {
       toast({
         variant: 'destructive',
         title: 'अमान्य इनपुट',
@@ -49,26 +49,26 @@ export default function ResultsPage() {
     
     setIsLoading(true);
     setResult(null);
-    setNotFound(false);
+    setError(null);
 
-    // Simulate API call
-    setTimeout(() => {
-      const foundResult = (mockResults.results as StudentResult[]).find(
-        (r) => r.rollNumber === rollNumber
-      );
-      if (foundResult) {
-        setResult(foundResult);
-      } else {
-        setNotFound(true);
-      }
-      setIsLoading(false);
-    }, 1500);
+    const response = await getBoardResult(formData);
+
+    if (response.success && response.data) {
+        setResult(response.data as StudentResult);
+    } else {
+        setError(response.error);
+        toast({
+            variant: "destructive",
+            title: "खोज विफल",
+            description: response.error,
+        });
+    }
+    setIsLoading(false);
   };
 
   const handleNewSearch = () => {
     setResult(null);
-    setRollNumber('');
-    setNotFound(false);
+    setError(null);
   }
 
   if (result) {
@@ -127,6 +127,7 @@ export default function ResultsPage() {
   return (
     <div className="p-4 md:p-8 flex items-center justify-center min-h-[calc(100vh-10rem)]">
       <Card className="w-full max-w-md">
+       <form action={handleSearch}>
         <CardHeader>
           <CardTitle className="font-headline text-2xl">परीक्षा परिणाम देखें</CardTitle>
           <CardDescription>
@@ -138,21 +139,20 @@ export default function ResultsPage() {
             <Label htmlFor="roll-number">रोल नंबर</Label>
             <Input
               id="roll-number"
+              name="rollNumber"
               placeholder="उदा. 2400001"
-              value={rollNumber}
-              onChange={(e) => setRollNumber(e.target.value)}
               disabled={isLoading}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              required
             />
           </div>
-          {notFound && (
+          {error && (
             <div className="text-center text-red-500 text-sm">
-                क्षमा करें, इस रोल नंबर के लिए कोई परिणाम नहीं मिला। कृपया पुनः जाँच करें।
+                {error}
             </div>
           )}
         </CardContent>
         <CardFooter>
-          <Button onClick={handleSearch} disabled={isLoading} className="w-full">
+          <Button type="submit" disabled={isLoading} className="w-full">
             {isLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -161,7 +161,9 @@ export default function ResultsPage() {
             {isLoading ? 'खोज रहा है...' : 'परिणाम खोजें'}
           </Button>
         </CardFooter>
+       </form>
       </Card>
     </div>
   );
 }
+

@@ -1,0 +1,64 @@
+{
+  "subjects": [
+    {
+      "subject": "Mathematics",
+      "questions": [
+        {
+          "question": "What is the value of Pi (π) to two decimal places?",
+          "options": ["3.12", "3.14", "3.16", "3.18"],
+          "answer": "3.14"
+        },
+        {
+          "question": "What is 12 multiplied by 12?",
+          "options": ["124", "136", "144", "156"],
+          "answer": "144"
+        },
+        {
+          "question": "What is the square root of 81?",
+          "options": ["7", "8", "9", "10"],
+          "answer": "9"
+        }
+      ]
+    },
+    {
+      "subject": "Science",
+      "questions": [
+        {
+          "question": "What is the chemical symbol for water?",
+          "options": ["O2", "CO2", "H2O", "NaCl"],
+          "answer": "H2O"
+        },
+        {
+          "question": "Which planet is known as the Red Planet?",
+          "options": ["Earth", "Mars", "Jupiter", "Venus"],
+          "answer": "Mars"
+        },
+        {
+          "question": "What is the powerhouse of the cell?",
+          "options": ["Nucleus", "Ribosome", "Mitochondrion", "Chloroplast"],
+          "answer": "Mitochondrion"
+        }
+      ]
+    },
+    {
+      "subject": "History",
+      "questions": [
+        {
+          "question": "Who was the first President of the United States?",
+          "options": ["Abraham Lincoln", "Thomas Jefferson", "George Washington", "John Adams"],
+          "answer": "George Washington"
+        },
+        {
+          "question": "In which year did World War II end?",
+          "options": ["1942", "1945", "1948", "1950"],
+          "answer": "1945"
+        },
+        {
+          "question": "The ancient pyramids are located in which country?",
+          "options": ["Greece", "Mexico", "Egypt", "Italy"],
+          "answer": "Egypt"
+        }
+      ]
+    }
+  ]
+}

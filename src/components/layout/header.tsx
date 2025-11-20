@@ -1,10 +1,12 @@
 
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { ModeToggle } from "../mode-toggle";
+import { Button } from "../ui/button";
+import { ArrowLeft } from "lucide-react";
 
 const pageTitles: { [key: string]: string } = {
   "/": "डैशबोर्ड",
@@ -20,6 +22,7 @@ const pageTitles: { [key: string]: string } = {
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { isMobile } = useSidebar();
   const title = pageTitles[pathname] || "अदिति लर्निंग प्लेटफॉर्म";
 
@@ -28,6 +31,10 @@ export function Header() {
       <div className={cn("md:hidden", { "invisible": !isMobile })}>
         <SidebarTrigger />
       </div>
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
+        <ArrowLeft />
+        <span className="sr-only">वापस</span>
+      </Button>
       <h1 className="text-lg font-semibold md:text-xl font-headline">{title}</h1>
       <div className="ml-auto md:hidden">
         <ModeToggle />

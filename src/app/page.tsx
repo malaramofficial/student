@@ -1,6 +1,6 @@
 import { DashboardCard } from "@/components/dashboard-card";
 import { WordOfTheDayCard } from "@/components/word-of-the-day-card";
-import { BookOpenCheck, Bot, ClipboardCheck, FileText, LineChart, Lock, MicVocal } from "lucide-react";
+import { BookOpenCheck, Bot, ClipboardCheck, FileText, LineChart, Lock, MicVocal, UserSquare } from "lucide-react";
 
 export default function Home() {
   return (
@@ -27,6 +27,12 @@ export default function Home() {
           icon={<FileText className="w-8 h-8 text-primary" />}
           title="परीक्षा परिणाम"
           description="राजस्थान बोर्ड के अपने परीक्षा परिणाम देखें।"
+        />
+         <DashboardCard
+          href="/visual-teacher"
+          icon={<UserSquare className="w-8 h-8 text-primary" />}
+          title="विजुअल टीचर"
+          description="अदिति मैडम को एक विज़ुअल अवतार में भाषण देते हुए देखें।"
         />
         <DashboardCard
           href="/progress-tracker"

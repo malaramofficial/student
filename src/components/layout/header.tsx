@@ -13,6 +13,7 @@ const pageTitles: { [key: string]: string } = {
   "/speech-generator": "भाषण जनरेटर",
   "/admin": "एडमिन पैनल",
   "/results": "परीक्षा परिणाम",
+  "/visual-teacher": "विजुअल टीचर",
 };
 
 export function Header() {

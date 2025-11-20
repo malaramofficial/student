@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpenCheck, Bot, ClipboardCheck, FileText, Home, LineChart, Lock, MicVocal } from "lucide-react";
+import { BookOpenCheck, Bot, ClipboardCheck, FileText, Home, LineChart, Lock, MicVocal, UserSquare } from "lucide-react";
 import {
   SidebarContent,
   SidebarHeader,
@@ -19,6 +19,7 @@ const menuItems = [
   { href: "/ai-teacher", label: "एआई शिक्षक", icon: Bot },
   { href: "/mock-tests", label: "मॉक टेस्ट", icon: ClipboardCheck },
   { href: "/results", label: "परीक्षा परिणाम", icon: FileText },
+  { href: "/visual-teacher", label: "विजुअल टीचर", icon: UserSquare },
   { href: "/progress-tracker", label: "प्रगति ट्रैकर", icon: LineChart },
   { href: "/speech-generator", label: "भाषण जनरेटर", icon: MicVocal },
   { href: "/admin", label: "एडमिन", icon: Lock },

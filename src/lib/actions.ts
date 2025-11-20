@@ -1,3 +1,4 @@
+
 'use server';
 
 import {
@@ -17,6 +18,11 @@ import {
   GenerateSpeechInput,
 } from '@/ai/flows/ai-mentor-speech-flow';
 import { getWordOfTheDay as getWordOfTheDayFlow } from '@/ai/flows/word-of-the-day';
+import { 
+  generateMockTest as generateMockTestFlow,
+  GenerateMockTestInput,
+} from '@/ai/flows/generate-mock-test';
+
 import { z } from 'zod';
 import mockResults from '@/app/results/mock-results.json';
 
@@ -187,3 +193,27 @@ export async function getBoardResult(formData: FormData) {
         return { success: false, data: null, error: "परिणाम लाते समय एक अप्रत्याशित त्रुटि हुई।" };
     }
 }
+
+
+const generateMockTestSchema = z.object({
+  subject: z.string(),
+  numQuestions: z.number().min(1).max(20),
+});
+
+export async function generateMockTest(input: GenerateMockTestInput) {
+  const parsedInput = generateMockTestSchema.safeParse(input);
+  if (!parsedInput.success) {
+    return { success: false, error: 'Invalid input' };
+  }
+  try {
+    const result = await generateMockTestFlow(parsedInput.data);
+    return { success: true, test: result };
+  } catch (error) {
+    console.error('Error in generateMockTest:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to generate mock test.';
+    return { success: false, error: errorMessage };
+  }
+}
+
+    

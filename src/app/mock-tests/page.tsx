@@ -1,23 +1,20 @@
+
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import questionsData from './questions.json';
-import { Book, CheckCircle, Clock, Percent, XCircle } from 'lucide-react';
+import { Book, CheckCircle, Clock, Loader2, Percent, XCircle } from 'lucide-react';
+import { generateMockTest } from '@/lib/actions';
+import { useToast } from '@/hooks/use-toast';
 
 type Question = {
   question: string;
   options: string[];
   answer: string;
-};
-
-type Subject = {
-  subject: string;
-  questions: Question[];
 };
 
 type TestResult = {
@@ -27,31 +24,57 @@ type TestResult = {
   date: string;
 };
 
-const subjects: Subject[] = questionsData.subjects;
+const subjects = [
+  "गणित", "विज्ञान", "इतिहास", "भौतिक विज्ञान", "रसायन विज्ञान", "जीव विज्ञान", "लेखाशास्त्र", "व्यवसाय अध्ययन", "अर्थशास्त्र", "राजनीति विज्ञान", "हिन्दी साहित्य", "भूगोल", "समाजशास्त्र", "अंग्रेजी साहित्य"
+];
 
 export default function MockTestsPage() {
-  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<string[]>([]);
   const [selectedOption, setSelectedOption] = useState<string>('');
   const [result, setResult] = useState<TestResult | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    if (selectedSubject) {
-      setSelectedOption(userAnswers[currentQuestionIndex] || '');
-    }
-  }, [currentQuestionIndex, selectedSubject, userAnswers]);
-
-  const handleSelectSubject = (subject: Subject) => {
+  const handleSelectSubject = async (subject: string) => {
     setSelectedSubject(subject);
-    setCurrentQuestionIndex(0);
-    setUserAnswers(new Array(subject.questions.length).fill(''));
+    setIsLoading(true);
     setResult(null);
+    setQuestions([]);
+    
+    try {
+      const response = await generateMockTest({ subject, numQuestions: 5 });
+      if (response.success && response.test) {
+        setQuestions(response.test.questions);
+        setUserAnswers(new Array(response.test.questions.length).fill(''));
+        setCurrentQuestionIndex(0);
+        setSelectedOption('');
+      } else {
+        toast({
+          variant: "destructive",
+          title: "टेस्ट बनाने में विफल",
+          description: response.error || "AI से प्रश्न प्राप्त करने में विफल रहा।",
+        });
+        setSelectedSubject(null);
+      }
+    } catch (e) {
+      toast({
+          variant: "destructive",
+          title: "एक त्रुटि हुई",
+          description: "टेस्ट उत्पन्न करते समय एक अप्रत्याशित त्रुटि हुई।",
+        });
+      setSelectedSubject(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleNext = () => {
-    if (selectedSubject && currentQuestionIndex < selectedSubject.questions.length - 1) {
+    if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setSelectedOption(userAnswers[currentQuestionIndex + 1] || '');
     }
   };
 
@@ -63,19 +86,17 @@ export default function MockTestsPage() {
   };
 
   const handleSubmit = () => {
-    if (!selectedSubject) return;
-
     let score = 0;
-    selectedSubject.questions.forEach((q, index) => {
+    questions.forEach((q, index) => {
       if (userAnswers[index] === q.answer) {
         score++;
       }
     });
 
-    const newResult = {
-      subject: selectedSubject.subject,
+    const newResult: TestResult = {
+      subject: selectedSubject!,
       score: score,
-      total: selectedSubject.questions.length,
+      total: questions.length,
       date: new Date().toISOString(),
     };
     setResult(newResult);
@@ -88,6 +109,7 @@ export default function MockTestsPage() {
   const resetTest = () => {
     setSelectedSubject(null);
     setResult(null);
+    setQuestions([]);
   };
 
   if (result) {
@@ -116,49 +138,56 @@ export default function MockTestsPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button onClick={resetTest} className="w-full">दूसरी परीक्षा दें</Button>
+            <Button onClick={resetTest} className="w-full">दूसरा विषय चुनें</Button>
           </CardFooter>
         </Card>
       </div>
     );
   }
 
-  if (!selectedSubject) {
+  if (!selectedSubject || isLoading) {
     return (
       <div className="p-4 md:p-8">
         <div className="text-center mb-8">
             <h1 className="font-headline text-3xl font-bold">एक विषय चुनें</h1>
             <p className="text-muted-foreground">अपने कौशल का मूल्यांकन शुरू करने के लिए एक परीक्षा चुनें।</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {subjects.map((s) => (
-            <Card key={s.subject} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="font-headline">{s.subject}</CardTitle>
-                <Book className="w-6 h-6 text-primary"/>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">{s.questions.length} प्रश्न आपके ज्ञान का परीक्षण करने के लिए।</p>
-              </CardContent>
-              <CardFooter>
-                <Button onClick={() => handleSelectSubject(s)} className="w-full">परीक्षा शुरू करें</Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center gap-4">
+            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            <p className="text-muted-foreground">{selectedSubject} के लिए प्रश्न तैयार किए जा रहे हैं...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {subjects.map((s) => (
+              <Card key={s} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="font-headline">{s}</CardTitle>
+                  <Book className="w-6 h-6 text-primary"/>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">AI द्वारा उत्पन्न 5 प्रश्न।</p>
+                </CardContent>
+                <CardFooter>
+                  <Button onClick={() => handleSelectSubject(s)} className="w-full">परीक्षा शुरू करें</Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
-
-  const currentQuestion = selectedSubject.questions[currentQuestionIndex];
-  const progress = ((currentQuestionIndex + 1) / selectedSubject.questions.length) * 100;
+  
+  const currentQuestion = questions[currentQuestionIndex];
+  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
   return (
     <div className="flex justify-center items-center p-4 min-h-[80vh]">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">{selectedSubject.subject} परीक्षा</CardTitle>
-          <CardDescription>प्रश्न {currentQuestionIndex + 1} / {selectedSubject.questions.length}</CardDescription>
+          <CardTitle className="font-headline text-2xl">{selectedSubject} परीक्षा</CardTitle>
+          <CardDescription>प्रश्न {currentQuestionIndex + 1} / {questions.length}</CardDescription>
           <Progress value={progress} className="mt-2" />
         </CardHeader>
         <CardContent className="space-y-6">
@@ -173,8 +202,8 @@ export default function MockTestsPage() {
           </RadioGroup>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => setSelectedSubject(null)}>विषय बदलें</Button>
-          {currentQuestionIndex < selectedSubject.questions.length - 1 ? (
+          <Button variant="outline" onClick={resetTest}>विषय बदलें</Button>
+          {currentQuestionIndex < questions.length - 1 ? (
             <Button onClick={handleNext} disabled={!selectedOption}>अगला प्रश्न</Button>
           ) : (
             <Button onClick={handleSubmit} disabled={!selectedOption}>समाप्त करें और परिणाम देखें</Button>
@@ -184,3 +213,5 @@ export default function MockTestsPage() {
     </div>
   );
 }
+
+    

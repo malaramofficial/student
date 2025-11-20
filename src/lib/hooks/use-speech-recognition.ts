@@ -29,6 +29,8 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Ref to hold the final transcript without causing re-renders on every interim result.
   const finalTranscriptRef = useRef('');
 
   useEffect(() => {
@@ -46,29 +48,37 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     recognition.lang = 'hi-IN';
 
     recognition.onresult = (event) => {
-      let interim = '';
-      finalTranscriptRef.current = '';
+      let interimTranscript = '';
+      let finalTranscript = '';
 
       for (let i = 0; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          finalTranscriptRef.current += event.results[i][0].transcript;
+          finalTranscript += event.results[i][0].transcript;
         } else {
-          interim += event.results[i][0].transcript;
+          interimTranscript += event.results[i][0].transcript;
         }
       }
-      setTranscript(finalTranscriptRef.current + interim);
+      finalTranscriptRef.current = finalTranscript;
+      setTranscript(finalTranscript + interimTranscript);
 
-      if (speechTimeoutRef.current) {
+       if (speechTimeoutRef.current) {
         clearTimeout(speechTimeoutRef.current);
       }
       speechTimeoutRef.current = setTimeout(() => {
-        stopListening();
-      }, 1500); // 1.5 second pause before stopping
+        // Only stop if the user has actually said something
+        if (finalTranscriptRef.current.trim() || interimTranscript.trim()) {
+           stopListening();
+        }
+      }, 3000); // 3-second pause before stopping
     };
     
     recognition.onerror = (event) => {
-        if (event.error === 'no-speech' || event.error === 'audio-capture') {
-            // These errors can be ignored as they are not critical.
+        if (event.error === 'no-speech' || event.error === 'audio-capture' || event.error === 'not-allowed') {
+            // These errors are common and can be ignored in some cases.
+            // 'not-allowed' happens if user denies permission.
+             if(event.error === 'not-allowed') {
+                setError("माइक्रोफ़ोन की अनुमति आवश्यक है।");
+             }
             return;
         }
         setError(`स्पीच रिकग्निशन त्रुटि: ${event.error}`);
@@ -80,8 +90,10 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
         if (speechTimeoutRef.current) {
           clearTimeout(speechTimeoutRef.current);
         }
-        if (onSpeechEnd && finalTranscriptRef.current.trim()) {
-          onSpeechEnd(finalTranscriptRef.current.trim());
+        // Use the ref for the final transcript to avoid stale closures
+        const finalContent = finalTranscriptRef.current.trim();
+        if (onSpeechEnd && finalContent) {
+          onSpeechEnd(finalContent);
         }
     };
 
@@ -96,12 +108,11 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onSpeechEnd]);
 
   const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
       resetTranscript();
-      finalTranscriptRef.current = '';
       recognitionRef.current.start();
       setIsListening(true);
       setError(null);

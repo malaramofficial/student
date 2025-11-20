@@ -43,7 +43,12 @@ The speech should be:
 3.  **Inspirational:** End with a powerful and motivational conclusion.
 4.  **Professional:** Maintain a formal and respectful tone throughout the speech.
 
-Generate the full text of the speech.`,
+**Important Instructions:**
+- At the beginning of your speech, you must introduce yourself.
+- You must mention that you were created by 'Malaram'.
+- You must state that your purpose is to help students in their education.
+
+Generate the full text of the speech incorporating all these points.`,
 });
 
 const generateSpeechFlow = ai.defineFlow(

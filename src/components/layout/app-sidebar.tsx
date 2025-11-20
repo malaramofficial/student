@@ -38,22 +38,19 @@ export function AppSidebar() {
         <SidebarMenu>
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} legacyBehavior passHref>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === item.href}
-                  tooltip={{ children: item.label, className: 'bg-sidebar-background text-sidebar-foreground border-sidebar-border' }}
-                  className={cn(
-                    "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
-                    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  )}
-                >
-                  <a>
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </a>
-                </SidebarMenuButton>
-              </Link>
+              <SidebarMenuButton
+                as={Link}
+                href={item.href}
+                isActive={pathname === item.href}
+                tooltip={{ children: item.label, className: 'bg-sidebar-background text-sidebar-foreground border-sidebar-border' }}
+                className={cn(
+                  "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
+                  "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                )}
+              >
+                <item.icon />
+                <span>{item.label}</span>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>

@@ -159,7 +159,7 @@ export default function AITeacherPage() {
                   ? 'bg-primary text-primary-foreground' 
                   : 'bg-muted'
               )}>
-                <p className="whitespace-pre-wrap text-muted-foreground">{message.content}</p>
+                <p className="whitespace-pre-wrap">{message.content}</p>
                  {message.role === 'assistant' && index === messages.length -1 && (
                     <div className="mt-2">
                       {isAudioLoading ? (

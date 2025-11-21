@@ -27,7 +27,6 @@ export default function AITeacherPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [mode, setMode] = useState<'student' | 'public'>('student');
   const [isConversationMode, setIsConversationMode] = useState(false);
@@ -39,12 +38,19 @@ export default function AITeacherPage() {
   const sendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
+  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError } = useSpeechRecognition();
+  
+  const sarathiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
+
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   const handleAIResponse = useCallback(async (query: string) => {
-    if (!query.trim() || isLoading) return;
+    if (!query.trim()) {
+        if(isConversationMode) startListening();
+        return;
+    };
 
     setIsLoading(true);
     setConversationStatus('thinking');
@@ -64,7 +70,6 @@ export default function AITeacherPage() {
             const assistantMessage: Message = { role: 'assistant', content: aiResponse.answer };
             setMessages(prev => [...prev, assistantMessage]);
 
-            setIsAudioLoading(true);
             const audioResponse = await getAudioResponse({ text: aiResponse.answer, voice: 'female' });
             if (audioResponse?.success && audioResponse.audio) {
                 setAudioUrl(audioResponse.audio);
@@ -76,8 +81,6 @@ export default function AITeacherPage() {
                     setConversationStatus('idle');
                  }
             }
-            setIsAudioLoading(false);
-
         } else {
             toast({ variant: 'destructive', title: 'AI Error', description: aiResponse.error });
             const errorMessage: Message = { role: 'assistant', content: "क्षमा करें, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया पुन: प्रयास करें।" };
@@ -98,21 +101,19 @@ export default function AITeacherPage() {
     } finally {
         setIsLoading(false);
     }
-  }, [isLoading, toast, messages, mode, isConversationMode]);
+  }, [messages, mode, isConversationMode, startListening, toast]);
     
-  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError } = useSpeechRecognition();
-  
-  const sarathiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
 
   useEffect(() => {
     if(speechError) {
       toast({ variant: 'destructive', title: 'Speech Recognition Error', description: speechError });
-      if(isConversationMode && speechError === "माइक्रोफ़ोन की अनुमति आवश्यक है।") {
+      if(isConversationMode && (speechError === "माइक्रोफ़ोन की अनुमति आवश्यक है।" || speechError === "इस ब्राउज़र में स्पीच रिकग्निशन समर्थित नहीं है।")) {
           setIsConversationMode(false);
           setConversationStatus('idle');
+          stopListening();
       }
     }
-  }, [speechError, toast, isConversationMode]);
+  }, [speechError, toast, isConversationMode, stopListening]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -123,40 +124,38 @@ export default function AITeacherPage() {
   useEffect(() => {
     if (audioUrl && audioRef.current) {
       setConversationStatus('speaking');
+      audioRef.current.src = audioUrl;
       audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
     }
   }, [audioUrl]);
-  
+
   useEffect(() => {
-    if(isConversationMode){
-        if (isListening) {
-            setConversationStatus('listening');
-        } else if (conversationStatus !== 'thinking' && conversationStatus !== 'speaking') {
-            setConversationStatus('idle');
-        }
-    }
-  }, [isConversationMode, isListening, conversationStatus]);
+    setInput(transcript);
+  }, [transcript]);
 
   useEffect(() => {
     if (isConversationMode) {
-        setInput(transcript);
+      if(isListening) {
+        setConversationStatus('listening');
+      }
 
-        if (sendTimeoutRef.current) {
-            clearTimeout(sendTimeoutRef.current);
-        }
+      if (sendTimeoutRef.current) {
+        clearTimeout(sendTimeoutRef.current);
+      }
 
-        if (transcript && !isListening) {
-             sendTimeoutRef.current = setTimeout(() => {
-                handleAIResponse(transcript);
-            }, 3000);
-        }
+      if (transcript && !isListening && conversationStatus === 'listening') {
+        sendTimeoutRef.current = setTimeout(() => {
+          handleAIResponse(transcript);
+        }, 3000);
+      }
     }
-     return () => {
+    
+    return () => {
       if (sendTimeoutRef.current) {
         clearTimeout(sendTimeoutRef.current);
       }
     };
-  }, [transcript, isListening, isConversationMode, handleAIResponse]);
+  }, [transcript, isListening, isConversationMode, handleAIResponse, conversationStatus]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -166,6 +165,7 @@ export default function AITeacherPage() {
   };
 
   const handleAudioEnded = () => {
+    setAudioUrl(null);
     setConversationStatus('idle');
     if (isConversationMode) {
       startListening();
@@ -192,37 +192,47 @@ export default function AITeacherPage() {
   const ConversationStatusIndicator = () => {
     if (!isConversationMode) return null;
     
+    let statusContent;
     switch (conversationStatus) {
       case 'listening':
-        return (
-          <div className="flex items-center gap-2 text-sm text-red-500 animate-pulse">
+        statusContent = (
+          <div className="flex items-center gap-2 text-red-500 animate-pulse">
             <Mic className="h-4 w-4" />
             <span>सुन रही हूँ...</span>
           </div>
         );
+        break;
       case 'thinking':
-        return (
-          <div className="flex items-center gap-2 text-sm text-blue-500">
+        statusContent = (
+          <div className="flex items-center gap-2 text-blue-500">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>प्रतिक्रिया तैयार की जा रही है...</span>
           </div>
         );
+        break;
       case 'speaking':
-        return (
-          <div className="flex items-center gap-2 text-sm text-green-500">
+        statusContent = (
+          <div className="flex items-center gap-2 text-green-500">
             <Volume2 className="h-4 w-4" />
             <span>सारथी बोल रही है...</span>
           </div>
         );
+        break;
       case 'idle':
       default:
-        return (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        statusContent = (
+          <div className="flex items-center gap-2 text-muted-foreground">
             <MicOff className="h-4 w-4" />
             <span>कन्वर्सेशन मोड सक्रिय है</span>
           </div>
         );
     }
+
+    return (
+        <div className="flex items-center justify-center text-sm min-w-[200px]">
+            {statusContent}
+        </div>
+    )
   };
 
   return (
@@ -267,13 +277,9 @@ export default function AITeacherPage() {
                   : 'bg-muted'
               )}>
                 <p className="whitespace-pre-wrap">{message.content}</p>
-                 {message.role === 'assistant' && index === messages.length -1 && (
+                 {message.role === 'assistant' && index === messages.length -1 && audioUrl && (
                     <div className="mt-2">
-                      {isAudioLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        audioUrl && <button onClick={() => audioRef.current?.play()}><Volume2 className="h-4 w-4" /></button>
-                      )}
+                      <button onClick={() => audioRef.current?.play()}><Volume2 className="h-4 w-4" /></button>
                     </div>
                 )}
               </div>
@@ -298,7 +304,7 @@ export default function AITeacherPage() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={isConversationMode ? "सुन रही हूँ... 3 सेकंड रुकने पर संदेश भेज दिया जाएगा" : "अपना प्रश्न टाइप करें..."}
+            placeholder={isConversationMode ? (isListening ? "सुन रही हूँ..." : "बोलने के लिए माइक्रोफ़ोन बटन दबाएँ...") : "अपना प्रश्न टाइप करें..."}
             disabled={isLoading || isConversationMode}
             className="flex-1"
           />
@@ -312,9 +318,7 @@ export default function AITeacherPage() {
           </Button>
         </form>
       </div>
-      {audioUrl && <audio ref={audioRef} src={audioUrl} className="hidden" onEnded={handleAudioEnded} />}
+      <audio ref={audioRef} className="hidden" onEnded={handleAudioEnded} />
     </div>
   );
 }
-
-    

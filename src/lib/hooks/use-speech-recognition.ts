@@ -35,6 +35,7 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
   const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
       try {
+        setTranscript(''); // Clear previous transcript before starting
         recognitionRef.current.start();
         setIsListening(true);
       } catch (err) {
@@ -63,16 +64,13 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
     recognition.lang = 'hi-IN';
 
     recognition.onresult = (event) => {
-      let interim_transcript = '';
       let final_transcript = '';
       for (let i = 0; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
             final_transcript += event.results[i][0].transcript;
-        } else {
-            interim_transcript += event.results[i][0].transcript;
         }
       }
-      setTranscript(final_transcript + interim_transcript);
+      setTranscript(final_transcript);
     };
 
     recognition.onstart = () => {

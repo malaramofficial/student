@@ -65,6 +65,46 @@ type Marksheet = {
 const subjects: Subject[] = questionsData.subjects;
 const streams = syllabusData.streams;
 
+// Helper function to shuffle an array
+const shuffleArray = (array: any[]) => {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// Function to get a random subset of questions from each section
+const getRandomizedQuestions = (subjectData: Subject) => {
+    const questionLimits: { [key: string]: number } = {
+        "खंड अ": 8, // अतिलघुरात्मक
+        "खंड ब": 5, // लघु उत्तरात्मक
+        "खंड स": 2, // दीर्घ उत्तरीय
+        "खंड द": 1, // निबंधात्मक
+    };
+
+    const randomizedSections = subjectData.sections.map(section => {
+        const limit = questionLimits[section.name.split(' ')[0]] || section.questions.length;
+        const shuffledQuestions = shuffleArray([...section.questions]);
+        const selectedQuestions = shuffledQuestions.slice(0, limit);
+        return {
+            ...section,
+            questions: selectedQuestions,
+        };
+    });
+
+    const allQuestions = randomizedSections.flatMap(section => 
+        section.questions.map(q => ({
+            question: q.question,
+            answer: '',
+            marks: q.marks
+        }))
+    );
+    
+    return { allQuestions, randomizedSections };
+}
+
+
 export default function WrittenExamPage() {
   const [selectedStream, setSelectedStream] = useState<string>('');
   const [selectedSubject, setSelectedSubject] = useState<string>('');
@@ -73,6 +113,7 @@ export default function WrittenExamPage() {
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [marksheet, setMarksheet] = useState<Marksheet | null>(null);
+  const [currentTestSections, setCurrentTestSections] = useState<Section[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -85,14 +126,9 @@ export default function WrittenExamPage() {
         (s) => s.name === selectedSubject
       );
       if (currentSubjectData && currentSubjectData.sections) {
-        const allQuestions = currentSubjectData.sections.flatMap(section => 
-            section.questions.map(q => ({
-                question: q.question,
-                answer: '',
-                marks: q.marks
-            }))
-        );
+        const { allQuestions, randomizedSections } = getRandomizedQuestions(currentSubjectData);
         setAnswers(allQuestions);
+        setCurrentTestSections(randomizedSections);
         setTestStarted(true);
         setMarksheet(null);
       }
@@ -136,6 +172,7 @@ export default function WrittenExamPage() {
       setSelectedSubject('');
       setMarksheet(null);
       setAnswers([]);
+      setCurrentTestSections([]);
   }
 
   if (!isClient) return null;
@@ -257,7 +294,7 @@ export default function WrittenExamPage() {
                 </Button>
             </CardFooter>
          </Card>
-      ) : currentSubjectData ? (
+      ) : currentTestSections.length > 0 ? (
         <div className="w-full max-w-4xl border-2 border-dashed border-border p-4 sm:p-6 md:p-8 rounded-lg bg-card">
             {/* Exam Header */}
             <div className="text-center border-b-2 border-border pb-4 mb-4">
@@ -284,7 +321,7 @@ export default function WrittenExamPage() {
 
             {/* Questions by Section */}
             <div className="space-y-8">
-              {currentSubjectData.sections.map((section, sectionIndex) => (
+              {currentTestSections.map((section, sectionIndex) => (
                 <div key={sectionIndex}>
                   <h3 className="text-lg font-bold border-b-2 border-primary mb-4 pb-2">{section.name}</h3>
                   {section.description && <p className="text-sm text-muted-foreground mb-4">{section.description}</p>}
@@ -331,3 +368,5 @@ export default function WrittenExamPage() {
     </div>
   );
 }
+
+    

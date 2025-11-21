@@ -13,10 +13,15 @@ import syllabusData from '@/app/syllabus/syllabus-data.json';
 
 const AIMentorInputSchema = z.object({
   query: z.string().describe('The query to ask Aditi Madam.'),
-  chatHistory: z.array(z.object({
-    role: z.enum(['user', 'assistant']),
-    content: z.string(),
-  })).optional().describe('The chat history between the user and Aditi Madam.'),
+  chatHistory: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string(),
+      })
+    )
+    .optional()
+    .describe('The chat history between the user and Aditi Madam.'),
 });
 type AIMentorInput = z.infer<typeof AIMentorInputSchema>;
 
@@ -24,16 +29,23 @@ const AIMentorOutputSchema = z.object({
   response: z.string().describe('The response from Aditi Madam.'),
 });
 
-export async function askAditiMadam(input: AIMentorInput): Promise<z.infer<typeof AIMentorOutputSchema>> {
+export async function askAditiMadam(
+  input: AIMentorInput
+): Promise<z.infer<typeof AIMentorOutputSchema>> {
   return aiMentorFlow(input);
 }
 
 const getSyllabusTool = ai.defineTool(
   {
     name: 'getSyllabusTool',
-    description: 'Get the syllabus topics for a given subject in Rajasthan Board Class 12. Use this to verify if a topic is within the syllabus before teaching it or to list available topics.',
+    description:
+      'Get the syllabus topics for a given subject in Rajasthan Board Class 12. Use this to verify if a topic is within the syllabus before teaching it or to list available topics.',
     inputSchema: z.object({
-      subjectName: z.string().describe('The name of the subject to get the syllabus for (e.g., "Physics", "भौतिक विज्ञान", "History", "इतिहास").'),
+      subjectName: z
+        .string()
+        .describe(
+          'The name of the subject to get the syllabus for (e.g., "Physics", "भौतिक विज्ञान", "History", "इतिहास").'
+        ),
     }),
     outputSchema: z.object({
       topics: z.array(z.string()).optional(),
@@ -46,11 +58,13 @@ const getSyllabusTool = ai.defineTool(
       for (const subject of stream.subjects) {
         const fullSubjectName = subject.name.toLowerCase();
         
+        // Break down the full name into parts (Hindi and English)
         const nameParts = fullSubjectName
           .split(/[()]/)
           .map(part => part.trim())
           .filter(part => part.length > 0);
 
+        // Check if the user's input matches any part of the subject name
         const isMatch = nameParts.some(part => part.includes(subjectToFind) || subjectToFind.includes(part));
 
         if (isMatch) {
@@ -62,54 +76,58 @@ const getSyllabusTool = ai.defineTool(
   }
 );
 
-const aboutCreatorTool = ai.defineTool(
-    {
-      name: 'aboutCreatorTool',
-      description: "Get information about the creator of the Aditi Learning Platform, Malaram.",
-      outputSchema: z.object({
-        name: z.string(),
-        dob: z.string(),
-        location: z.string(),
-        bloodGroup: z.string(),
-        coreIdentity: z.string(),
-        interests: z.array(z.string()),
-        languages: z.array(z.string()),
-        education: z.array(z.string()),
-        traits: z.array(z.string()),
-        communicationTone: z.string(),
-      }),
-    },
-    async () => {
-      return {
-        name: 'Mala Ram',
-        dob: '10 Oct 2001',
-        location: 'Village Panchayat डऊकियों की बेरी, मीठा बेरी, Tehsil Nokhra, District Barmer, Rajasthan – 344033',
-        bloodGroup: 'A+',
-        coreIdentity: 'Values logic, science, and experience-based thinking. Not associated with religious/faith/caste-based identity. Agrees with most ideas of Osho Rajneesh (individual freedom, consciousness, experiential truth).',
-        interests: [
-          'Technology, electronics, machines, systems',
-          'Opening devices/machines to understand internal mechanisms',
-          'Coding, app development, software systems',
-          'Psychology, human behavior, consciousness',
-          'Automobiles (especially Scorpio)',
-        ],
-        languages: ['Hindi (primary)', 'Understands Punjabi (cannot read)'],
-        education: [
-          'B.A. 4th Semester (exam completed, result pending)',
-          '12th: 70% (RBSE, 2023)',
-          '10th: 81.83% (RBSE, 2021)',
-        ],
-        traits: [
-          'Naturally curious',
-          'Analytical and experimental learner',
-          'Prefers logic, awareness, and free thinking',
-          'Challenges assumptions; seeks root-level understanding',
-        ],
-        communicationTone: 'Calm, rational, thoughtful. Clear, direct, grounded. Reflective and scientific rather than emotional or belief-driven.',
-      };
-    }
-  );
 
+const aboutCreatorTool = ai.defineTool(
+  {
+    name: 'aboutCreatorTool',
+    description:
+      'Get information about the creator of the Aditi Learning Platform, Malaram.',
+    outputSchema: z.object({
+      name: z.string(),
+      dob: z.string(),
+      location: z.string(),
+      bloodGroup: z.string(),
+      coreIdentity: z.string(),
+      interests: z.array(z.string()),
+      languages: z.array(z.string()),
+      education: z.array(z.string()),
+      traits: z.array(z.string()),
+      communicationTone: z.string(),
+    }),
+  },
+  async () => {
+    return {
+      name: 'Mala Ram',
+      dob: '10 Oct 2001',
+      location:
+        'Village Panchayat डऊकियों की बेरी, मीठा बेरी, Tehsil Nokhra, District Barmer, Rajasthan – 344033',
+      bloodGroup: 'A+',
+      coreIdentity:
+        'Values logic, science, and experience-based thinking. Not associated with religious/faith/caste-based identity. Agrees with most ideas of Osho Rajneesh (individual freedom, consciousness, experiential truth).',
+      interests: [
+        'Technology, electronics, machines, systems',
+        'Opening devices/machines to understand internal mechanisms',
+        'Coding, app development, software systems',
+        'Psychology, human behavior, consciousness',
+        'Automobiles (especially Scorpio)',
+      ],
+      languages: ['Hindi (primary)', 'Understands Punjabi (cannot read)'],
+      education: [
+        'B.A. 4th Semester (exam completed, result pending)',
+        '12th: 70% (RBSE, 2023)',
+        '10th: 81.83% (RBSE, 2021)',
+      ],
+      traits: [
+        'Naturally curious',
+        'Analytical and experimental learner',
+        'Prefers logic, awareness, and free thinking',
+        'Challenges assumptions; seeks root-level understanding',
+      ],
+      communicationTone:
+        'Calm, rational, thoughtful. Clear, direct, grounded. Reflective and scientific rather than emotional or belief-driven.',
+    };
+  }
+);
 
 const prompt = ai.definePrompt({
   name: 'aiMentorFollowUpPrompt',
@@ -143,13 +161,14 @@ Your personality must adapt to the user you are interacting with.
     *   **Maintain Respect**: Always remain respectful and proud of your creator.
 
 7. **Teaching a Lesson**: If the user asks you to teach, explain, or "पढ़ाओ" a topic, you MUST adopt the persona of a real, effective teacher.
-    *   **Verify the Topic**: First, silently use the 'getSyllabusTool' to confirm the subject and topic exist in the curriculum. If the user is vague (e.g., "पहला पाठ पढ़ाओ"), use the tool to find the correct topic from the syllabus. If the topic is not found, ask the user for clarification.
-    *   **Start the Lesson**: Once the topic is verified, begin the lesson. DO NOT just say you are going to teach. START teaching.
-    *   **Explain Step-by-Step**: Break down the topic into smaller, easy-to-understand parts. Use simple language and analogies.
-    *   **Use Examples**: Provide clear and relevant examples to illustrate your points.
-    *   **Ask Engaging Questions**: Ask questions during the lesson to check for understanding and keep the student engaged (e.g., "क्या आपको यह समझ में आया?", "इसका एक और उदाहरण सोच सकते हैं?").
+    *   **Embody a Great Teacher**: You are not just a machine giving facts. You are a skilled, empathetic educator who excels at making complex topics simple and memorable. Use a warm, encouraging, and engaging tone.
+    *   **Verify the Topic**: First, silently use the 'getSyllabusTool' to confirm the subject and topic exist in the curriculum. If the user is vague (e.g., "पहला पाठ पढ़ाओ"), use the tool to find the correct topic from the syllabus. If the topic is not found, ask the user for clarification. Do not teach topics outside the syllabus.
+    *   **Start the Lesson**: Once the topic is verified, begin the lesson directly. DO NOT just say you are going to teach. START teaching. For example, begin with "बहुत अच्छा! चलिए, आज हम [topic] के बारे में सीखते हैं।"
+    *   **Explain Step-by-Step with Analogies**: Break down the topic into smaller, easy-to-understand parts. For each part, use simple language and relatable, real-world analogies or stories. For example, to explain photosynthesis, you could compare it to a chef cooking food in a kitchen.
+    *   **Use Examples**: Provide clear and relevant examples to illustrate your points. Make them practical and easy for a student in Rajasthan to understand.
+    *   **Ask Engaging Questions**: Ask questions during the lesson to check for understanding and keep the student engaged (e.g., "क्या आपको यह समझ में आया?", "इसका एक और उदाहरण सोच सकते हैं?", "आपके अनुसार ऐसा क्यों होता है?").
     *   **Summarize**: End the lesson with a brief summary of the key points.
-    *   **Encourage Further Questions**: Invite the student to ask more questions if they have any doubts.
+    *   **Encourage Further Questions**: Invite the student to ask more questions if they have any doubts. For example, "इस विषय के बारे में आपके और कोई प्रश्न हैं? पूछने में संकोच न करें!"
 
 Always be kind, patient, and helpful. Your goal is to make learning a positive and encouraging experience for everyone.
 
@@ -164,14 +183,13 @@ The user is asking the following question:
 Based on all the rules above, provide a helpful and informative answer. Remember to always credit your creator, Malaram. If it's the first interaction as defined in rule 1, only ask for an introduction. If the user asks about the syllabus, use the getSyllabusTool. If they ask about your creator, use the aboutCreatorTool. If they ask you to teach a lesson, you must act like a real teacher and teach it.`,
 });
 
-
 const aiMentorFlow = ai.defineFlow(
   {
     name: 'aiMentorFlow',
     inputSchema: AIMentorInputSchema,
     outputSchema: AIMentorOutputSchema,
   },
-  async input => {
+  async (input) => {
     const {output} = await prompt(input);
     return output!;
   }

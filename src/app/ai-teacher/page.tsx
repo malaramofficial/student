@@ -34,7 +34,17 @@ export default function AITeacherPage() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  const handleSpeechEnd = useCallback(async (finalTranscript: string) => {
+      if (finalTranscript && isConversationMode) {
+        await handleAIResponse(finalTranscript);
+      }
+  }, [isConversationMode, handleAIResponse]);
   
+  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition({ 
+    onSpeechEnd: handleSpeechEnd
+  });
+
   const handleAIResponse = useCallback(async (query: string) => {
     if (!query.trim() || isLoading) return;
 
@@ -85,18 +95,6 @@ export default function AITeacherPage() {
     }
   }, [isLoading, toast, resetTranscript, messages, mode, isConversationMode, startListening]);
   
-  const handleSpeechEnd = useCallback(async (finalTranscript: string) => {
-      if (finalTranscript) {
-          if (isConversationMode) {
-              await handleAIResponse(finalTranscript);
-          }
-      }
-  }, [isConversationMode, handleAIResponse]);
-  
-  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition({ 
-    onSpeechEnd: handleSpeechEnd
-  });
-
   const sarathiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
 
   useEffect(() => {

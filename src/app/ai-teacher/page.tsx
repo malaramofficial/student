@@ -45,17 +45,17 @@ export default function AITeacherPage() {
   }, []);
 
   const handleAIResponse = useCallback(async (query: string) => {
-    if (!query.trim() || conversationStatus !== 'listening') return;
+    if (!query.trim() || isLoading) return;
 
     if (autoSendTimeoutRef.current) {
         clearTimeout(autoSendTimeoutRef.current);
     }
-
+    
     stopListening();
     setConversationStatus('thinking');
     setIsLoading(true);
     setAudioUrl(null);
-    // Do not clear input here, so user can see what was sent
+    setInput('');
 
     const userMessage: Message = { role: 'user', content: query };
     const currentMessages = [...messages, userMessage];
@@ -75,31 +75,52 @@ export default function AITeacherPage() {
                     setAudioUrl(audioResponse.audio);
                 } else {
                      toast({ variant: 'destructive', title: 'Audio Error', description: audioResponse?.error || 'Failed to generate audio.' });
-                     if (isConversationMode) startListening(); else setConversationStatus('idle');
+                     if (isConversationMode) {
+                        startListening();
+                     } else {
+                        setConversationStatus('idle');
+                     }
                 }
             } catch (audioError) {
                  toast({ variant: 'destructive', title: 'Audio Generation Error', description: (audioError as Error).message });
-                 if (isConversationMode) startListening(); else setConversationStatus('idle');
+                 if (isConversationMode) {
+                    startListening();
+                 } else {
+                    setConversationStatus('idle');
+                 }
             }
         } else {
             toast({ variant: 'destructive', title: 'AI Error', description: aiResponse.error });
             const errorMessage: Message = { role: 'assistant', content: "क्षमा करें, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया पुन: प्रयास करें।" };
             setMessages(prev => [...prev, errorMessage]);
-            if (isConversationMode) startListening(); else setConversationStatus('idle');
+            if (isConversationMode) {
+                startListening();
+            } else {
+                setConversationStatus('idle');
+            }
         }
     } catch(e) {
         toast({ variant: 'destructive', title: 'An unexpected error occurred.', description: (e as Error).message });
-        if (isConversationMode) startListening(); else setConversationStatus('idle');
+        if (isConversationMode) {
+            startListening();
+        } else {
+            setConversationStatus('idle');
+        }
     } finally {
         setIsLoading(false);
     }
-  }, [messages, mode, isConversationMode, toast, conversationStatus]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, mode, isConversationMode, isLoading]);
 
   const handleSpeechEnd = useCallback((finalTranscript: string) => {
-      // This is now handled by the timeout logic inside the page
-  }, []);
+      if (finalTranscript.trim()) {
+        handleAIResponse(finalTranscript.trim());
+      }
+  }, [handleAIResponse]);
 
-  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError } = useSpeechRecognition({ onSpeechEnd: handleSpeechEnd });
+  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError } = useSpeechRecognition({
+    onSpeechEnd: handleSpeechEnd,
+  });
 
   useEffect(() => {
     if(speechError) {
@@ -127,7 +148,9 @@ export default function AITeacherPage() {
   }, [audioUrl]);
 
   useEffect(() => {
-    setInput(transcript);
+    if (isConversationMode) {
+        setInput(transcript);
+    }
     
     if (autoSendTimeoutRef.current) {
       clearTimeout(autoSendTimeoutRef.current);
@@ -144,12 +167,12 @@ export default function AITeacherPage() {
         clearTimeout(autoSendTimeoutRef.current);
       }
     }
-  }, [transcript, isConversationMode, isListening, handleAIResponse]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transcript, isConversationMode, isListening]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading || isConversationMode) return;
-    setConversationStatus('thinking');
     handleAIResponse(input);
   };
 
@@ -172,6 +195,7 @@ export default function AITeacherPage() {
     if(newConversationMode){
       startListening();
     } else {
+      if (autoSendTimeoutRef.current) clearTimeout(autoSendTimeoutRef.current);
       stopListening();
       setInput('');
       setConversationStatus('idle');
@@ -182,11 +206,15 @@ export default function AITeacherPage() {
     if (isConversationMode) {
       if (isListening) {
         setConversationStatus('listening');
+      } else if (!isLoading && !audioUrl) {
+        // If not listening, not loading, and not speaking, go back to idle or listening
+        // This handles the case where listening stops unexpectedly
+        setConversationStatus('idle');
       }
     } else {
       setConversationStatus('idle');
     }
-  }, [isListening, isConversationMode]);
+  }, [isListening, isConversationMode, isLoading, audioUrl]);
 
   const ConversationStatusIndicator = () => {
     if (!isConversationMode) return null;

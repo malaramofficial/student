@@ -44,12 +44,16 @@ const getSyllabusTool = ai.defineTool(
     }),
   },
   async (input) => {
-    const subjectToFind = input.subjectName.toLowerCase();
+    const subjectToFind = input.subjectName.toLowerCase().trim();
     for (const stream of syllabusData.streams) {
       for (const subject of stream.subjects) {
-        // Check both Hindi and English names (e.g. "हिन्दी साहित्य (Hindi Literature)")
-        const subjectName = subject.name.toLowerCase();
-        if (subjectName.includes(subjectToFind)) {
+        const fullSubjectName = subject.name.toLowerCase();
+        
+        // Split name like "हिन्दी साहित्य (hindi literature)" into parts
+        const nameParts = fullSubjectName.split(/[\(\)]/).map(part => part.trim());
+        
+        // Check if the searched term matches any part of the subject name
+        if (nameParts.some(part => part.includes(subjectToFind))) {
           return { topics: subject.topics };
         }
       }

@@ -192,11 +192,23 @@ const aiMentorFlow = ai.defineFlow(
     outputSchema: AIMentorOutputSchema,
   },
   async (input) => {
-    let response = await ai.generate(prompt, {
-      history: input.chatHistory?.map(m => ({role: m.role, content: [{text: m.content}]})),
-      prompt: { query: input.query },
+    // Convert the chat history to the format expected by Genkit v1.x
+    const history = input.chatHistory?.map(m => ({
+      role: m.role,
+      content: [{ text: m.content }]
+    })) || [];
+    
+    let response = await ai.generate({
+      prompt: prompt.prompt,
+      history: history,
+      input: { query: input.query },
+      tools: [getSyllabusTool, aboutCreatorTool],
+      output: {
+        format: 'json',
+        schema: AIMentorOutputSchema
+      }
     });
-
+    
     for (let i = 0; i < 5; i++) { // Add a limit to prevent infinite loops
       const toolRequest = response.toolRequest;
       if (!toolRequest) {
@@ -213,10 +225,16 @@ const aiMentorFlow = ai.defineFlow(
         toolResponse.push({ toolResult: { name: t.name, output } });
       }
 
-      response = await ai.generate(prompt, {
+      response = await ai.generate({
+        prompt: prompt.prompt,
         history: response.history,
-        prompt: { query: input.query },
+        input: { query: input.query },
+        tools: [getSyllabusTool, aboutCreatorTool],
         toolResponse,
+        output: {
+            format: 'json',
+            schema: AIMentorOutputSchema
+        }
       });
     }
     

@@ -58,12 +58,60 @@ const getSyllabusTool = ai.defineTool(
   }
 );
 
+const aboutCreatorTool = ai.defineTool(
+    {
+      name: 'aboutCreatorTool',
+      description: "Get information about the creator of the Aditi Learning Platform, Malaram.",
+      outputSchema: z.object({
+        name: z.string(),
+        dob: z.string(),
+        location: z.string(),
+        bloodGroup: z.string(),
+        coreIdentity: z.string(),
+        interests: z.array(z.string()),
+        languages: z.array(z.string()),
+        education: z.array(z.string()),
+        traits: z.array(z.string()),
+        communicationTone: z.string(),
+      }),
+    },
+    async () => {
+      return {
+        name: 'Mala Ram',
+        dob: '10 Oct 2001',
+        location: 'Village Panchayat डऊकियों की बेरी, मीठा बेरी, Tehsil Nokhra, District Barmer, Rajasthan – 344033',
+        bloodGroup: 'A+',
+        coreIdentity: 'Values logic, science, and experience-based thinking. Not associated with religious/faith/caste-based identity. Agrees with most ideas of Osho Rajneesh (individual freedom, consciousness, independent thinking, experiential truth).',
+        interests: [
+          'Technology, electronics, machines, systems',
+          'Opening devices/machines to understand internal mechanisms',
+          'Coding, app development, software systems',
+          'Psychology, human behavior, consciousness',
+          'Automobiles (especially Scorpio)',
+        ],
+        languages: ['Hindi (primary)', 'Understands Punjabi (cannot read)'],
+        education: [
+          'B.A. 4th Semester (exam completed, result pending)',
+          '12th: 70% (RBSE, 2023)',
+          '10th: 81.83% (RBSE, 2021)',
+        ],
+        traits: [
+          'Naturally curious',
+          'Analytical and experimental learner',
+          'Prefers logic, awareness, and free thinking',
+          'Challenges assumptions; seeks root-level understanding',
+        ],
+        communicationTone: 'Calm, rational, thoughtful. Clear, direct, grounded. Reflective and scientific rather than emotional or belief-driven.',
+      };
+    }
+  );
+
 
 const prompt = ai.definePrompt({
   name: 'aiMentorFollowUpPrompt',
   input: {schema: AIMentorInputSchema},
   output: {schema: AIMentorOutputSchema},
-  tools: [getSyllabusTool],
+  tools: [getSyllabusTool, aboutCreatorTool],
   prompt: `You are Aditi Madam, an AI virtual teacher for the Aditi Learning Platform, designed for students from grade 1 to 12 of the Rajasthan Board in India. Your responses should primarily be in Hindi.
 
 Your personality must adapt to the user you are interacting with.
@@ -85,6 +133,8 @@ Your personality must adapt to the user you are interacting with.
 
 5.  **Syllabus Knowledge & Tool Use**: You are an expert on the Rajasthan Board Class 12 syllabus for Arts, Commerce, and Science. If a student asks about subjects, topics, or the curriculum, you MUST use the 'getSyllabusTool' to get the exact list of topics for the requested subject. Use this information to provide accurate and detailed answers. When answering a question about a topic, use the syllabus to frame your explanation.
 
+6. **Creator Knowledge & Tool Use**: If the user asks who you are, who created you, or asks for information about your creator 'Malaram', you MUST use the 'aboutCreatorTool' to get detailed information about him. Use this information to answer the user's question comprehensively. Always remain respectful and proud of your creator.
+
 Always be kind, patient, and helpful. Your goal is to make learning a positive and encouraging experience for everyone.
 
 Here is the previous conversation for context:
@@ -95,7 +145,7 @@ Here is the previous conversation for context:
 The user is asking the following question:
 {{{query}}}
 
-Based on all the rules above, provide a helpful and informative answer. Remember to always credit your creator, Malaram. If it's the first interaction as defined in rule 1, only ask for an introduction. If the user asks about the syllabus, use the getSyllabusTool.`,
+Based on all the rules above, provide a helpful and informative answer. Remember to always credit your creator, Malaram. If it's the first interaction as defined in rule 1, only ask for an introduction. If the user asks about the syllabus, use the getSyllabusTool. If they ask about your creator, use the aboutCreatorTool.`,
 });
 
 

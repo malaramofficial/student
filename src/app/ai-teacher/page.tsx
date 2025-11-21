@@ -44,8 +44,7 @@ export default function AITeacherPage() {
     setIsLoading(true);
     setAudioUrl(null);
     setInput('');
-    // resetTranscript() is called within the hook now
-
+    
     const chatHistory = [...messages, userMessage].map(msg => ({ role: msg.role, content: msg.content }));
     
     try {
@@ -61,8 +60,10 @@ export default function AITeacherPage() {
                 setAudioUrl(audioResponse.audio);
             } else {
                  toast({ variant: 'destructive', title: 'Audio Error', description: audioResponse?.error || 'Failed to generate audio.' });
-                 if (isConversationMode) {
-                    // This will be handled by the audio onEnded event
+                 if (isConversationMode && audioRef.current) {
+                    // Manually trigger the audio ended event to restart listening
+                    const event = new Event('ended');
+                    audioRef.current.dispatchEvent(event);
                  }
             }
             setIsAudioLoading(false);
@@ -71,20 +72,22 @@ export default function AITeacherPage() {
             toast({ variant: 'destructive', title: 'AI Error', description: aiResponse.error });
             const errorMessage: Message = { role: 'assistant', content: "क्षमा करें, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया पुन: प्रयास करें।" };
             setMessages(prev => [...prev, errorMessage]);
-            if (isConversationMode) {
-                // This will be handled by the audio onEnded event
+            if (isConversationMode && audioRef.current) {
+                 const event = new Event('ended');
+                 audioRef.current.dispatchEvent(event);
             }
         }
     } catch(e) {
         toast({ variant: 'destructive', title: 'An unexpected error occurred.', description: (e as Error).message });
-        if (isConversationMode) {
-           // This will be handled by the audio onEnded event
+        if (isConversationMode && audioRef.current) {
+           const event = new Event('ended');
+           audioRef.current.dispatchEvent(event);
         }
     } finally {
         setIsLoading(false);
     }
   }, [isLoading, toast, messages, mode, isConversationMode]);
-
+  
   const handleSpeechEnd = useCallback(async (finalTranscript: string) => {
       if (finalTranscript && isConversationMode) {
         await handleAIResponse(finalTranscript);
@@ -121,10 +124,11 @@ export default function AITeacherPage() {
   }, [audioUrl]);
 
   useEffect(() => {
-    if (isListening || !isConversationMode) {
+    // Only update the input with transcript if not in conversation mode or if listening
+    if (!isConversationMode || isListening) {
       setInput(transcript);
     }
-  }, [transcript, isListening, isConversationMode]);
+  }, [transcript, isConversationMode, isListening]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,8 +160,10 @@ export default function AITeacherPage() {
     setIsConversationMode(isPublic);
 
     if (isPublic) {
+        // Automatically start listening in public/conversation mode
         startListening();
     } else {
+        // Stop listening if we switch back to student mode
         if (isListening) {
             stopListening();
         }
@@ -243,7 +249,7 @@ export default function AITeacherPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={isListening ? "सुन रही हूँ..." : (isConversationMode ? "कन्वर्सेशन मोड से बाहर निकलने के लिए स्विच बंद करें" : "अपना प्रश्न टाइप करें या माइक का उपयोग करें")}
-            disabled={isLoading || (isConversationMode && isListening)}
+            disabled={isLoading || isConversationMode}
             className="flex-1"
           />
           {isClient && hasRecognitionSupport && !isConversationMode && (
@@ -260,6 +266,3 @@ export default function AITeacherPage() {
     </div>
   );
 }
-
-
-    

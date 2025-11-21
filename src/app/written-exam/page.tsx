@@ -52,6 +52,13 @@ type QuestionState = {
   answer: string;
 };
 
+type WrittenExamResult = {
+  subject: string;
+  totalMarks: number;
+  obtainedMarks: number;
+  date: string;
+};
+
 export default function WrittenExamPage() {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [exam, setExam] = useState<GenerateWrittenExamOutput | null>(null);
@@ -128,6 +135,16 @@ export default function WrittenExamPage() {
           title: 'मूल्यांकन पूर्ण',
           description: 'AI ने आपकी कॉपी जाँच ली है।',
         });
+         // Store result in localStorage
+        const newResult: WrittenExamResult = {
+          subject: selectedSubject!,
+          totalMarks: response.evaluation.totalMarks,
+          obtainedMarks: response.evaluation.obtainedMarks,
+          date: new Date().toISOString(),
+        };
+        const pastResults: WrittenExamResult[] = JSON.parse(localStorage.getItem('writtenExamResults') || '[]');
+        localStorage.setItem('writtenExamResults', JSON.stringify([...pastResults, newResult]));
+
       } else {
         toast({
           variant: 'destructive',

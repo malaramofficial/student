@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -6,11 +7,19 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Responsive
 import { ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-type TestResult = {
+type MockTestResult = {
   subject: string;
   score: number;
   total: number;
+  date: string;
+};
+
+type WrittenExamResult = {
+  subject: string;
+  obtainedMarks: number;
+  totalMarks: number;
   date: string;
 };
 
@@ -21,17 +30,23 @@ type ChartData = {
 };
 
 export default function ProgressTrackerPage() {
-  const [results, setResults] = useState<TestResult[]>([]);
-  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [mockTestResults, setMockTestResults] = useState<MockTestResult[]>([]);
+  const [writtenExamResults, setWrittenExamResults] = useState<WrittenExamResult[]>([]);
+  const [mockTestChartData, setMockTestChartData] = useState<ChartData[]>([]);
+  const [writtenExamChartData, setWrittenExamChartData] = useState<ChartData[]>([]);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    const storedResults = JSON.parse(localStorage.getItem('mockTestResults') || '[]');
-    setResults(storedResults);
+    setIsClient(true);
+    const storedMockResults = JSON.parse(localStorage.getItem('mockTestResults') || '[]');
+    const storedWrittenResults = JSON.parse(localStorage.getItem('writtenExamResults') || '[]');
+    
+    setMockTestResults(storedMockResults);
+    setWrittenExamResults(storedWrittenResults);
 
-    if (storedResults.length > 0) {
+    if (storedMockResults.length > 0) {
       const subjectScores: { [key: string]: { scores: number[], count: number } } = {};
-
-      storedResults.forEach((result: TestResult) => {
+      storedMockResults.forEach((result: MockTestResult) => {
         if (!subjectScores[result.subject]) {
           subjectScores[result.subject] = { scores: [], count: 0 };
         }
@@ -39,33 +54,54 @@ export default function ProgressTrackerPage() {
         subjectScores[result.subject].scores.push(percentage);
         subjectScores[result.subject].count++;
       });
-
-      const aggregatedData = Object.keys(subjectScores).map(subject => {
-        const lastScore = subjectScores[subject].scores[subjectScores[subject].scores.length - 1];
-        const avg = subjectScores[subject].scores.reduce((a, b) => a + b, 0) / subjectScores[subject].count;
-        return {
-          subject: subject,
-          score: Math.round(lastScore),
-          averageScore: Math.round(avg),
-        };
-      });
-      setChartData(aggregatedData);
+      const aggregatedData = Object.keys(subjectScores).map(subject => ({
+        subject: subject,
+        score: Math.round(subjectScores[subject].scores[subjectScores[subject].scores.length - 1]),
+        averageScore: Math.round(subjectScores[subject].scores.reduce((a, b) => a + b, 0) / subjectScores[subject].count),
+      }));
+      setMockTestChartData(aggregatedData);
     }
+    
+    if (storedWrittenResults.length > 0) {
+      const subjectScores: { [key: string]: { scores: number[], count: number } } = {};
+      storedWrittenResults.forEach((result: WrittenExamResult) => {
+        if (!subjectScores[result.subject]) {
+          subjectScores[result.subject] = { scores: [], count: 0 };
+        }
+        const percentage = (result.obtainedMarks / result.totalMarks) * 100;
+        subjectScores[result.subject].scores.push(percentage);
+        subjectScores[result.subject].count++;
+      });
+      const aggregatedData = Object.keys(subjectScores).map(subject => ({
+        subject: subject,
+        score: Math.round(subjectScores[subject].scores[subjectScores[subject].scores.length - 1]),
+        averageScore: Math.round(subjectScores[subject].scores.reduce((a, b) => a + b, 0) / subjectScores[subject].count),
+      }));
+      setWrittenExamChartData(aggregatedData);
+    }
+
   }, []);
 
-  if (results.length === 0) {
+  if (!isClient) {
+    return null; // Don't render server-side
+  }
+
+  if (mockTestResults.length === 0 && writtenExamResults.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center p-4 min-h-[80vh]">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="font-headline">दिखाने के लिए कोई प्रगति नहीं है</CardTitle>
             <CardDescription>
-              अपनी प्रगति को ट्रैक करना शुरू करने के लिए एक मॉक टेस्ट पूरा करें। आपके परिणाम यहां दिखाई देंगे।
+              अपनी प्रगति को ट्रैक करना शुरू करने के लिए एक मॉक टेस्ट या लिखित परीक्षा पूरी करें। आपके परिणाम यहां दिखाई देंगे।
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-4">
             <Link href="/mock-tests">
-              <Button>मॉक टेस्ट दें</Button>
+              <Button className="w-full">मॉक टेस्ट दें</Button>
+            </Link>
+             <Link href="/written-exam">
+              <Button className="w-full" variant="outline">लिखित परीक्षा दें</Button>
             </Link>
           </CardContent>
         </Card>
@@ -73,19 +109,19 @@ export default function ProgressTrackerPage() {
     );
   }
 
-  return (
-    <div className="p-4 md:p-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline text-2xl">आपके प्रदर्शन का अवलोकन</CardTitle>
-          <CardDescription>
-            यह चार्ट प्रत्येक विषय में आपके औसत स्कोर की तुलना में आपका नवीनतम स्कोर दिखाता है।
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[400px] w-full">
+  const renderChart = (data: ChartData[], title: string) => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-headline text-2xl">{title}</CardTitle>
+        <CardDescription>
+          यह चार्ट प्रत्येक विषय में आपके औसत स्कोर की तुलना में आपका नवीनतम स्कोर दिखाता है।
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[400px] w-full">
+          {data.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
+              <BarChart data={data}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="subject" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
@@ -98,9 +134,30 @@ export default function ProgressTrackerPage() {
                 <Bar dataKey="averageScore" name="औसत स्कोर" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+          ) : (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              इस परीक्षा प्रकार के लिए कोई डेटा उपलब्ध नहीं है।
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="p-4 md:p-8">
+      <Tabs defaultValue="mock-tests" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="mock-tests">मॉक टेस्ट</TabsTrigger>
+          <TabsTrigger value="written-exams">लिखित परीक्षा</TabsTrigger>
+        </TabsList>
+        <TabsContent value="mock-tests" className="mt-6">
+          {renderChart(mockTestChartData, 'मॉक टेस्ट प्रदर्शन')}
+        </TabsContent>
+        <TabsContent value="written-exams" className="mt-6">
+          {renderChart(writtenExamChartData, 'लिखित परीक्षा प्रदर्शन')}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

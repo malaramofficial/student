@@ -1,4 +1,5 @@
 import { DashboardCard } from "@/components/dashboard-card";
+import { ProgressSummaryCard } from "@/components/progress-summary-card";
 import { WordOfTheDayCard } from "@/components/word-of-the-day-card";
 import { BookOpenCheck, Bot, ClipboardCheck, FileText, LineChart, Lock, MicVocal, PencilRuler, UserSquare } from "lucide-react";
 
@@ -10,6 +11,7 @@ export default function Home() {
         <p className="mt-2 text-muted-foreground animate-fade-in-up">इंटरैक्टिव सीखने और प्रगति की ट्रैकिंग के लिए आपका केंद्रीकृत हब।</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-6 md:px-8 pb-8">
+        <ProgressSummaryCard />
         <DashboardCard
           href="/ai-teacher"
           icon={<Bot className="w-8 h-8 text-primary" />}
@@ -44,7 +46,7 @@ export default function Home() {
           href="/visual-teacher"
           icon={<UserSquare className="w-8 h-8 text-primary" />}
           title="विजुअल टीचर"
-          description="अदिति मैडम को एक विज़ुअल अवतार में भाषण देते हुए देखें।"
+          description="रणवीर को एक विज़ुअल अवतार में भाषण देते हुए देखें।"
         />
         <DashboardCard
           href="/progress-tracker"
@@ -57,7 +59,7 @@ export default function Home() {
           href="/speech-generator"
           icon={<MicVocal className="w-8 h-8 text-primary" />}
           title="भाषण जनरेटर"
-          description="किसी भी विषय पर अदिति मैडम से एक प्रेरक भाषण तैयार करवाएं।"
+          description="किसी भी विषय पर रणवीर से एक प्रेरक भाषण तैयार करवाएं।"
         />
         <DashboardCard
           href="/admin"

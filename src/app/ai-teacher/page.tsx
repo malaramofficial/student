@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -5,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Loader2, Mic, Send, User, Volume2, StopCircle, Info } from "lucide-react";
+import { Bot, Loader2, Mic, Send, User, Volume2, StopCircle, Info, MicOff } from "lucide-react";
 import { getAIResponse, getAudioResponse } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
@@ -28,19 +29,26 @@ export default function AITeacherPage() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [mode, setMode] = useState<'student' | 'public'>('student');
+  const [isConversationMode, setIsConversationMode] = useState(false);
+  
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
+  const handleSpeechEnd = useCallback(async (finalTranscript: string) => {
+      if (finalTranscript) {
+          // Only auto-submit in conversation mode
+          if (isConversationMode) {
+              await handleAIResponse(finalTranscript);
+          }
+      }
+  }, [isConversationMode]);
+  
   const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition({ 
-    onSpeechEnd: (finalTranscript: string) => {
-        if (finalTranscript) {
-            handleAIResponse(finalTranscript);
-        }
-    } 
+    onSpeechEnd: handleSpeechEnd
   });
 
-  const aditiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
+  const sarathiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
 
   useEffect(() => {
     setIsClient(true);
@@ -49,6 +57,7 @@ export default function AITeacherPage() {
   useEffect(() => {
     if(speechError) {
       toast({ variant: 'destructive', title: 'Speech Recognition Error', description: speechError });
+      setIsConversationMode(false); // Turn off conversation mode on error
     }
   }, [speechError, toast]);
 
@@ -65,9 +74,11 @@ export default function AITeacherPage() {
   }, [audioUrl]);
 
   useEffect(() => {
-    setInput(transcript);
-  }, [transcript]);
-
+    // Update input field as user speaks, but only if not in conversation mode listening
+    if (!isConversationMode || (isConversationMode && !isListening) ) {
+      setInput(transcript);
+    }
+  }, [transcript, isConversationMode, isListening]);
 
   const handleAIResponse = useCallback(async (query: string) => {
     if (!query.trim() || isLoading) return;
@@ -77,32 +88,27 @@ export default function AITeacherPage() {
     
     setIsLoading(true);
     setAudioUrl(null);
-    resetTranscript();
     setInput('');
+    resetTranscript();
 
     const chatHistory = [...messages, userMessage].map(msg => ({ role: msg.role, content: msg.content }));
     
-    const aiResponsePromise = getAIResponse({ question: query, chatHistory, mode });
-    const audioResponsePromise = aiResponsePromise.then(response => {
-        if (response.success && response.answer) {
-            return getAudioResponse({ text: response.answer });
-        }
-        return null;
-    });
-
     try {
-        const aiResponse = await aiResponsePromise;
+        const aiResponse = await getAIResponse({ question: query, chatHistory, mode });
         
         if (aiResponse.success && aiResponse.answer) {
             const assistantMessage: Message = { role: 'assistant', content: aiResponse.answer };
             setMessages(prev => [...prev, assistantMessage]);
 
             setIsAudioLoading(true);
-            const audioResponse = await audioResponsePromise;
+            const audioResponse = await getAudioResponse({ text: aiResponse.answer });
             if (audioResponse && audioResponse.success && audioResponse.audio) {
                 setAudioUrl(audioResponse.audio);
             } else {
                  toast({ variant: 'destructive', title: 'Audio Error', description: audioResponse?.error || 'Failed to generate audio.' });
+                 if (isConversationMode) {
+                    startListening();
+                 }
             }
             setIsAudioLoading(false);
 
@@ -110,26 +116,40 @@ export default function AITeacherPage() {
             toast({ variant: 'destructive', title: 'AI Error', description: aiResponse.error });
             const errorMessage: Message = { role: 'assistant', content: "क्षमा करें, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया पुन: प्रयास करें।" };
             setMessages(prev => [...prev, errorMessage]);
+            if (isConversationMode) {
+                startListening();
+            }
         }
     } catch(e) {
         toast({ variant: 'destructive', title: 'An unexpected error occurred.', description: (e as Error).message });
+        if (isConversationMode) {
+            startListening();
+        }
     } finally {
         setIsLoading(false);
     }
-  }, [isLoading, toast, resetTranscript, messages, mode]);
+  }, [isLoading, toast, resetTranscript, messages, mode, isConversationMode, startListening]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-    stopListening();
-    handleAIResponse(input);
+    if (isListening) stopListening();
+    await handleAIResponse(input);
   };
   
   const toggleListening = () => {
     if (isListening) {
       stopListening();
+      if(isConversationMode) setIsConversationMode(false);
     } else {
+      startListening();
+      if(mode === 'public') setIsConversationMode(true);
+    }
+  };
+
+  const handleAudioEnded = () => {
+    if (isConversationMode) {
       startListening();
     }
   };
@@ -143,15 +163,19 @@ export default function AITeacherPage() {
                 <Switch
                     id="mode-switch"
                     checked={mode === 'public'}
-                    onCheckedChange={(checked) => setMode(checked ? 'public' : 'student')}
+                    onCheckedChange={(checked) => {
+                        setMode(checked ? 'public' : 'student');
+                        setIsConversationMode(false);
+                        if(isListening) stopListening();
+                    }}
                     aria-label="Toggle between Student and Public mode"
                 />
                 <Label htmlFor="mode-switch" className={cn(mode === 'public' && 'text-primary font-semibold')}>सार्वजनिक मोड</Label>
             </div>
-            {mode === 'public' && (
-                <div className="flex items-center gap-2 text-sm text-primary animate-fade-in-down">
-                    <Info className="h-4 w-4" />
-                    <span>सार्वजनिक मोड सक्रिय है</span>
+            {isConversationMode && (
+                <div className="flex items-center gap-2 text-sm text-blue-500 animate-pulse">
+                    <Mic className="h-4 w-4" />
+                    <span>कन्वर्सेशन मोड सक्रिय है...</span>
                 </div>
             )}
         </div>
@@ -171,7 +195,7 @@ export default function AITeacherPage() {
             <div key={index} className={cn("flex items-start gap-4", message.role === 'user' ? 'justify-end' : '')}>
               {message.role === 'assistant' && (
                 <Avatar className="border-2 border-primary/50">
-                  {aditiAvatar && <Image src={aditiAvatar.imageUrl} alt="Sarathi" width={40} height={40} data-ai-hint={aditiAvatar.imageHint} />}
+                  {sarathiAvatar && <Image src={sarathiAvatar.imageUrl} alt="Sarathi" width={40} height={40} data-ai-hint={sarathiAvatar.imageHint} />}
                   <AvatarFallback><Bot /></AvatarFallback>
                 </Avatar>
               )}
@@ -197,7 +221,7 @@ export default function AITeacherPage() {
           {isLoading && messages[messages.length-1]?.role === 'user' && (
             <div className="flex items-start gap-4">
               <Avatar className="border-2 border-primary/50">
-                  {aditiAvatar && <Image src={aditiAvatar.imageUrl} alt="Sarathi" width={40} height={40} data-ai-hint={aditiAvatar.imageHint} />}
+                  {sarathiAvatar && <Image src={sarathiAvatar.imageUrl} alt="Sarathi" width={40} height={40} data-ai-hint={sarathiAvatar.imageHint} />}
                   <AvatarFallback><Bot /></AvatarFallback>
               </Avatar>
               <div className="max-w-[75%] rounded-lg p-3 text-sm bg-muted text-muted-foreground">
@@ -212,21 +236,23 @@ export default function AITeacherPage() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={isListening ? "सुन रही हूँ..." : "अपना प्रश्न टाइप करें या माइक का उपयोग करें"}
-            disabled={isLoading}
+            placeholder={isListening ? "सुन रही हूँ..." : (isConversationMode ? "कन्वर्सेशन मोड से बाहर निकलने के लिए स्टॉप दबाएँ" : "अपना प्रश्न टाइप करें या माइक का उपयोग करें")}
+            disabled={isLoading || (isListening && isConversationMode)}
             className="flex-1"
           />
           {isClient && hasRecognitionSupport && (
             <Button type="button" size="icon" variant={isListening ? "destructive" : "outline"} onClick={toggleListening}>
-              {isListening ? <StopCircle /> : <Mic />}
+               {isListening ? (isConversationMode ? <MicOff /> : <StopCircle />) : <Mic />}
             </Button>
           )}
-          <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+          <Button type="submit" size="icon" disabled={isLoading || !input.trim() || isConversationMode}>
             <Send />
           </Button>
         </form>
       </div>
-      {audioUrl && <audio ref={audioRef} src={audioUrl} className="hidden" onEnded={() => { /* can add logic here if needed */}} />}
+      {audioUrl && <audio ref={audioRef} src={audioUrl} className="hidden" onEnded={handleAudioEnded} />}
     </div>
   );
 }
+
+    

@@ -9,6 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import syllabusData from '@/app/syllabus/syllabus-data.json';
 
 const getCreatorName = ai.defineTool(
     {
@@ -46,6 +47,44 @@ const getCreatorBloodGroup = ai.defineTool(
     async () => "A+"
 );
 
+const getSyllabusInfo = ai.defineTool(
+    {
+        name: 'getSyllabusInfo',
+        description: 'Provides information about the syllabus for different streams and subjects.',
+        inputSchema: z.object({
+            stream: z.string().optional().describe('The academic stream, e.g., "विज्ञान (Science)", "कला (Arts)".'),
+            subject: z.string().optional().describe('The subject, e.g., "भौतिक विज्ञान (Physics)", "इतिहास (History)".'),
+        }),
+        outputSchema: z.any(),
+    },
+    async ({ stream, subject }) => {
+        if (stream && subject) {
+            const streamData = syllabusData.streams.find(s => s.name.toLowerCase().includes(stream.toLowerCase()));
+            if (streamData) {
+                const subjectData = streamData.subjects.find(sub => sub.name.toLowerCase().includes(subject.toLowerCase()));
+                if (subjectData) {
+                    return { topics: subjectData.topics };
+                }
+            }
+        }
+        if (stream) {
+            const streamData = syllabusData.streams.find(s => s.name.toLowerCase().includes(stream.toLowerCase()));
+            if (streamData) {
+                return { subjects: streamData.subjects.map(s => s.name) };
+            }
+        }
+        if (subject) {
+             for (const s of syllabusData.streams) {
+                const subjectData = s.subjects.find(sub => sub.name.toLowerCase().includes(subject.toLowerCase()));
+                if (subjectData) {
+                    return { stream: s.name, topics: subjectData.topics };
+                }
+            }
+        }
+        return "Could not find the requested syllabus information. Please specify a stream or subject.";
+    }
+);
+
 
 const AIMentorChatInputSchema = z.object({
     studentName: z.string().describe("The name of the student."),
@@ -71,7 +110,7 @@ const prompt = ai.definePrompt({
     name: 'aiMentorChatPrompt',
     input: { schema: AIMentorChatInputSchema },
     output: { schema: AIMentorChatOutputSchema },
-    tools: [getCreatorName, getCreatorDOB, getCreatorLocation, getCreatorBloodGroup],
+    tools: [getCreatorName, getCreatorDOB, getCreatorLocation, getCreatorBloodGroup, getSyllabusInfo],
     prompt: `You are an AI assistant named AI Guru. You must adopt the persona of Mala Ram to interact with a student.
 
 **Your Persona: Mala Ram**
@@ -83,7 +122,8 @@ const prompt = ai.definePrompt({
 
 **Your Task:**
 As AI Guru, adopt the Mala Ram persona to respond to the student's message. Your response must be consistent with this persona. Provide helpful, clear, and logical answers.
-If the user asks about your creator, developer, or who made you, use the available tools to get only the specific information requested and present it in a clear, factual manner consistent with your persona. Do not provide all information at once unless specifically asked for.
+- If the user asks about your creator, developer, or who made you, use the available tools to get only the specific information requested and present it in a clear, factual manner consistent with your persona. Do not provide all information at once unless specifically asked for.
+- If the user asks about the syllabus, subjects, or topics for a specific stream, use the 'getSyllabusInfo' tool to provide accurate information.
 
 - The student's name is {{{studentName}}}.
 - The conversation history is as follows:

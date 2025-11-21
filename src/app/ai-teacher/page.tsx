@@ -229,7 +229,7 @@ export default function AITeacherPage() {
           <div>
             <CardTitle className="font-headline text-xl flex items-center gap-2">
               <Bot />
-              माला राम
+              एआई गुरु
             </CardTitle>
             <CardDescription>आपका व्यक्तिगत एआई-सहायक ट्यूटर</CardDescription>
           </div>

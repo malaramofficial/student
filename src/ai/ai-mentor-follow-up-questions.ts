@@ -190,62 +190,14 @@ const aiMentorFlow = ai.defineFlow(
     outputSchema: AIMentorOutputSchema,
   },
   async (input) => {
-    const llmResponse = await ai.generate({
-      prompt: prompt.prompt,
-      model: 'googleai/gemini-2.5-flash',
-      tools: [getSyllabusTool, aboutCreatorTool],
-      input: input,
-      output: {
-        schema: AIMentorOutputSchema,
-      },
-    });
-
-    const output = llmResponse.output();
-
+    // ai.run automatically handles tool calling and re-running the prompt.
+    const output = await ai.run(prompt, input);
+    
     if (output) {
       return output;
     }
-
-    // Handle tool calls if there is no direct output
-    const toolCalls = llmResponse.toolCalls();
-    if (toolCalls.length > 0) {
-      const toolResponses = [];
-      for (const toolCall of toolCalls) {
-        const tool = llmResponse.findTool(toolCall.name);
-        if (tool?.fn) {
-          try {
-            const toolResult = await (tool.fn as any)(toolCall.input);
-            toolResponses.push({
-              toolResult: toolResult,
-            });
-          } catch (e) {
-             console.error(`Error executing tool ${toolCall.name}:`, e);
-             toolResponses.push({
-                toolResult: { error: `Tool ${toolCall.name} failed.` },
-             });
-          }
-        }
-      }
-
-      // Re-invoke the LLM with the tool results
-      const followUpResponse = await ai.generate({
-        prompt: prompt.prompt,
-        model: 'googleai/gemini-2.5-flash',
-        tools: [getSyllabusTool, aboutCreatorTool],
-        input: input,
-        toolResponse: toolResponses,
-        output: {
-          schema: AIMentorOutputSchema,
-        },
-      });
-      
-      const finalOutput = followUpResponse.output();
-      if(finalOutput) {
-        return finalOutput;
-      }
-    }
     
-    // Fallback response
+    // Fallback response in case something goes wrong.
     return { response: "मुझे खेद है, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया अपना प्रश्न दोबारा पूछें। मेरे निर्माता, मालाराम, हमेशा मुझे बेहतर बनाने के लिए काम कर रहे हैं।" };
   }
 );

@@ -23,14 +23,13 @@ const AIMentorInputSchema = z.object({
     .optional()
     .describe('The chat history between the user and Aditi Madam.'),
 });
-type AIMentorInput = z.infer<typeof AIMentorInputSchema>;
 
 const AIMentorOutputSchema = z.object({
   response: z.string().describe('The response from Aditi Madam.'),
 });
 
 export async function askAditiMadam(
-  input: AIMentorInput
+  input: z.infer<typeof AIMentorInputSchema>
 ): Promise<z.infer<typeof AIMentorOutputSchema>> {
   return aiMentorFlow(input);
 }

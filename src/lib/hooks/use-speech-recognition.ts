@@ -54,6 +54,11 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     recognition.lang = 'hi-IN';
 
     recognition.onresult = (event) => {
+      // Always clear the previous timeout when new results come in.
+      if (speechEndTimeoutRef.current) {
+        clearTimeout(speechEndTimeoutRef.current);
+      }
+
       let final_transcript = '';
       let interim_transcript = '';
 
@@ -67,17 +72,14 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
       
       finalTranscriptRef.current = final_transcript;
       setTranscript(final_transcript + interim_transcript);
-
-      if (speechEndTimeoutRef.current) {
-        clearTimeout(speechEndTimeoutRef.current);
-      }
       
+      // Set a new timeout to trigger onSpeechEnd after a pause.
       speechEndTimeoutRef.current = setTimeout(() => {
         const currentTranscript = (finalTranscriptRef.current + interim_transcript).trim();
         if (currentTranscript) {
           stableOnSpeechEnd(currentTranscript);
-          if (recognitionRef.current) {
-            recognitionRef.current.stop();
+          if (recognitionRef.current && isListening) {
+             recognitionRef.current.stop();
           }
         }
       }, 3000); // 3-second delay for a more natural pause
@@ -116,6 +118,8 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
             recognitionRef.current.onend = null;
         }
     };
+  // `isListening` is intentionally omitted to avoid re-triggering the effect on its change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stableOnSpeechEnd]);
 
   const startListening = useCallback(() => {

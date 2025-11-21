@@ -36,7 +36,7 @@ const textToSpeechConversionFlow = ai.defineFlow(
     const voiceName = input.voice === 'male' ? 'Algenib' : 'Achernar';
 
     const { media } = await ai.generate({
-      model: 'googleai/gemini-2.5-flash-tts-preview',
+      model: 'googleai/gemini-2.5-flash-preview-tts',
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {

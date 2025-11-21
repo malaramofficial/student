@@ -22,6 +22,9 @@ export async function getAudioResponse(input: TextToSpeechConversionInput) {
     return { success: true, audio: result.media };
   } catch (error) {
     console.error('Error in getAudioResponse:', error);
+    if (error instanceof Error && error.message.includes('429')) {
+         return { success: false, error: 'Audio generation failed due to rate limits.' };
+    }
     const errorMessage =
       error instanceof Error
         ? error.message

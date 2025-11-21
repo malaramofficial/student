@@ -23,10 +23,8 @@ import {
 import { generateWrittenExam, evaluateWrittenExam } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  GenerateWrittenExamOutput,
-  EvaluateWrittenExamOutput,
-} from '@/ai/flows/generate-written-exam';
+import { type GenerateWrittenExamOutput } from '@/ai/flows/generate-written-exam';
+import { type EvaluateWrittenExamOutput } from '@/ai/flows/evaluate-written-exam';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 

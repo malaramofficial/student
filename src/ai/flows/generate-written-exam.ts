@@ -23,7 +23,7 @@ const GenerateWrittenExamInputSchema = z.object({
 });
 export type GenerateWrittenExamInput = z.infer<typeof GenerateWrittenExamInputSchema>;
 
-export const GenerateWrittenExamOutputSchema = z.object({
+const GenerateWrittenExamOutputSchema = z.object({
   subject: z.string(),
   totalMarks: z.number(),
   duration: z.string().describe('The duration of the exam, e.g., "3 घंटे".'),

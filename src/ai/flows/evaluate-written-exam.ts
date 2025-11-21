@@ -24,7 +24,7 @@ const EvaluationResultSchema = z.object({
   feedback: z.string().describe('Constructive feedback for the user on their answer, explaining why marks were awarded or deducted. Should be in Hindi.'),
 });
 
-export const EvaluateWrittenExamInputSchema = z.object({
+const EvaluateWrittenExamInputSchema = z.object({
   subject: z.string(),
   questions: z.array(QuestionAnswerSchema),
 });

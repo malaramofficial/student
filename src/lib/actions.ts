@@ -1,4 +1,3 @@
-
 'use server';
 
 import {
@@ -25,11 +24,10 @@ import {
 import {
   generateWrittenExam as generateWrittenExamFlow,
   type GenerateWrittenExamInput,
-  GenerateWrittenExamOutputSchema,
+  type GenerateWrittenExamOutput,
 } from '@/ai/flows/generate-written-exam';
 import {
   evaluateWrittenExam as evaluateWrittenExamFlow,
-  EvaluateWrittenExamInputSchema,
   type EvaluateWrittenExamInput,
 } from '@/ai/flows/evaluate-written-exam';
 
@@ -233,12 +231,7 @@ export async function generateWrittenExam(input: GenerateWrittenExamInput) {
   }
   try {
     const result = await generateWrittenExamFlow(parsedInput.data);
-    // Validate the output from the flow
-    const validatedOutput = GenerateWrittenExamOutputSchema.safeParse(result);
-    if (!validatedOutput.success) {
-        throw new Error('AI generated invalid exam paper format.');
-    }
-    return { success: true, exam: validatedOutput.data };
+    return { success: true, exam: result as GenerateWrittenExamOutput };
   } catch (error) {
     console.error('Error in generateWrittenExam:', error);
     const errorMessage =
@@ -249,7 +242,15 @@ export async function generateWrittenExam(input: GenerateWrittenExamInput) {
 
 
 export async function evaluateWrittenExam(input: EvaluateWrittenExamInput) {
-  const parsedInput = EvaluateWrittenExamInputSchema.safeParse(input);
+  const parsedInput = z.object({
+    subject: z.string(),
+    questions: z.array(z.object({
+        question: z.string(),
+        marks: z.number(),
+        answer: z.string(),
+    }))
+  }).safeParse(input);
+
   if (!parsedInput.success) {
     console.log(parsedInput.error);
     return { success: false, error: 'Invalid input for evaluation.' };

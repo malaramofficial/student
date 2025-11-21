@@ -76,9 +76,10 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
         const currentTranscript = (finalTranscriptRef.current + interim_transcript).trim();
         if (currentTranscript) {
           stableOnSpeechEnd(currentTranscript);
-          if (recognitionRef.current && isListening) {
-             recognitionRef.current.stop();
-          }
+          // Do not stop listening here in conversation mode. Let the parent component control it.
+          // if (recognitionRef.current && isListening) {
+          //    recognitionRef.current.stop();
+          // }
         }
       }, 3000); 
     };
@@ -129,7 +130,7 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
         setError(null);
       } catch (err) {
         if ((err as DOMException).name === 'InvalidStateError') {
-            console.warn("Speech recognition already started.");
+            // Already started, this is fine.
         } else {
             console.error("स्पीच रिकग्निशन शुरू करने में त्रुटि:", err);
             setIsListening(false);

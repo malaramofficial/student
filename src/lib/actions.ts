@@ -1,9 +1,6 @@
 'use server';
 
-import {
-  askAditiMadam,
-  AIMentorInput,
-} from '@/ai/ai-mentor-follow-up-questions';
+import { AIMentorInput } from '@/ai/ai-mentor-follow-up-questions';
 import {
   adminTrainAIMentor,
   AdminTrainAIMentorInput,
@@ -17,7 +14,7 @@ import {
   GenerateSpeechInput,
 } from '@/ai/flows/ai-mentor-speech-flow';
 import { getWordOfTheDay as getWordOfTheDayFlow } from '@/ai/flows/word-of-the-day';
-import { 
+import {
   generateMockTest as generateMockTestFlow,
   GenerateMockTestInput,
 } from '@/ai/flows/generate-mock-test';
@@ -33,6 +30,7 @@ import {
 
 import { z } from 'zod';
 import mockResults from '@/app/results/mock-results.json';
+import { askAditiMadam } from '@/ai/ai-mentor-follow-up-questions';
 
 // Define types for better type safety
 type SubjectResult = {

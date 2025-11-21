@@ -17,8 +17,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'ज्ञानोदय',
-  description: 'छात्रों को सीखने और बढ़ने के लिए एक इंटरैक्टिव प्लेटफॉर्म।',
+  title: 'टेक्स्ट-टू-स्पीच',
+  description: 'टेक्स्ट को आसानी से भाषण में बदलें।',
   icons: {
     icon: "/favicon.ico",
   }

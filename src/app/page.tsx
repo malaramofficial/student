@@ -1,149 +1,132 @@
-
 "use client";
 
-import { useState, useEffect } from "react";
-import { DashboardCard } from "@/components/dashboard-card";
-import { ProgressSummaryCard } from "@/components/progress-summary-card";
-import { WordOfTheDayCard } from "@/components/word-of-the-day-card";
-import {
-  BookOpenCheck,
-  Bot,
-  ClipboardCheck,
-  FileText,
-  LineChart,
-  Lock,
-  MicVocal,
-  PencilRuler,
-  UserSquare,
-} from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { useState, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { getAudioResponse } from '@/lib/actions';
+import { Loader2, Volume2, Download, Mic } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-export default function Home() {
-  const [studentName, setStudentName] = useState<string | null>(null);
-  const [isNameModalOpen, setIsNameModalOpen] = useState(false);
-  const [inputName, setInputName] = useState("");
-  const [isClient, setIsClient] = useState(false);
+export default function TextToSpeechPage() {
+  const [text, setText] = useState('');
+  const [voice, setVoice] = useState('female');
+  const [isLoading, setIsLoading] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    setIsClient(true);
-    const storedName = localStorage.getItem("studentName");
-    if (storedName) {
-      setStudentName(storedName);
+  const handleConvert = async () => {
+    if (!text.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'इनपुट त्रुटि',
+        description: 'कृपया बदलने के लिए कुछ टेक्स्ट दर्ज करें।',
+      });
+      return;
+    }
+    setIsLoading(true);
+    setAudioUrl(null);
+
+    const response = await getAudioResponse({ text, voice });
+
+    if (response.success && response.audio) {
+      setAudioUrl(response.audio);
+      toast({
+        title: 'रूपांतरण सफल',
+        description: 'आपका टेक्स्ट भाषण में बदल दिया गया है।',
+      });
     } else {
-      setIsNameModalOpen(true);
+      toast({
+        variant: 'destructive',
+        title: 'रूपांतरण विफल',
+        description: response.error || 'एक अज्ञात त्रुटि हुई।',
+      });
     }
-  }, []);
-
-  const handleNameSubmit = () => {
-    if (inputName.trim()) {
-      localStorage.setItem("studentName", inputName.trim());
-      setStudentName(inputName.trim());
-      setIsNameModalOpen(false);
-    }
+    setIsLoading(false);
   };
 
-  return (
-    <>
-      <Dialog open={isNameModalOpen} onOpenChange={setIsNameModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="font-headline">आपका स्वागत है!</DialogTitle>
-            <DialogDescription>
-              शुरू करने से पहले, कृपया हमें अपना नाम बताएं।
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                नाम
-              </Label>
-              <Input
-                id="name"
-                value={inputName}
-                onChange={(e) => setInputName(e.target.value)}
-                className="col-span-3"
-                placeholder="आपका नाम..."
-                onKeyDown={(e) => e.key === 'Enter' && handleNameSubmit()}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleNameSubmit}>सहेजें</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+  const handlePlay = () => {
+    if (audioRef.current) {
+      audioRef.current.play();
+    }
+  };
+  
+  const handleDownload = () => {
+    if (audioUrl) {
+      const link = document.createElement('a');
+      link.href = audioUrl;
+      link.download = 'speech.wav';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }
 
-      <div className="flex flex-col gap-8">
-        <div className="p-6 md:p-8">
-          <h1 className="text-3xl md:text-4xl font-bold font-headline text-primary animate-fade-in-down">
-            {isClient && studentName ? `${studentName}, ` : ""}ज्ञानोदय में आपका स्वागत है
-          </h1>
-          <p className="mt-2 text-muted-foreground animate-fade-in-up">
-            इंटरैक्टिव सीखने और प्रगति की ट्रैकिंग के लिए आपका केंद्रीकृत हब।
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-6 md:px-8 pb-8">
-          <ProgressSummaryCard />
-          <DashboardCard
-            href="/ai-teacher"
-            icon={<Bot className="w-8 h-8 text-primary" />}
-            title="एआई वर्चुअल शिक्षक"
-            description="प्रश्न पूछें और अपने एआई मेंटर सारथी से तुरंत सहायता प्राप्त करें।"
-          />
-          <DashboardCard
-            href="/mock-tests"
-            icon={<ClipboardCheck className="w-8 h-8 text-primary" />}
-            title="मॉक टेस्ट"
-            description="विभिन्न विषयों पर मॉक टेस्ट के साथ अपने ज्ञान का मूल्यांकन करें।"
-          />
-          <DashboardCard
-            href="/written-exam"
-            icon={<PencilRuler className="w-8 h-8 text-primary" />}
-            title="लिखित परीक्षा"
-            description="AI द्वारा उत्पन्न लिखित परीक्षा दें और मूल्यांकन प्राप्त करें।"
-          />
-          <DashboardCard
-            href="/syllabus"
-            icon={<BookOpenCheck className="w-8 h-8 text-primary" />}
-            title="पाठ्यक्रम"
-            description="12वीं कक्षा के लिए राजस्थान बोर्ड का पूरा पाठ्यक्रम देखें।"
-          />
-          <DashboardCard
-            href="/results"
-            icon={<FileText className="w-8 h-8 text-primary" />}
-            title="परीक्षा परिणाम"
-            description="राजस्थान बोर्ड के अपने परीक्षा परिणाम देखें।"
-          />
-          <DashboardCard
-            href="/visual-teacher"
-            icon={<UserSquare className="w-8 h-8 text-primary" />}
-            title="विजुअल टीचर"
-            description="रणवीर को एक विज़ुअल अवतार में भाषण देते हुए देखें।"
-          />
-          <DashboardCard
-            href="/progress-tracker"
-            icon={<LineChart className="w-8 h-8 text-primary" />}
-            title="प्रगति ट्रैकर"
-            description="अपने परीक्षा स्कोर देखें और समय के साथ अपने सुधार को ट्रैक करें।"
-          />
-          <WordOfTheDayCard />
-          <DashboardCard
-            href="/speech-generator"
-            icon={<MicVocal className="w-8 h-8 text-primary" />}
-            title="भाषण जनरेटर"
-            description="किसी भी विषय पर रणवीर से एक प्रेरक भाषण तैयार करवाएं।"
-          />
-          <DashboardCard
-            href="/admin"
-            icon={<Lock className="w-8 h-8 text-primary" />}
-            title="एडमिन ट्रेनिंग"
-            description="एआई मेंटर के प्रशिक्षण और कॉन्फ़िगरेशन के लिए सुरक्षित क्षेत्र।"
-          />
-        </div>
-      </div>
-    </>
+  return (
+    <div className="flex justify-center items-center p-4 min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Card className="w-full max-w-xl shadow-2xl">
+        <CardHeader>
+          <CardTitle className="font-headline text-2xl flex items-center gap-2 text-primary"><Mic />टेक्स्ट-टू-स्पीच</CardTitle>
+          <CardDescription>
+            हिंदी या अंग्रेजी में टेक्स्ट टाइप या पेस्ट करें और इसे ऑडियो में बदलें। आप पुरुष या महिला की आवाज़ भी चुन सकते हैं।
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="text-input">आपका टेक्स्ट</Label>
+                <Textarea
+                  id="text-input"
+                  placeholder="यहां टेक्स्ट दर्ज करें..."
+                  className="min-h-[150px]"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="voice-select">आवाज़ चुनें</Label>
+                <Select value={voice} onValueChange={setVoice} disabled={isLoading}>
+                    <SelectTrigger id="voice-select">
+                        <SelectValue placeholder="एक आवाज़ चुनें" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="female">महिला</SelectItem>
+                        <SelectItem value="male">पुरुष</SelectItem>
+                    </SelectContent>
+                </Select>
+              </div>
+          </div>
+          {audioUrl && (
+            <div className="p-4 bg-muted rounded-lg flex items-center justify-center gap-4">
+              <audio ref={audioRef} src={audioUrl} className="hidden" />
+              <Button variant="outline" size="icon" onClick={handlePlay}>
+                <Volume2 className="h-5 w-5" />
+                <span className="sr-only">चलाएं</span>
+              </Button>
+               <Button variant="outline" size="icon" onClick={handleDownload}>
+                <Download className="h-5 w-5" />
+                <span className="sr-only">डाउनलोड करें</span>
+              </Button>
+            </div>
+          )}
+        </CardContent>
+        <CardFooter>
+          <Button onClick={handleConvert} disabled={isLoading} className="w-full">
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                बदल रहा है...
+              </>
+            ) : (
+              'भाषण में बदलें'
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }

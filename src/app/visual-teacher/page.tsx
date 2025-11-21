@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 export default function VisualTeacherPage() {
   const [topic, setTopic] = useState('शिक्षा का महत्व');
   const [isLoading, setIsLoading] = useState(false);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speech, setSpeech] = useState('');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -49,15 +50,17 @@ export default function VisualTeacherPage() {
       const response = await generateSpeechAction({ topic });
       if (response.success && response.speech) {
         setSpeech(response.speech);
-        toast({ title: 'भाषण तैयार है' });
+        wordsRef.current = response.speech.split(/\s+/);
+        toast({ title: 'भाषण तैयार है', description: 'ऑडियो तैयार किया जा रहा है...' });
         
+        setIsAudioLoading(true);
         const audioResponse = await getAudioResponse({ text: response.speech });
         if (audioResponse.success && audioResponse.audio) {
           setAudioUrl(audioResponse.audio);
-          wordsRef.current = response.speech.split(/\s+/);
         } else {
           toast({ variant: 'destructive', title: 'ऑडियो रूपांतरण विफल', description: audioResponse.error });
         }
+        setIsAudioLoading(false);
       } else {
         toast({ variant: 'destructive', title: 'भाषण उत्पन्न करने में विफल', description: response.error });
       }
@@ -80,11 +83,16 @@ export default function VisualTeacherPage() {
 
   const startTeleprompter = () => {
     const totalWords = wordsRef.current.length;
-    if (!audioRef.current || totalWords === 0) return;
+    if (!audioRef.current || totalWords === 0 || !audioRef.current.duration) return;
 
     const duration = audioRef.current.duration;
+    // Adding a buffer to prevent division by zero or infinity
+    if (duration <= 0 || !isFinite(duration)) return;
+
     const wordsPerSecond = totalWords / duration;
     const interval = 1000 / wordsPerSecond;
+
+    if (intervalRef.current) clearInterval(intervalRef.current);
 
     intervalRef.current = setInterval(() => {
       if (wordIndexRef.current < totalWords) {
@@ -98,13 +106,43 @@ export default function VisualTeacherPage() {
   };
   
   useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) {
+        const onPlay = () => setIsPlaying(true);
+        const onPause = () => setIsPlaying(false);
+        const onEnded = () => {
+          setIsPlaying(false);
+          wordIndexRef.current = 0;
+          setTeleprompterText('');
+          if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+        const onLoadedData = () => {
+            if (isPlaying) {
+                startTeleprompter();
+            }
+        };
+
+        audio.addEventListener('play', onPlay);
+        audio.addEventListener('pause', onPause);
+        audio.addEventListener('ended', onEnded);
+        audio.addEventListener('loadeddata', onLoadedData);
+
+        return () => {
+            audio.removeEventListener('play', onPlay);
+            audio.removeEventListener('pause', onPause);
+            audio.removeEventListener('ended', onEnded);
+            audio.removeEventListener('loadeddata', onLoadedData);
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioUrl]);
+
+  useEffect(() => {
     if (isPlaying) {
       startTeleprompter();
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
-    }
-    return () => {
-        if (intervalRef.current) clearInterval(intervalRef.current);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying]);
@@ -129,22 +167,27 @@ export default function VisualTeacherPage() {
                 placeholder="जैसे, 'समय का सदुपयोग'..."
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                disabled={isLoading}
+                disabled={isLoading || isAudioLoading}
               />
             </div>
           </CardContent>
           <CardFooter className="flex-col gap-4">
-            <Button onClick={handleGenerateSpeech} disabled={isLoading} className="w-full">
+            <Button onClick={handleGenerateSpeech} disabled={isLoading || isAudioLoading} className="w-full">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  भाषण तैयार किया जा रहा है...
+                  भाषण लिखा जा रहा है...
+                </>
+              ) : isAudioLoading ? (
+                 <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ऑडियो तैयार हो रहा है...
                 </>
               ) : (
                 'भाषण तैयार करें'
               )}
             </Button>
-            {audioUrl && !isLoading && (
+            {audioUrl && !isLoading && !isAudioLoading && (
                  <Button onClick={handlePlayPause} className="w-full" variant="outline">
                     {isPlaying ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
                     {isPlaying ? 'रोकें' : 'चलाएं'}
@@ -171,7 +214,7 @@ export default function VisualTeacherPage() {
 
             <div className="absolute bottom-4 left-4 right-4 bg-black/50 backdrop-blur-sm text-white p-4 rounded-lg h-28 overflow-hidden">
                 <p className="text-center text-lg font-mono">
-                    {teleprompterText || "भाषण शुरू करने के लिए प्ले बटन दबाएं..."}
+                    {isLoading || isAudioLoading ? '...' : teleprompterText || "भाषण शुरू करने के लिए प्ले बटन दबाएं..."}
                 </p>
             </div>
         </div>
@@ -181,9 +224,6 @@ export default function VisualTeacherPage() {
         ref={audioRef} 
         src={audioUrl} 
         className="hidden" 
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onEnded={() => setIsPlaying(false)}
       />}
     </div>
   );

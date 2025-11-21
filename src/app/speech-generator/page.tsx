@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -34,31 +34,41 @@ export default function SpeechGeneratorPage() {
     setAudioUrl(null);
     setIsPlaying(false);
 
-    const response = await generateSpeechAction({ topic });
+    try {
+      const response = await generateSpeechAction({ topic });
 
-    if (response.success && response.speech) {
-      setSpeech(response.speech);
-      toast({
-        title: 'भाषण तैयार है',
-        description: 'आपका भाषण उत्पन्न किया गया है।',
-      });
-      // Now convert the generated speech to audio
-      setIsAudioLoading(true);
-      const audioResponse = await getAudioResponse({ text: response.speech });
-      if (audioResponse.success && audioResponse.audio) {
-        setAudioUrl(audioResponse.audio);
+      if (response.success && response.speech) {
+        setSpeech(response.speech);
+        toast({
+          title: 'भाषण तैयार है',
+          description: 'आपका भाषण उत्पन्न किया गया है। अब ऑडियो तैयार किया जा रहा है...',
+        });
+        
+        // Now convert the generated speech to audio in the background
+        setIsAudioLoading(true);
+        const audioResponse = await getAudioResponse({ text: response.speech });
+        if (audioResponse.success && audioResponse.audio) {
+          setAudioUrl(audioResponse.audio);
+        } else {
+          toast({ variant: 'destructive', title: 'ऑडियो रूपांतरण विफल', description: audioResponse.error });
+        }
+        setIsAudioLoading(false);
       } else {
-        toast({ variant: 'destructive', title: 'ऑडियो रूपांतरण विफल', description: audioResponse.error });
+        toast({
+          variant: 'destructive',
+          title: 'भाषण उत्पन्न करने में विफल',
+          description: response.error || 'एक अज्ञात त्रुटि हुई।',
+        });
       }
-      setIsAudioLoading(false);
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'भाषण उत्पन्न करने में विफल',
-        description: response.error || 'एक अज्ञात त्रुटि हुई।',
-      });
+    } catch (e) {
+        toast({
+            variant: "destructive",
+            title: "An unexpected error occurred",
+            description: (e as Error).message,
+        });
+    } finally {
+        setIsLoading(false);
     }
-    setIsLoading(false);
   };
   
   const handlePlayPause = () => {
@@ -82,6 +92,25 @@ export default function SpeechGeneratorPage() {
     }
   }
 
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) {
+        const onPlay = () => setIsPlaying(true);
+        const onPause = () => setIsPlaying(false);
+        const onEnded = () => setIsPlaying(false);
+
+        audio.addEventListener('play', onPlay);
+        audio.addEventListener('pause', onPause);
+        audio.addEventListener('ended', onEnded);
+
+        return () => {
+            audio.removeEventListener('play', onPlay);
+            audio.removeEventListener('pause', onPause);
+            audio.removeEventListener('ended', onEnded);
+        };
+    }
+  }, [audioUrl]);
+
   return (
     <div className="p-4 md:p-8">
       <Card className="w-full max-w-3xl mx-auto">
@@ -90,7 +119,7 @@ export default function SpeechGeneratorPage() {
             <MicVocal /> भाषण जनरेटर
           </CardTitle>
           <CardDescription>
-            भाषण के लिए एक विषय प्रदान करें। AI एक प्रेरक और जानकारीपूर्ण भाषण तैयार करेगा।
+            भाषण के लिए एक विषय प्रदान करें। रणवीर एक प्रेरक और जानकारीपूर्ण भाषण तैयार करेगा।
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -102,10 +131,16 @@ export default function SpeechGeneratorPage() {
               className="min-h-[100px]"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              disabled={isLoading}
+              disabled={isLoading || isAudioLoading}
             />
           </div>
-          {speech && (
+          {isLoading && (
+             <div className="flex items-center justify-center p-10">
+                <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+                <p>भाषण तैयार किया जा रहा है...</p>
+            </div>
+          )}
+          {speech && !isLoading && (
             <div className="space-y-4">
                 <div className="p-4 bg-muted rounded-lg">
                     <div className="flex justify-between items-center mb-2">
@@ -137,25 +172,15 @@ export default function SpeechGeneratorPage() {
           )}
         </CardContent>
         <CardFooter>
-          <Button onClick={handleGenerateSpeech} disabled={isLoading} className="w-full">
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                भाषण तैयार किया जा रहा है...
-              </>
-            ) : (
-              'भाषण उत्पन्न करें'
-            )}
+          <Button onClick={handleGenerateSpeech} disabled={isLoading || isAudioLoading} className="w-full">
+            {isLoading ? 'भाषण तैयार किया जा रहा है...' : 'भाषण उत्पन्न करें'}
           </Button>
         </CardFooter>
       </Card>
       {audioUrl && <audio 
         ref={audioRef} 
         src={audioUrl} 
-        className="hidden" 
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onEnded={() => setIsPlaying(false)}
+        className="hidden"
       />}
     </div>
   );

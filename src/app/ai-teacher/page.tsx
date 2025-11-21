@@ -45,16 +45,16 @@ export default function AITeacherPage() {
   const handleAIResponse = useCallback(async (query: string) => {
     if (!query.trim() || isLoading) return;
 
-    setConversationStatus('thinking');
-
-    const userMessage: Message = { role: 'user', content: query };
-    setMessages(prev => [...prev, userMessage]);
-    
     setIsLoading(true);
+    setConversationStatus('thinking');
     setAudioUrl(null);
     setInput('');
+
+    const userMessage: Message = { role: 'user', content: query };
+    const currentMessages = [...messages, userMessage];
+    setMessages(currentMessages);
     
-    const chatHistory = [...messages, userMessage].map(msg => ({ role: msg.role, content: msg.content }));
+    const chatHistory = currentMessages.map(msg => ({ role: msg.role, content: msg.content }));
     
     try {
         const aiResponse = await getAIResponse({ question: query, chatHistory, mode });
@@ -69,7 +69,6 @@ export default function AITeacherPage() {
                 setAudioUrl(audioResponse.audio);
             } else {
                  toast({ variant: 'destructive', title: 'Audio Error', description: audioResponse?.error || 'Failed to generate audio.' });
-                 // If audio fails in conversation mode, start listening again
                  if (isConversationMode) {
                     startListening();
                  } else {
@@ -82,7 +81,6 @@ export default function AITeacherPage() {
             toast({ variant: 'destructive', title: 'AI Error', description: aiResponse.error });
             const errorMessage: Message = { role: 'assistant', content: "क्षमा करें, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया पुन: प्रयास करें।" };
             setMessages(prev => [...prev, errorMessage]);
-            // If AI response fails in conversation mode, start listening again
             if (isConversationMode) {
                 startListening();
             } else {
@@ -91,7 +89,6 @@ export default function AITeacherPage() {
         }
     } catch(e) {
         toast({ variant: 'destructive', title: 'An unexpected error occurred.', description: (e as Error).message });
-        // If an unexpected error occurs, start listening again
         if (isConversationMode) {
            startListening();
         } else {
@@ -117,7 +114,6 @@ export default function AITeacherPage() {
   useEffect(() => {
     if(speechError) {
       toast({ variant: 'destructive', title: 'Speech Recognition Error', description: speechError });
-      // Turn off conversation mode on critical error (e.g. permission denied)
       if(isConversationMode && speechError === "माइक्रोफ़ोन की अनुमति आवश्यक है।") {
           setIsConversationMode(false);
           setConversationStatus('idle');
@@ -138,14 +134,12 @@ export default function AITeacherPage() {
     }
   }, [audioUrl]);
 
-  // Update text input with transcript only in manual mode
   useEffect(() => {
     if (!isConversationMode) {
       setInput(transcript);
     }
   }, [transcript, isConversationMode]);
   
-  // Update status indicator based on listening state
   useEffect(() => {
     if(isConversationMode){
         if (isListening) {
@@ -160,8 +154,8 @@ export default function AITeacherPage() {
     e.preventDefault();
     if (!input.trim() || isLoading || isConversationMode) return;
     if (isListening) stopListening();
-    await handleAIResponse(input);
     resetTranscript();
+    await handleAIResponse(input);
   };
 
   const handleAudioEnded = () => {

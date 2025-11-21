@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -24,8 +25,10 @@ export default function Home() {
   const [studentName, setStudentName] = useState<string | null>(null);
   const [isNameModalOpen, setIsNameModalOpen] = useState(false);
   const [inputName, setInputName] = useState("");
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     const storedName = localStorage.getItem("studentName");
     if (storedName) {
       setStudentName(storedName);
@@ -76,7 +79,7 @@ export default function Home() {
       <div className="flex flex-col gap-8">
         <div className="p-6 md:p-8">
           <h1 className="text-3xl md:text-4xl font-bold font-headline text-primary animate-fade-in-down">
-            {studentName ? `${studentName}, ` : ""}ज्ञानोदय में आपका स्वागत है
+            {isClient && studentName ? `${studentName}, ` : ""}ज्ञानोदय में आपका स्वागत है
           </h1>
           <p className="mt-2 text-muted-foreground animate-fade-in-up">
             इंटरैक्टिव सीखने और प्रगति की ट्रैकिंग के लिए आपका केंद्रीकृत हब।

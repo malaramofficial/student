@@ -1,15 +1,10 @@
 
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { ModeToggle } from "../mode-toggle";
-import { Button } from "../ui/button";
-import { ArrowLeft, Home } from "lucide-react";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
 
 const pageTitles: { [key: string]: string } = {
   "/": "डैशबोर्ड",
@@ -29,35 +24,14 @@ const pageTitles: { [key: string]: string } = {
 
 export function Header() {
   const pathname = usePathname();
-  const router = useRouter();
   const { isMobile } = useSidebar();
-  const [isMounted, setIsMounted] = useState(false);
   const title = pageTitles[pathname] || "ज्ञानोदय";
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  const handleBack = () => {
-    if (isMounted) {
-      router.back();
-    }
-  };
-
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
       <div className={cn("md:hidden", { "invisible": !isMobile })}>
         <SidebarTrigger />
       </div>
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBack}>
-        <ArrowLeft />
-        <span className="sr-only">वापस</span>
-      </Button>
-      <Link href="/" className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-8 w-8")}>
-        <Home />
-        <span className="sr-only">होम</span>
-      </Link>
       <h1 className="text-lg font-semibold md:text-xl font-headline">{title}</h1>
       <div className="ml-auto md:hidden">
         <ModeToggle />

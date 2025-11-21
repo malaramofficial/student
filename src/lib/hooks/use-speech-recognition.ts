@@ -29,16 +29,37 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  
+
+  const resetTranscript = useCallback(() => {
+    setTranscript('');
+  }, []);
+
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+  }, []);
+
   const stableOnSpeechEnd = useCallback((finalTranscript: string) => {
     if (onSpeechEnd) {
       onSpeechEnd(finalTranscript);
     }
   }, [onSpeechEnd]);
 
-  const resetTranscript = useCallback(() => {
-    setTranscript('');
-  }, []);
+  const startListening = useCallback(() => {
+    if (recognitionRef.current && !isListening) {
+      resetTranscript();
+      try {
+        recognitionRef.current.start();
+      } catch (err) {
+        if ((err as DOMException).name !== 'InvalidStateError') {
+          console.error("Error starting speech recognition:", err);
+          setError("माइक्रोफ़ोन शुरू करने में विफल।");
+          setIsListening(false);
+        }
+      }
+    }
+  }, [isListening, resetTranscript]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -52,44 +73,37 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
     
-    recognition.continuous = true;
+    recognition.continuous = false; // We will manually restart it for conversation flow
     recognition.interimResults = true;
     recognition.lang = 'hi-IN';
 
-    let finalTranscript = '';
-
     recognition.onresult = (event) => {
       let interim_transcript = '';
-      finalTranscript = ''; 
+      let final_transcript = ''; 
 
       for (let i = 0; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
+          final_transcript += event.results[i][0].transcript;
         } else {
           interim_transcript += event.results[i][0].transcript;
         }
       }
-      
-      setTranscript(finalTranscript + interim_transcript);
+      setTranscript(final_transcript + interim_transcript);
+      if(final_transcript) {
+        stableOnSpeechEnd(final_transcript.trim());
+        resetTranscript();
+        stopListening();
+      }
     };
 
     recognition.onstart = () => {
       setIsListening(true);
       setError(null);
     };
-    
-    recognition.onspeechend = () => {
-        // When user stops speaking, process the transcript
-        const currentTranscript = transcript.trim();
-        if (currentTranscript) {
-           stableOnSpeechEnd(currentTranscript);
-           resetTranscript();
-        }
-    };
 
     recognition.onerror = (event) => {
-      setIsListening(false);
       if (event.error === 'no-speech' || event.error === 'audio-capture') {
+         // These are common, non-critical errors. We can ignore them.
         return; 
       }
       if (event.error === 'not-allowed') {
@@ -99,6 +113,7 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
       } else {
         setError(`स्पीच रिकग्निशन त्रुटि: ${event.error}`);
       }
+      setIsListening(false);
     };
     
     recognition.onend = () => {
@@ -112,31 +127,10 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
             recognitionRef.current.onerror = null;
             recognitionRef.current.onend = null;
             recognitionRef.current.onstart = null;
-            recognitionRef.current.onspeechend = null;
         }
     };
-  }, [stableOnSpeechEnd, resetTranscript, transcript]);
+  }, [resetTranscript, stableOnSpeechEnd, stopListening]);
 
-  const startListening = useCallback(() => {
-    if (recognitionRef.current && !isListening) {
-      resetTranscript();
-      try {
-        recognitionRef.current.start();
-      } catch (err) {
-        if ((err as DOMException).name !== 'InvalidStateError') {
-            console.error("स्पीच रिकग्निशन शुरू करने में त्रुटि:", err);
-            setError("माइक्रोफ़ोन शुरू करने में विफल।");
-            setIsListening(false);
-        }
-      }
-    }
-  }, [isListening, resetTranscript]);
-
-  const stopListening = useCallback(() => {
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
-    }
-  }, [isListening]);
 
   return {
     transcript,

@@ -69,9 +69,11 @@ export default function AITeacherPage() {
                 setAudioUrl(audioResponse.audio);
             } else {
                  toast({ variant: 'destructive', title: 'Audio Error', description: audioResponse?.error || 'Failed to generate audio.' });
-                 if (isConversationMode && audioRef.current) {
-                    const event = new Event('ended');
-                    audioRef.current.dispatchEvent(event);
+                 // If audio fails in conversation mode, start listening again
+                 if (isConversationMode) {
+                    startListening();
+                 } else {
+                    setConversationStatus('idle');
                  }
             }
             setIsAudioLoading(false);
@@ -80,16 +82,20 @@ export default function AITeacherPage() {
             toast({ variant: 'destructive', title: 'AI Error', description: aiResponse.error });
             const errorMessage: Message = { role: 'assistant', content: "क्षमा करें, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया पुन: प्रयास करें।" };
             setMessages(prev => [...prev, errorMessage]);
-            if (isConversationMode && audioRef.current) {
-                const event = new Event('ended');
-                audioRef.current.dispatchEvent(event);
+            // If AI response fails in conversation mode, start listening again
+            if (isConversationMode) {
+                startListening();
+            } else {
+                setConversationStatus('idle');
             }
         }
     } catch(e) {
         toast({ variant: 'destructive', title: 'An unexpected error occurred.', description: (e as Error).message });
-        if (isConversationMode && audioRef.current) {
-           const event = new Event('ended');
-           audioRef.current.dispatchEvent(event);
+        // If an unexpected error occurs, start listening again
+        if (isConversationMode) {
+           startListening();
+        } else {
+            setConversationStatus('idle');
         }
     } finally {
         setIsLoading(false);
@@ -111,8 +117,8 @@ export default function AITeacherPage() {
   useEffect(() => {
     if(speechError) {
       toast({ variant: 'destructive', title: 'Speech Recognition Error', description: speechError });
-      // Turn off conversation mode on error (e.g. permission denied)
-      if(isConversationMode) {
+      // Turn off conversation mode on critical error (e.g. permission denied)
+      if(isConversationMode && speechError === "माइक्रोफ़ोन की अनुमति आवश्यक है।") {
           setIsConversationMode(false);
           setConversationStatus('idle');
       }
@@ -142,9 +148,13 @@ export default function AITeacherPage() {
   // Update status indicator based on listening state
   useEffect(() => {
     if(isConversationMode){
-        setConversationStatus(isListening ? 'listening' : 'idle');
+        if (isListening) {
+            setConversationStatus('listening');
+        } else if (conversationStatus !== 'thinking' && conversationStatus !== 'speaking') {
+            setConversationStatus('idle');
+        }
     }
-  }, [isConversationMode, isListening]);
+  }, [isConversationMode, isListening, conversationStatus]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,10 +165,9 @@ export default function AITeacherPage() {
   };
 
   const handleAudioEnded = () => {
+    setConversationStatus('idle');
     if (isConversationMode) {
       startListening();
-    } else {
-      setConversationStatus('idle');
     }
   };
   

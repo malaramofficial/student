@@ -29,7 +29,6 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const speechEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const stableOnSpeechEnd = useCallback((finalTranscript: string) => {
     if (onSpeechEnd) {
@@ -60,13 +59,8 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     let finalTranscript = '';
 
     recognition.onresult = (event) => {
-      // Clear any existing timeout on new speech input
-      if (speechEndTimeoutRef.current) {
-        clearTimeout(speechEndTimeoutRef.current);
-      }
-
       let interim_transcript = '';
-      finalTranscript = ''; // Reset final transcript for this result event
+      finalTranscript = ''; 
 
       for (let i = 0; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
@@ -77,26 +71,25 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
       }
       
       setTranscript(finalTranscript + interim_transcript);
-      
-      // Set a timeout to trigger onSpeechEnd if there's a pause in speech
-      speechEndTimeoutRef.current = setTimeout(() => {
-        const currentTranscript = (finalTranscript + interim_transcript).trim();
-        if (currentTranscript) {
-          stableOnSpeechEnd(currentTranscript);
-          resetTranscript();
-        }
-      }, 3000); 
     };
 
     recognition.onstart = () => {
       setIsListening(true);
       setError(null);
     };
+    
+    recognition.onspeechend = () => {
+        // When user stops speaking, process the transcript
+        const currentTranscript = transcript.trim();
+        if (currentTranscript) {
+           stableOnSpeechEnd(currentTranscript);
+           resetTranscript();
+        }
+    };
 
     recognition.onerror = (event) => {
       setIsListening(false);
       if (event.error === 'no-speech' || event.error === 'audio-capture') {
-        // These are not critical errors, we can ignore them and let listening restart if needed.
         return; 
       }
       if (event.error === 'not-allowed') {
@@ -110,24 +103,19 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     
     recognition.onend = () => {
       setIsListening(false);
-      if (speechEndTimeoutRef.current) {
-        clearTimeout(speechEndTimeoutRef.current);
-      }
     };
     
     return () => {
-        if (speechEndTimeoutRef.current) {
-            clearTimeout(speechEndTimeoutRef.current);
-        }
         if (recognitionRef.current) {
             recognitionRef.current.stop();
             recognitionRef.current.onresult = null;
             recognitionRef.current.onerror = null;
             recognitionRef.current.onend = null;
             recognitionRef.current.onstart = null;
+            recognitionRef.current.onspeechend = null;
         }
     };
-  }, [stableOnSpeechEnd, resetTranscript]);
+  }, [stableOnSpeechEnd, resetTranscript, transcript]);
 
   const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
@@ -146,9 +134,6 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current && isListening) {
-      if (speechEndTimeoutRef.current) {
-        clearTimeout(speechEndTimeoutRef.current);
-      }
       recognitionRef.current.stop();
     }
   }, [isListening]);
@@ -163,5 +148,3 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     resetTranscript,
   };
 };
-
-    

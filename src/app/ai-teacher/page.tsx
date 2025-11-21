@@ -36,6 +36,7 @@ export default function AITeacherPage() {
   
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const sendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -98,16 +99,8 @@ export default function AITeacherPage() {
         setIsLoading(false);
     }
   }, [isLoading, toast, messages, mode, isConversationMode]);
-  
-  const handleSpeechEnd = useCallback(async (finalTranscript: string) => {
-      if (finalTranscript && isConversationMode) {
-        await handleAIResponse(finalTranscript);
-      }
-  }, [isConversationMode, handleAIResponse]);
-  
-  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition({ 
-    onSpeechEnd: handleSpeechEnd
-  });
+    
+  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError } = useSpeechRecognition();
   
   const sarathiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
 
@@ -133,12 +126,6 @@ export default function AITeacherPage() {
       audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
     }
   }, [audioUrl]);
-
-  useEffect(() => {
-    if (!isConversationMode) {
-      setInput(transcript);
-    }
-  }, [transcript, isConversationMode]);
   
   useEffect(() => {
     if(isConversationMode){
@@ -150,11 +137,31 @@ export default function AITeacherPage() {
     }
   }, [isConversationMode, isListening, conversationStatus]);
 
+  useEffect(() => {
+    if (isConversationMode) {
+        setInput(transcript);
+
+        if (sendTimeoutRef.current) {
+            clearTimeout(sendTimeoutRef.current);
+        }
+
+        if (transcript && !isListening) {
+             sendTimeoutRef.current = setTimeout(() => {
+                handleAIResponse(transcript);
+            }, 3000);
+        }
+    }
+     return () => {
+      if (sendTimeoutRef.current) {
+        clearTimeout(sendTimeoutRef.current);
+      }
+    };
+  }, [transcript, isListening, isConversationMode, handleAIResponse]);
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading || isConversationMode) return;
-    if (isListening) stopListening();
-    resetTranscript();
     await handleAIResponse(input);
   };
 
@@ -176,6 +183,8 @@ export default function AITeacherPage() {
       startListening();
     } else {
       stopListening();
+      setInput('');
+      if (sendTimeoutRef.current) clearTimeout(sendTimeoutRef.current);
       setConversationStatus('idle');
     }
   }
@@ -289,7 +298,7 @@ export default function AITeacherPage() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={isConversationMode ? "कन्वर्सेशन मोड सक्रिय है..." : "अपना प्रश्न टाइप करें..."}
+            placeholder={isConversationMode ? "सुन रही हूँ... 3 सेकंड रुकने पर संदेश भेज दिया जाएगा" : "अपना प्रश्न टाइप करें..."}
             disabled={isLoading || isConversationMode}
             className="flex-1"
           />
@@ -307,3 +316,5 @@ export default function AITeacherPage() {
     </div>
   );
 }
+
+    

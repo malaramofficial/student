@@ -3,10 +3,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-type SpeechRecognitionOptions = {
-  onSpeechEnd?: (finalTranscript: string) => void;
-};
-
 type SpeechRecognitionHook = {
   transcript: string;
   isListening: boolean;
@@ -14,7 +10,6 @@ type SpeechRecognitionHook = {
   stopListening: () => void;
   hasRecognitionSupport: boolean;
   error: string | null;
-  resetTranscript: () => void;
 };
 
 declare global {
@@ -24,42 +19,32 @@ declare global {
   }
 }
 
-export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions = {}): SpeechRecognitionHook => {
+export const useSpeechRecognition = (): SpeechRecognitionHook => {
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  const resetTranscript = useCallback(() => {
-    setTranscript('');
-  }, []);
-
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
+      setIsListening(false);
     }
   }, []);
 
-  const stableOnSpeechEnd = useCallback((finalTranscript: string) => {
-    if (onSpeechEnd) {
-      onSpeechEnd(finalTranscript);
-    }
-  }, [onSpeechEnd]);
-
   const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
-      resetTranscript();
       try {
         recognitionRef.current.start();
+        setIsListening(true);
       } catch (err) {
         if ((err as DOMException).name !== 'InvalidStateError') {
           console.error("Error starting speech recognition:", err);
           setError("माइक्रोफ़ोन शुरू करने में विफल।");
-          setIsListening(false);
         }
       }
     }
-  }, [isListening, resetTranscript]);
+  }, [isListening]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -73,27 +58,21 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
     
-    recognition.continuous = false; // We will manually restart it for conversation flow
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'hi-IN';
 
     recognition.onresult = (event) => {
       let interim_transcript = '';
-      let final_transcript = ''; 
-
+      let final_transcript = '';
       for (let i = 0; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          final_transcript += event.results[i][0].transcript;
+            final_transcript += event.results[i][0].transcript;
         } else {
-          interim_transcript += event.results[i][0].transcript;
+            interim_transcript += event.results[i][0].transcript;
         }
       }
       setTranscript(final_transcript + interim_transcript);
-      if(final_transcript) {
-        stableOnSpeechEnd(final_transcript.trim());
-        resetTranscript();
-        stopListening();
-      }
     };
 
     recognition.onstart = () => {
@@ -103,7 +82,8 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
 
     recognition.onerror = (event) => {
       if (event.error === 'no-speech' || event.error === 'audio-capture') {
-         // These are common, non-critical errors. We can ignore them.
+        // These are common, non-critical errors. We can ignore them.
+        setIsListening(false);
         return; 
       }
       if (event.error === 'not-allowed') {
@@ -122,15 +102,14 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     
     return () => {
         if (recognitionRef.current) {
-            recognitionRef.current.stop();
             recognitionRef.current.onresult = null;
             recognitionRef.current.onerror = null;
             recognitionRef.current.onend = null;
             recognitionRef.current.onstart = null;
+            recognitionRef.current.stop();
         }
     };
-  }, [resetTranscript, stableOnSpeechEnd, stopListening]);
-
+  }, []);
 
   return {
     transcript,
@@ -139,6 +118,7 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     stopListening,
     hasRecognitionSupport: !!(typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)),
     error,
-    resetTranscript,
   };
 };
+
+    

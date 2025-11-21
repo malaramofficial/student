@@ -36,6 +36,7 @@ export default function AITeacherPage() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const autoSendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const sarathiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
 
@@ -44,12 +45,17 @@ export default function AITeacherPage() {
   }, []);
 
   const handleAIResponse = useCallback(async (query: string) => {
-    if (!query.trim()) return;
+    if (!query.trim() || conversationStatus !== 'listening') return;
 
+    if (autoSendTimeoutRef.current) {
+        clearTimeout(autoSendTimeoutRef.current);
+    }
+
+    stopListening();
     setConversationStatus('thinking');
     setIsLoading(true);
     setAudioUrl(null);
-    setInput('');
+    // Do not clear input here, so user can see what was sent
 
     const userMessage: Message = { role: 'user', content: query };
     const currentMessages = [...messages, userMessage];
@@ -87,13 +93,11 @@ export default function AITeacherPage() {
     } finally {
         setIsLoading(false);
     }
-  }, [messages, mode, isConversationMode, toast]);
+  }, [messages, mode, isConversationMode, toast, conversationStatus]);
 
   const handleSpeechEnd = useCallback((finalTranscript: string) => {
-    if (finalTranscript.trim() && conversationStatus === 'listening') {
-      handleAIResponse(finalTranscript);
-    }
-  }, [conversationStatus, handleAIResponse]);
+      // This is now handled by the timeout logic inside the page
+  }, []);
 
   const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError } = useSpeechRecognition({ onSpeechEnd: handleSpeechEnd });
 
@@ -124,20 +128,29 @@ export default function AITeacherPage() {
 
   useEffect(() => {
     setInput(transcript);
-  }, [transcript]);
-
-  useEffect(() => {
-    if (isConversationMode && !isListening) {
-       setConversationStatus('idle');
-    } else if (isConversationMode && isListening) {
-       setConversationStatus('listening');
+    
+    if (autoSendTimeoutRef.current) {
+      clearTimeout(autoSendTimeoutRef.current);
     }
-  }, [isListening, isConversationMode]);
+
+    if (isConversationMode && isListening && transcript.trim()) {
+      autoSendTimeoutRef.current = setTimeout(() => {
+        handleAIResponse(transcript.trim());
+      }, 3000);
+    }
+    
+    return () => {
+      if (autoSendTimeoutRef.current) {
+        clearTimeout(autoSendTimeoutRef.current);
+      }
+    }
+  }, [transcript, isConversationMode, isListening, handleAIResponse]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading || isConversationMode) return;
-    await handleAIResponse(input);
+    setConversationStatus('thinking');
+    handleAIResponse(input);
   };
 
   const handleAudioEnded = () => {
@@ -164,6 +177,16 @@ export default function AITeacherPage() {
       setConversationStatus('idle');
     }
   }
+
+  useEffect(() => {
+    if (isConversationMode) {
+      if (isListening) {
+        setConversationStatus('listening');
+      }
+    } else {
+      setConversationStatus('idle');
+    }
+  }, [isListening, isConversationMode]);
 
   const ConversationStatusIndicator = () => {
     if (!isConversationMode) return null;
@@ -280,7 +303,7 @@ export default function AITeacherPage() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={isConversationMode ? "सुन रही हूँ..." : "अपना प्रश्न टाइप करें..."}
+            placeholder={isConversationMode ? (isListening ? "सुन रही हूँ..." : "बोलने के लिए माइक्रोफ़ोन बटन दबाएँ...") : "अपना प्रश्न टाइप करें..."}
             disabled={isLoading || isConversationMode}
             className="flex-1"
           />

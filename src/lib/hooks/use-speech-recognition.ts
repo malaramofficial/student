@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -37,6 +38,11 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     }
   }, [onSpeechEnd]);
 
+  const resetTranscript = useCallback(() => {
+    finalTranscriptRef.current = '';
+    setTranscript('');
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -58,28 +64,22 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
         clearTimeout(speechEndTimeoutRef.current);
       }
 
-      let final_transcript = '';
       let interim_transcript = '';
-
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          final_transcript += event.results[i][0].transcript;
+          finalTranscriptRef.current += event.results[i][0].transcript;
         } else {
           interim_transcript += event.results[i][0].transcript;
         }
       }
       
-      finalTranscriptRef.current = final_transcript;
-      setTranscript(final_transcript + interim_transcript);
+      setTranscript(finalTranscriptRef.current + interim_transcript);
       
       speechEndTimeoutRef.current = setTimeout(() => {
         const currentTranscript = (finalTranscriptRef.current + interim_transcript).trim();
         if (currentTranscript) {
           stableOnSpeechEnd(currentTranscript);
-          // Do not stop listening here in conversation mode. Let the parent component control it.
-          // if (recognitionRef.current && isListening) {
-          //    recognitionRef.current.stop();
-          // }
+          resetTranscript();
         }
       }, 3000); 
     };
@@ -116,14 +116,11 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
             recognitionRef.current.onend = null;
         }
     };
-  // `isListening` is intentionally omitted to avoid re-triggering the effect on its change
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stableOnSpeechEnd]);
+  }, [stableOnSpeechEnd, resetTranscript]);
 
   const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
       resetTranscript();
-      finalTranscriptRef.current = '';
       try {
         recognitionRef.current.start();
         setIsListening(true);
@@ -137,26 +134,23 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
         }
       }
     }
-  }, [isListening]);
+  }, [isListening, resetTranscript]);
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false); 
       if (speechEndTimeoutRef.current) {
         clearTimeout(speechEndTimeoutRef.current);
       }
-      const finalTranscript = transcript.trim();
+      recognitionRef.current.stop();
+      setIsListening(false); 
+      
+      const finalTranscript = (finalTranscriptRef.current || transcript).trim();
       if(finalTranscript){
           stableOnSpeechEnd(finalTranscript);
+          resetTranscript();
       }
     }
-  }, [isListening, transcript, stableOnSpeechEnd]);
-
-  const resetTranscript = useCallback(() => {
-    setTranscript('');
-    finalTranscriptRef.current = '';
-  }, []);
+  }, [isListening, transcript, stableOnSpeechEnd, resetTranscript]);
 
   return {
     transcript,

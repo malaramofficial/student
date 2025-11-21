@@ -8,6 +8,9 @@ import { ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { Trash2 } from 'lucide-react';
 
 type MockTestResult = {
   subject: string;
@@ -35,9 +38,9 @@ export default function ProgressTrackerPage() {
   const [mockTestChartData, setMockTestChartData] = useState<ChartData[]>([]);
   const [writtenExamChartData, setWrittenExamChartData] = useState<ChartData[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    setIsClient(true);
+  const loadData = () => {
     const storedMockResults = JSON.parse(localStorage.getItem('mockTestResults') || '[]');
     const storedWrittenResults = JSON.parse(localStorage.getItem('writtenExamResults') || '[]');
     
@@ -60,6 +63,8 @@ export default function ProgressTrackerPage() {
         averageScore: Math.round(subjectScores[subject].scores.reduce((a, b) => a + b, 0) / subjectScores[subject].count),
       }));
       setMockTestChartData(aggregatedData);
+    } else {
+        setMockTestChartData([]);
     }
     
     if (storedWrittenResults.length > 0) {
@@ -78,9 +83,29 @@ export default function ProgressTrackerPage() {
         averageScore: Math.round(subjectScores[subject].scores.reduce((a, b) => a + b, 0) / subjectScores[subject].count),
       }));
       setWrittenExamChartData(aggregatedData);
+    } else {
+        setWrittenExamChartData([]);
     }
+  };
 
+  useEffect(() => {
+    setIsClient(true);
+    loadData();
   }, []);
+  
+  const handleResetProgress = () => {
+    localStorage.removeItem('mockTestResults');
+    localStorage.removeItem('writtenExamResults');
+    localStorage.removeItem('studentName');
+    loadData();
+    toast({
+      title: 'प्रगति रीसेट',
+      description: 'आपकी सभी प्रगति सफलतापूर्वक हटा दी गई है।',
+    });
+    // Optional: force a reload to re-trigger name prompt on home page
+    setTimeout(() => window.location.href = '/', 500);
+  };
+
 
   if (!isClient) {
     return null; // Don't render server-side
@@ -146,6 +171,28 @@ export default function ProgressTrackerPage() {
 
   return (
     <div className="p-4 md:p-8">
+      <div className="flex justify-end mb-4">
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                <Trash2 className="mr-2 h-4 w-4" />
+                प्रगति रीसेट करें
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>क्या आप निश्चित हैं?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    यह क्रिया आपके सभी सहेजे गए परीक्षा परिणामों और प्रगति डेटा को स्थायी रूप से हटा देगी। आप इस क्रिया को पूर्ववत नहीं कर सकते।
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                <AlertDialogCancel>रद्द करें</AlertDialogCancel>
+                <AlertDialogAction onClick={handleResetProgress}>जारी रखें</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+      </div>
       <Tabs defaultValue="mock-tests" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="mock-tests">मॉक टेस्ट</TabsTrigger>

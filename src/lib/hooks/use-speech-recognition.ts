@@ -30,7 +30,6 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const speechEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const finalTranscriptRef = useRef('');
   
   const stableOnSpeechEnd = useCallback((finalTranscript: string) => {
     if (onSpeechEnd) {
@@ -39,7 +38,6 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
   }, [onSpeechEnd]);
 
   const resetTranscript = useCallback(() => {
-    finalTranscriptRef.current = '';
     setTranscript('');
   }, []);
 
@@ -59,24 +57,30 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     recognition.interimResults = true;
     recognition.lang = 'hi-IN';
 
+    let finalTranscript = '';
+
     recognition.onresult = (event) => {
+      // Clear any existing timeout on new speech input
       if (speechEndTimeoutRef.current) {
         clearTimeout(speechEndTimeoutRef.current);
       }
 
       let interim_transcript = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
+      finalTranscript = ''; // Reset final transcript for this result event
+
+      for (let i = 0; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          finalTranscriptRef.current += event.results[i][0].transcript;
+          finalTranscript += event.results[i][0].transcript;
         } else {
           interim_transcript += event.results[i][0].transcript;
         }
       }
       
-      setTranscript(finalTranscriptRef.current + interim_transcript);
+      setTranscript(finalTranscript + interim_transcript);
       
+      // Set a timeout to trigger onSpeechEnd if there's a pause in speech
       speechEndTimeoutRef.current = setTimeout(() => {
-        const currentTranscript = (finalTranscriptRef.current + interim_transcript).trim();
+        const currentTranscript = (finalTranscript + interim_transcript).trim();
         if (currentTranscript) {
           stableOnSpeechEnd(currentTranscript);
           resetTranscript();
@@ -84,9 +88,16 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
       }, 3000); 
     };
 
+    recognition.onstart = () => {
+      setIsListening(true);
+      setError(null);
+    };
+
     recognition.onerror = (event) => {
+      setIsListening(false);
       if (event.error === 'no-speech' || event.error === 'audio-capture') {
-        return;
+        // These are not critical errors, we can ignore them and let listening restart if needed.
+        return; 
       }
       if (event.error === 'not-allowed') {
         setError("माइक्रोफ़ोन की अनुमति आवश्यक है।");
@@ -95,7 +106,6 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
       } else {
         setError(`स्पीच रिकग्निशन त्रुटि: ${event.error}`);
       }
-      setIsListening(false);
     };
     
     recognition.onend = () => {
@@ -114,6 +124,7 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
             recognitionRef.current.onresult = null;
             recognitionRef.current.onerror = null;
             recognitionRef.current.onend = null;
+            recognitionRef.current.onstart = null;
         }
     };
   }, [stableOnSpeechEnd, resetTranscript]);
@@ -123,13 +134,10 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
       resetTranscript();
       try {
         recognitionRef.current.start();
-        setIsListening(true);
-        setError(null);
       } catch (err) {
-        if ((err as DOMException).name === 'InvalidStateError') {
-            // Already started, this is fine.
-        } else {
+        if ((err as DOMException).name !== 'InvalidStateError') {
             console.error("स्पीच रिकग्निशन शुरू करने में त्रुटि:", err);
+            setError("माइक्रोफ़ोन शुरू करने में विफल।");
             setIsListening(false);
         }
       }
@@ -142,15 +150,8 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
         clearTimeout(speechEndTimeoutRef.current);
       }
       recognitionRef.current.stop();
-      setIsListening(false); 
-      
-      const finalTranscript = (finalTranscriptRef.current || transcript).trim();
-      if(finalTranscript){
-          stableOnSpeechEnd(finalTranscript);
-          resetTranscript();
-      }
     }
-  }, [isListening, transcript, stableOnSpeechEnd, resetTranscript]);
+  }, [isListening]);
 
   return {
     transcript,
@@ -162,3 +163,5 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     resetTranscript,
   };
 };
+
+    

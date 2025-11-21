@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Loader2, Mic, Send, User, Volume2, StopCircle, Info, MicOff } from "lucide-react";
+import { Bot, Loader2, Mic, Send, User, Volume2, StopCircle, MicOff } from "lucide-react";
 import { getAIResponse, getAudioResponse } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
@@ -29,7 +29,6 @@ export default function AITeacherPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [isClient, setIsClient] = useState(false);
   const [mode, setMode] = useState<'student' | 'public'>('student');
   const [isConversationMode, setIsConversationMode] = useState(false);
   const [conversationStatus, setConversationStatus] = useState<ConversationStatus>('idle');
@@ -40,7 +39,7 @@ export default function AITeacherPage() {
 
   const handleAIResponse = useCallback(async (query: string) => {
     if (!query.trim() || isLoading) return;
-    
+
     setConversationStatus('thinking');
 
     const userMessage: Message = { role: 'user', content: query };
@@ -61,7 +60,7 @@ export default function AITeacherPage() {
 
             setIsAudioLoading(true);
             const audioResponse = await getAudioResponse({ text: aiResponse.answer, voice: 'female' });
-            if (audioResponse && audioResponse.success && audioResponse.audio) {
+            if (audioResponse?.success && audioResponse.audio) {
                 setAudioUrl(audioResponse.audio);
             } else {
                  toast({ variant: 'destructive', title: 'Audio Error', description: audioResponse?.error || 'Failed to generate audio.' });
@@ -77,8 +76,8 @@ export default function AITeacherPage() {
             const errorMessage: Message = { role: 'assistant', content: "क्षमा करें, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया पुन: प्रयास करें।" };
             setMessages(prev => [...prev, errorMessage]);
             if (isConversationMode && audioRef.current) {
-                 const event = new Event('ended');
-                 audioRef.current.dispatchEvent(event);
+                const event = new Event('ended');
+                audioRef.current.dispatchEvent(event);
             }
         }
     } catch(e) {
@@ -101,19 +100,19 @@ export default function AITeacherPage() {
   const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition({ 
     onSpeechEnd: handleSpeechEnd
   });
-
+  
   const sarathiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-  
-  useEffect(() => {
     if(speechError) {
       toast({ variant: 'destructive', title: 'Speech Recognition Error', description: speechError });
-      setIsConversationMode(false); // Turn off conversation mode on error
+      // Turn off conversation mode on error (e.g. permission denied)
+      if(isConversationMode) {
+          setIsConversationMode(false);
+          setConversationStatus('idle');
+      }
     }
-  }, [speechError, toast]);
+  }, [speechError, toast, isConversationMode]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -128,32 +127,36 @@ export default function AITeacherPage() {
     }
   }, [audioUrl]);
 
+  // Update text input with transcript only in manual mode
   useEffect(() => {
-    if (!isConversationMode || isListening) {
+    if (!isConversationMode) {
       setInput(transcript);
     }
-  }, [transcript, isConversationMode, isListening]);
-  
+  }, [transcript, isConversationMode]);
+
+  // Handle conversation mode state changes
   useEffect(() => {
-    if(isConversationMode && isListening){
-      setConversationStatus('listening');
+    if (isConversationMode) {
+        startListening();
+    } else {
+        stopListening();
+        setConversationStatus('idle');
+    }
+  }, [isConversationMode, startListening, stopListening]);
+  
+  // Update status indicator based on listening state
+  useEffect(() => {
+    if(isConversationMode){
+        setConversationStatus(isListening ? 'listening' : 'idle');
     }
   }, [isConversationMode, isListening]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || isConversationMode) return;
     if (isListening) stopListening();
     await handleAIResponse(input);
     resetTranscript();
-  };
-  
-  const toggleListening = () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
-    }
   };
 
   const handleAudioEnded = () => {
@@ -164,22 +167,13 @@ export default function AITeacherPage() {
     }
   };
   
-  const handleModeChange = (isPublic: boolean) => {
-    const newMode = isPublic ? 'public' : 'student';
-    setMode(newMode);
-    
-    setIsConversationMode(isPublic);
-
-    if (isPublic) {
-        startListening();
-        setConversationStatus('listening');
-    } else {
-        if (isListening) {
-            stopListening();
-        }
-        setConversationStatus('idle');
+  const toggleConversationMode = () => {
+    if (!hasRecognitionSupport) {
+        toast({ variant: "destructive", title: "Unsupported Browser", description: "Speech recognition is not supported in this browser." });
+        return;
     }
-  };
+    setIsConversationMode(prev => !prev);
+  }
 
   const ConversationStatusIndicator = () => {
     if (!isConversationMode) return null;
@@ -210,7 +204,7 @@ export default function AITeacherPage() {
       default:
         return (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Mic className="h-4 w-4" />
+            <MicOff className="h-4 w-4" />
             <span>कन्वर्सेशन मोड सक्रिय है</span>
           </div>
         );
@@ -226,7 +220,7 @@ export default function AITeacherPage() {
                 <Switch
                     id="mode-switch"
                     checked={mode === 'public'}
-                    onCheckedChange={handleModeChange}
+                    onCheckedChange={(isPublic) => setMode(isPublic ? 'public' : 'student')}
                     aria-label="Toggle between Student and Public mode"
                 />
                 <Label htmlFor="mode-switch" className={cn(mode === 'public' && 'text-primary font-semibold')}>सार्वजनिक मोड</Label>
@@ -290,13 +284,13 @@ export default function AITeacherPage() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={isListening ? "सुन रही हूँ..." : (isConversationMode ? "कन्वर्सेशन मोड से बाहर निकलने के लिए स्विच बंद करें" : "अपना प्रश्न टाइप करें या माइक का उपयोग करें")}
+            placeholder={isConversationMode ? "कन्वर्सेशन मोड सक्रिय है..." : "अपना प्रश्न टाइप करें..."}
             disabled={isLoading || isConversationMode}
             className="flex-1"
           />
-          {isClient && hasRecognitionSupport && !isConversationMode && (
-            <Button type="button" size="icon" variant={isListening ? "destructive" : "outline"} onClick={toggleListening}>
-               {isListening ? <StopCircle /> : <Mic />}
+          {hasRecognitionSupport && (
+            <Button type="button" size="icon" variant={isConversationMode ? "destructive" : "outline"} onClick={toggleConversationMode} disabled={isLoading}>
+               {isConversationMode ? <StopCircle /> : <Mic />}
             </Button>
           )}
           <Button type="submit" size="icon" disabled={isLoading || !input.trim() || isConversationMode}>
@@ -308,3 +302,5 @@ export default function AITeacherPage() {
     </div>
   );
 }
+
+    

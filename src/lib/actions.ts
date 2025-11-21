@@ -1,6 +1,5 @@
 'use server';
 
-import { AIMentorInput } from '@/ai/ai-mentor-follow-up-questions';
 import {
   adminTrainAIMentor,
   AdminTrainAIMentorInput,
@@ -74,7 +73,7 @@ export async function getAIResponse(input: {
     return { success: false, error: 'Invalid input' };
   }
 
-  const flowInput: AIMentorInput = {
+  const flowInput = {
     query: parsedInput.data.question,
     chatHistory: parsedInput.data.chatHistory,
   };
@@ -263,3 +262,5 @@ export async function evaluateWrittenExam(input: EvaluateWrittenExamInput) {
     return { success: false, error: errorMessage };
   }
 }
+
+    

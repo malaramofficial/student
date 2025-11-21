@@ -5,8 +5,6 @@
  *
  * This file exports:
  * - `askAditiMadam`: The main function to ask Aditi Madam a question.
- * - `AIMentorInput`: The input type for the askAditiMadam function.
- * - `AIMentorOutput`: The output type for the askAditiMadam function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -20,17 +18,16 @@ const AIMentorInputSchema = z.object({
     content: z.string(),
   })).optional().describe('The chat history between the user and Aditi Madam.'),
 });
-export type AIMentorInput = z.infer<typeof AIMentorInputSchema>;
+type AIMentorInput = z.infer<typeof AIMentorInputSchema>;
 
 const AIMentorOutputSchema = z.object({
   response: z.string().describe('The response from Aditi Madam.'),
 });
-export type AIMentorOutput = z.infer<typeof AIMentorOutputSchema>;
+type AIMentorOutput = z.infer<typeof AIMentorOutputSchema>;
 
 export async function askAditiMadam(input: AIMentorInput): Promise<AIMentorOutput> {
   return aiMentorFlow(input);
 }
-
 
 const getSyllabusTool = ai.defineTool(
   {
@@ -50,10 +47,10 @@ const getSyllabusTool = ai.defineTool(
         const fullSubjectName = subject.name.toLowerCase();
         
         // Split name like "हिन्दी साहित्य (hindi literature)" into parts
-        const nameParts = fullSubjectName.split(/[\(\)]/).map(part => part.trim());
+        const nameParts = fullSubjectName.replace(/[()]/g, '').split(/[\s,]+/).map(part => part.trim());
         
         // Check if the searched term matches any part of the subject name
-        if (nameParts.some(part => part.includes(subjectToFind))) {
+        if (nameParts.includes(subjectToFind)) {
           return { topics: subject.topics };
         }
       }
@@ -218,3 +215,5 @@ const aiMentorFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

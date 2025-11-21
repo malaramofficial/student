@@ -172,6 +172,176 @@
                     ]
                 }
             ]
+        },
+        {
+            "name": "रसायन विज्ञान (Chemistry)",
+            "sections": [
+                {
+                    "name": "खंड अ",
+                    "description": "उत्तर एक शब्द अथवा एक पंक्ति में दीजिए।",
+                    "questions": [
+                        { "question": "विलयन की मोलरता को परिभाषित कीजिए।", "marks": 1 },
+                        { "question": "प्राथमिक सेल का एक उदाहरण दीजिए।", "marks": 1 }
+                    ]
+                },
+                {
+                    "name": "खंड ब",
+                    "description": "उत्तर लगभग 30-40 शब्दों में दीजिए।",
+                    "questions": [
+                        { "question": "अभिक्रिया की कोटि और आणविकता में दो अंतर लिखिए।", "marks": 2 }
+                    ]
+                },
+                {
+                    "name": "खंड स",
+                    "description": "उत्तर लगभग 100-150 शब्दों में दीजिए।",
+                    "questions": [
+                        { "question": "संक्रमण तत्व परिवर्ती ऑक्सीकरण अवस्था क्यों दर्शाते हैं? समझाइए।", "marks": 4 }
+                    ]
+                },
+                {
+                    "name": "खंड द",
+                    "description": "उत्तर लगभग 250-300 शब्दों में दीजिए।",
+                    "questions": [
+                        { "question": "ऐल्डिहाइड और कीटोन में विभेद करने के लिए दो रासायनिक परीक्षण दीजिए। संबंधित रासायनिक समीकरण भी लिखिए।", "marks": 6 }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "भूगोल (Geography)",
+            "sections": [
+                {
+                    "name": "खंड अ",
+                    "description": "उत्तर एक शब्द अथवा एक पंक्ति में दीजिए।",
+                    "questions": [
+                        { "question": "मानव भूगोल का जनक किसे कहा जाता है?", "marks": 1 },
+                        { "question": "भारत में सर्वाधिक जनसंख्या घनत्व वाला राज्य कौन सा है?", "marks": 1 }
+                    ]
+                },
+                {
+                    "name": "खंड ब",
+                    "description": "उत्तर लगभग 50 शब्दों में दीजिए।",
+                    "questions": [
+                        { "question": "प्रवास के अपकर्ष और प्रतिकर्ष कारकों में अंतर स्पष्ट कीजिए।", "marks": 2 }
+                    ]
+                },
+                {
+                    "name": "खंड स",
+                    "description": "उत्तर लगभग 100-150 शब्दों में दीजिए।",
+                    "questions": [
+                        { "question": "भारत में लौह-अयस्क के वितरण का वर्णन कीजिए।", "marks": 4 }
+                    ]
+                },
+                {
+                    "name": "खंड द",
+                    "description": "उत्तर लगभग 250-300 शब्दों में दीजिए।",
+                    "questions": [
+                        { "question": "भारत में चावल की कृषि के लिए अनुकूल भौगोलिक दशाओं तथा इसके उत्पादन क्षेत्रों का विस्तृत वर्णन कीजिए।", "marks": 6 }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "समाजशास्त्र (Sociology)",
+            "sections": [
+                {
+                    "name": "खंड अ",
+                    "description": "उत्तर एक शब्द अथवा एक पंक्ति में दीजिए।",
+                    "questions": [
+                        { "question": "जाति को परिभाषित कीजिए।", "marks": 1 },
+                        { "question": "सांस्कृतिकरण की अवधारणा किसने दी?", "marks": 1 }
+                    ]
+                },
+                {
+                    "name": "खंड ब",
+                    "description": "उत्तर लगभग 50 शब्दों में दीजिए।",
+                    "questions": [
+                        { "question": "सामाजिक स्तरीकरण से आप क्या समझते हैं?", "marks": 2 }
+                    ]
+                },
+                {
+                    "name": "खंड स",
+                    "description": "उत्तर लगभग 100-150 शब्दों में दीजिए।",
+                    "questions": [
+                        { "question": "भारत में सामाजिक आंदोलन के रूप में किसान आंदोलन की भूमिका पर चर्चा करें।", "marks": 4 }
+                    ]
+                },
+                {
+                    "name": "खंड द",
+                    "description": "उत्तर लगभग 250-300 शब्दों में दीजिए।",
+                    "questions": [
+                        { "question": "भूमंडलीकरण ने भारतीय समाज को किस प्रकार प्रभावित किया है? विस्तार से समझाइए।", "marks": 6 }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "अर्थशास्त्र (Economics)",
+            "sections": [
+                {
+                    "name": "खंड अ",
+                    "description": "उत्तर एक शब्द अथवा एक पंक्ति में दीजिए।",
+                    "questions": [
+                        { "question": "व्यष्टि अर्थशास्त्र क्या है?", "marks": 1 },
+                        { "question": "मुद्रा का एक प्राथमिक कार्य बताइए।", "marks": 1 }
+                    ]
+                },
+                {
+                    "name": "खंड ब",
+                    "description": "उत्तर लगभग 50 शब्दों में दीजिए।",
+                    "questions": [
+                        { "question": "स्टॉक और प्रवाह में क्या अंतर है?", "marks": 2 }
+                    ]
+                },
+                {
+                    "name": "खंड स",
+                    "description": "उत्तर लगभग 100-150 शब्दों में दीजिए।",
+                    "questions": [
+                        { "question": "केंद्रीय बैंक के प्रमुख कार्यों का वर्णन कीजिए।", "marks": 4 }
+                    ]
+                },
+                {
+                    "name": "खंड द",
+                    "description": "उत्तर लगभग 250-300 शब्दों में दीजिए।",
+                    "questions": [
+                        { "question": "राष्ट्रीय आय की गणना की व्यय विधि को विस्तार से समझाइए।", "marks": 6 }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "अंग्रेजी साहित्य (English Literature)",
+            "sections": [
+                {
+                    "name": "Section A",
+                    "description": "Reading",
+                    "questions": [
+                        { "question": "What is the theme of the poem 'My Mother at Sixty-Six'?", "marks": 1 },
+                        { "question": "Who is the author of 'The Last Lesson'?", "marks": 1 }
+                    ]
+                },
+                {
+                    "name": "Section B",
+                    "description": "Writing Skills",
+                    "questions": [
+                        { "question": "You are the secretary of the Eco Club of your school. Write a notice for the school notice board informing students about a tree plantation drive.", "marks": 2 }
+                    ]
+                },
+                {
+                    "name": "Section C",
+                    "description": "Literature (Answer in 100-150 words)",
+                    "questions": [
+                        { "question": "Describe the character of the peddler in 'The Rattrap'.", "marks": 4 }
+                    ]
+                },
+                {
+                    "name": "Section D",
+                    "description": "Long Answer Question (Answer in 250-300 words)",
+                    "questions": [
+                        { "question": "How did the incident at the YMCA pool affect Douglas? What was its impact on his life?", "marks": 6 }
+                    ]
+                }
+            ]
         }
     ]
 }

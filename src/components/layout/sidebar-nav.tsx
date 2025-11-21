@@ -17,6 +17,7 @@ import {
   BookOpen,
   GraduationCap,
   Speech,
+  FileText,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -99,6 +100,17 @@ export default function SidebarNav() {
               >
                 <ClipboardList />
                 <span>मॉक टेस्ट</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton
+                as={Link}
+                href="/written-exam"
+                isActive={isActive('/written-exam')}
+                tooltip="लिखित परीक्षा"
+              >
+                <FileText />
+                <span>लिखित परीक्षा</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>

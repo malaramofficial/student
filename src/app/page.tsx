@@ -102,6 +102,21 @@ export default function DashboardPage() {
 
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
+                <CardTitle>लिखित परीक्षा</CardTitle>
+                <CardDescription>लंबे उत्तर वाले प्रश्नों के लिए अभ्यास करें।</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-32 bg-muted rounded-md flex items-center justify-center">
+                  <p className="text-sm text-muted-foreground">उत्तर लिखने का अभ्यास करें</p>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={() => handleNavigation('/written-exam')} className="w-full">अभ्यास करें</Button>
+              </CardFooter>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
                 <CardTitle>पाठ्यक्रम</CardTitle>
                 <CardDescription>कक्षा 12 के सभी विषयों का विस्तृत पाठ्यक्रम देखें।</CardDescription>
               </CardHeader>

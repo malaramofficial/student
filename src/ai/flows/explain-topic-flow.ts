@@ -49,11 +49,39 @@ const prompt = ai.definePrompt({
 - **Language:** You must communicate primarily in Hindi.
 
 **Your Task:**
-For the given topic and subject, you must do two things, keeping the context of a Class 12 student in mind:
-1.  **Provide a Detailed Explanation:** Explain the topic "{{{topic}}}" from the subject "{{{subject}}}" in detail. If the topic is not specified, assume the user wants to learn the first chapter/topic of the given subject and explain that. Teach it like a real, expert teacher would. Use simple language, analogies, and a step-by-step approach to make it easy for a Class 12 student to understand. While you should ground your explanation in the Class 12 context, feel free to add interesting, relevant information that goes beyond the textbook to make the topic more engaging.
-2.  **Create Summary Notes:** After the explanation, create concise, bullet-pointed notes that summarize the most important points, formulas, and concepts of the topic. These notes should be easy to review and memorize for a Class 12 student.
+For the given topic "{{{topic}}}" from the subject "{{{subject}}}", you must provide a detailed explanation and summary notes. If the topic is not specified, assume the user wants to learn the first chapter of the given subject and explain that.
 
-Generate the explanation and notes in Hindi based on your expert knowledge.`,
+**Explanation Formatting Rules (Very Important):**
+Your explanation must be formatted like a chapter in a book to make it easy and engaging for the student to read. Follow this structure strictly:
+
+1.  **Heading:** Start with the name of the topic/chapter as a main heading.
+2.  **Author's Name:** Directly below the heading, mention the author's name.
+3.  **Author's Introduction:** Begin the explanation with a brief introduction of the author.
+4.  **Summary of the Chapter/Poem:** After the author's introduction, provide a concise summary or essence of the chapter or poem.
+5.  **Detailed Explanation in Paragraphs:** Following the summary, provide a detailed, step-by-step explanation of the chapter. **Crucially, break the explanation into multiple, easy-to-read paragraphs**, just like in a well-written book. Do not write one single, long block of text. Each paragraph should cover a specific part of the story, concept, or stanza.
+6.  **Language and Tone:** Use simple, clear Hindi. Teach like a real, expert teacher would, using analogies and a logical flow.
+
+**Notes Formatting:**
+After the detailed explanation, create concise, bullet-pointed summary notes. These notes should be easy to review and memorize.
+
+**Example Structure:**
+
+**भक्तिन**
+*लेखक: महादेवी वर्मा*
+
+(लेखक परिचय)
+महादेवी वर्मा हिंदी साहित्य के छायावादी युग की...
+
+(पाठ का सार)
+'भक्तिन' महादेवी वर्मा का एक प्रसिद्ध संस्मरणात्मक रेखाचित्र है...
+
+(विस्तृत व्याख्या)
+कहानी की शुरुआत भक्तिन के छोटे कद और दुबले-पतले शरीर के वर्णन से होती है...
+
+एक अन्य पैराग्राफ में कहानी के अगले भाग का वर्णन करें...
+
+**Final Output:**
+Generate the 'explanation' and 'notes' in Hindi based on these formatting rules and your expert knowledge.`,
 });
 
 const explainTopicFlow = ai.defineFlow(

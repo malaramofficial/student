@@ -298,5 +298,3 @@ export default function AITeacherPage() {
     </div>
   );
 }
-
-    

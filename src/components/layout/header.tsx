@@ -9,6 +9,7 @@ import { Button } from "../ui/button";
 import { ArrowLeft, Home } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 
 const pageTitles: { [key: string]: string } = {
   "/": "डैशबोर्ड",
@@ -51,12 +52,10 @@ export function Header() {
         <ArrowLeft />
         <span className="sr-only">वापस</span>
       </Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-        <Link href="/">
-          <Home />
-          <span className="sr-only">होम</span>
-        </Link>
-      </Button>
+      <Link href="/" className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-8 w-8")}>
+        <Home />
+        <span className="sr-only">होम</span>
+      </Link>
       <h1 className="text-lg font-semibold md:text-xl font-headline">{title}</h1>
       <div className="ml-auto md:hidden">
         <ModeToggle />

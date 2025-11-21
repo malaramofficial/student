@@ -32,10 +32,15 @@ export default function AITeacherPage() {
   const [mode, setMode] = useState<'student' | 'public'>('student');
   const [isConversationMode, setIsConversationMode] = useState(false);
   const [conversationStatus, setConversationStatus] = useState<ConversationStatus>('idle');
+  const [isClient, setIsClient] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleAIResponse = useCallback(async (query: string) => {
     if (!query.trim() || isLoading) return;
@@ -133,16 +138,6 @@ export default function AITeacherPage() {
       setInput(transcript);
     }
   }, [transcript, isConversationMode]);
-
-  // Handle conversation mode state changes
-  useEffect(() => {
-    if (isConversationMode) {
-        startListening();
-    } else {
-        stopListening();
-        setConversationStatus('idle');
-    }
-  }, [isConversationMode, startListening, stopListening]);
   
   // Update status indicator based on listening state
   useEffect(() => {
@@ -172,7 +167,14 @@ export default function AITeacherPage() {
         toast({ variant: "destructive", title: "Unsupported Browser", description: "Speech recognition is not supported in this browser." });
         return;
     }
-    setIsConversationMode(prev => !prev);
+    const newConversationMode = !isConversationMode;
+    setIsConversationMode(newConversationMode);
+    if(newConversationMode){
+      startListening();
+    } else {
+      stopListening();
+      setConversationStatus('idle');
+    }
   }
 
   const ConversationStatusIndicator = () => {
@@ -288,7 +290,7 @@ export default function AITeacherPage() {
             disabled={isLoading || isConversationMode}
             className="flex-1"
           />
-          {hasRecognitionSupport && (
+          {isClient && hasRecognitionSupport && (
             <Button type="button" size="icon" variant={isConversationMode ? "destructive" : "outline"} onClick={toggleConversationMode} disabled={isLoading}>
                {isConversationMode ? <StopCircle /> : <Mic />}
             </Button>
@@ -302,5 +304,3 @@ export default function AITeacherPage() {
     </div>
   );
 }
-
-    

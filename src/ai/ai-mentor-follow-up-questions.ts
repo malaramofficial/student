@@ -47,7 +47,7 @@ const getSyllabusTool = ai.defineTool(
     const subjectToFind = input.subjectName.toLowerCase();
     for (const stream of syllabusData.streams) {
       for (const subject of stream.subjects) {
-        // Check both Hindi and English names
+        // Check both Hindi and English names (e.g. "हिन्दी साहित्य (Hindi Literature)")
         const subjectName = subject.name.toLowerCase();
         if (subjectName.includes(subjectToFind)) {
           return { topics: subject.topics };

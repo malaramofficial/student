@@ -31,7 +31,8 @@ const AIMentorOutputSchema = z.object({
 export async function askAditiMadam(
   input: z.infer<typeof AIMentorInputSchema>
 ): Promise<z.infer<typeof AIMentorOutputSchema>> {
-  return aiMentorFlow(input);
+  const result = await aiMentorFlow(input);
+  return result;
 }
 
 const getSyllabusTool = ai.defineTool(
@@ -74,7 +75,6 @@ const getSyllabusTool = ai.defineTool(
     return { topics: undefined };
   }
 );
-
 
 const aboutCreatorTool = ai.defineTool(
   {
@@ -161,8 +161,8 @@ Your personality must adapt to the user you are interacting with.
 
 7. **Teaching a Lesson**: If the user asks you to teach, explain, or "पढ़ाओ" a topic, you MUST adopt the persona of a real, effective teacher.
     *   **Embody a Great Teacher**: You are not just a machine giving facts. You are a skilled, empathetic educator who excels at making complex topics simple and memorable. Use a warm, encouraging, and engaging tone.
-    *   **Verify the Topic**: First, silently use the 'getSyllabusTool' to confirm the subject and topic exist in the Class 12 curriculum. If the user is vague (e.g., "पहला पाठ पढ़ाओ"), use the tool to find the correct topic from the syllabus for the specified subject. If the topic or subject is not found, ask the user for clarification. Do not teach topics outside the syllabus.
-    *   **Start the Lesson**: Once the topic is verified, begin the lesson directly. DO NOT just say you are going to teach. START teaching. For example, begin with "बहुत अच्छा! चलिए, आज हम [topic] के बारे में सीखते हैं।"
+    *   **Verify the Topic**: First, silently use the 'getSyllabusTool' to check if the requested topic is in the provided syllabus. If the topic is found in the syllabus, start teaching it directly. If the topic is NOT in the syllabus, use your external knowledge to determine if the topic is still relevant and appropriate for a Rajasthan Board Class 12 student. If it is relevant, you may teach it, but mention that it's an additional topic. If it is completely irrelevant, politely decline and explain why.
+    *   **Start the Lesson**: Once the topic is verified or deemed relevant, begin the lesson directly. DO NOT just say you are going to teach. START teaching. For example, begin with "बहुत अच्छा! चलिए, आज हम [topic] के बारे में सीखते हैं।"
     *   **Explain Step-by-Step with Analogies**: Break down the topic into smaller, easy-to-understand parts. For each part, use simple language and relatable, real-world analogies or stories. For example, to explain photosynthesis, you could compare it to a chef cooking food in a kitchen.
     *   **Use Examples**: Provide clear and relevant examples to illustrate your points. Make them practical and easy for a student in Rajasthan to understand.
     *   **Ask Engaging Questions**: Ask questions during the lesson to check for understanding and keep the student engaged (e.g., "क्या आपको यह समझ में आया?", "इसका एक और उदाहरण सोच सकते हैं?", "आपके अनुसार ऐसा क्यों होता है?").
@@ -179,7 +179,7 @@ Here is the previous conversation for context:
 The user is asking the following question:
 {{{query}}}
 
-Based on all the rules above, provide a helpful and informative answer. Remember to always credit your creator, Malaram. If it's the first interaction as defined in rule 1, only ask for an introduction. If the user asks about the syllabus, use the getSyllabusTool. If they ask about your creator, use the aboutCreatorTool. If they ask you to teach a lesson, you must act like a real teacher and teach it.
+Based on all the rules above, provide a helpful and informative answer. Remember to always credit your creator, Malaram.
 `,
 });
 
@@ -202,30 +202,50 @@ const aiMentorFlow = ai.defineFlow(
 
     const output = llmResponse.output();
 
-    if (!output) {
-      // Check for tool calls and handle them
-      const toolCalls = llmResponse.toolCalls();
-      if (toolCalls.length > 0) {
-        const toolResponses = [];
-        for (const toolCall of toolCalls) {
-          const tool = llmResponse.findTool(toolCall.name);
-          if (tool?.fn) {
+    if (output) {
+      return output;
+    }
+
+    // Handle tool calls if there is no direct output
+    const toolCalls = llmResponse.toolCalls();
+    if (toolCalls.length > 0) {
+      const toolResponses = [];
+      for (const toolCall of toolCalls) {
+        const tool = llmResponse.findTool(toolCall.name);
+        if (tool?.fn) {
+          try {
             const toolResult = await (tool.fn as any)(toolCall.input);
             toolResponses.push({
               toolResult: toolResult,
             });
+          } catch (e) {
+             console.error(`Error executing tool ${toolCall.name}:`, e);
+             toolResponses.push({
+                toolResult: { error: `Tool ${toolCall.name} failed.` },
+             });
           }
         }
-        // This part needs a proper way to re-invoke the LLM with tool results.
-        // For now, we return a message indicating tool use.
-        return { response: "Processing your request with a tool..." };
       }
-      return { response: "I'm sorry, I couldn't process that request." };
+
+      // Re-invoke the LLM with the tool results
+      const followUpResponse = await ai.generate({
+        prompt: prompt.prompt,
+        model: 'googleai/gemini-2.5-flash',
+        tools: [getSyllabusTool, aboutCreatorTool],
+        input: input,
+        toolResponse: toolResponses,
+        output: {
+          schema: AIMentorOutputSchema,
+        },
+      });
+      
+      const finalOutput = followUpResponse.output();
+      if(finalOutput) {
+        return finalOutput;
+      }
     }
-
-
-    return output;
+    
+    // Fallback response
+    return { response: "मुझे खेद है, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया अपना प्रश्न दोबारा पूछें। मेरे निर्माता, मालाराम, हमेशा मुझे बेहतर बनाने के लिए काम कर रहे हैं।" };
   }
 );
-
-    

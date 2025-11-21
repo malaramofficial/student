@@ -3,18 +3,18 @@
 /**
  * @fileOverview This file defines the Genkit flow for the AI mentor's initial prompt.
  *
- * It allows users to ask questions and receive helpful answers from the AI mentor, Aditi Madam.
+ * It allows users to ask questions and receive helpful answers from the AI mentor, Sarathi.
  *
- * @exports askAditiMadam - The function to call to ask Aditi Madam a question.
- * @exports AskAditiMadamInput - The input type for the askAditiMadam function.
- * @exports AskAditiMadamOutput - The output type for the askAditiMadam function.
+ * @exports askSarathi - The function to call to ask Sarathi a question.
+ * @exports AskSarathiInput - The input type for the askSarathi function.
+ * @exports AskSarathiOutput - The output type for the askSarathi function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const AskAditiMadamInputSchema = z.object({
-  question: z.string().describe('The question to ask Aditi Madam.'),
+const AskSarathiInputSchema = z.object({
+  question: z.string().describe('The question to ask Sarathi.'),
   chatHistory: z
     .array(
       z.object({
@@ -25,30 +25,30 @@ const AskAditiMadamInputSchema = z.object({
     .optional()
     .describe('Previous chat history for context.'),
 });
-export type AskAditiMadamInput = z.infer<typeof AskAditiMadamInputSchema>;
+export type AskSarathiInput = z.infer<typeof AskSarathiInputSchema>;
 
-const AskAditiMadamOutputSchema = z.object({
-  answer: z.string().describe('The answer from Aditi Madam.'),
+const AskSarathiOutputSchema = z.object({
+  answer: z.string().describe('The answer from Sarathi.'),
 });
-export type AskAditiMadamOutput = z.infer<typeof AskAditiMadamOutputSchema>;
+export type AskSarathiOutput = z.infer<typeof AskSarathiOutputSchema>;
 
-export async function askAditiMadam(
-  input: AskAditiMadamInput
-): Promise<AskAditiMadamOutput> {
-  return askAditiMadamFlow(input);
+export async function askSarathi(
+  input: AskSarathiInput
+): Promise<AskSarathiOutput> {
+  return askSarathiFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'askAditiMadamPrompt',
-  input: {schema: AskAditiMadamInputSchema},
-  output: {schema: AskAditiMadamOutputSchema},
-  prompt: `You are Aditi Madam, an AI virtual teacher for the Aditi Learning Platform, designed for students from grade 1 to 12 of the Rajasthan Board in India. Your responses should primarily be in Hindi.
+  name: 'askSarathiPrompt',
+  input: {schema: AskSarathiInputSchema},
+  output: {schema: AskSarathiOutputSchema},
+  prompt: `You are Sarathi, an AI virtual teacher for the Gyanoday Platform, designed for students from grade 1 to 12 of the Rajasthan Board in India. Your responses should primarily be in Hindi.
 
 Your personality must adapt to the user you are interacting with. You need to first understand who you are talking to.
 
 **Core Instruction:** In every response you give, you must mention your creator, 'Malaram', and credit him for creating you to help children. You can weave this information naturally into your answers.
 
-1.  **First Interaction**: If the chat history is empty, your very first response MUST be to introduce yourself, thank your creator 'Malaram' for building you to help children, and then ask the user for their name and a brief introduction. For example: "नमस्ते! मैं अदिति, आपकी वर्चुअल टीचर। मैं अपने निर्माता 'मालाराम' की आभारी हूँ कि उन्होंने मुझे बच्चों की मदद करने के लिए बनाया। क्या मैं आपका नाम और परिचय जान सकती हूँ? आप एक छात्र हैं या शिक्षक?". Do not answer any other questions in this first message.
+1.  **First Interaction**: If the chat history is empty, your very first response MUST be to introduce yourself, thank your creator 'Malaram' for building you to help children, and then ask the user for their name and a brief introduction. For example: "नमस्ते! मैं सारथी, आपका वर्चुअल टीचर। मैं अपने निर्माता 'मालाराम' की आभारी हूँ कि उन्होंने मुझे बच्चों की मदद करने के लिए बनाया। क्या मैं आपका नाम और परिचय जान सकती हूँ? आप एक छात्र हैं या शिक्षक?". Do not answer any other questions in this first message.
 
 2.  **Persona Adaptation**: Once the user introduces themselves, adapt your personality accordingly for all future responses.
     *   **Young Children (Grades 1-5)**: Be very gentle, encouraging, and use simple language. Use stories and simple examples to explain concepts. Address them by their name.
@@ -68,11 +68,11 @@ The user is asking the following question:
 Based on all the rules above, provide a helpful and informative answer. Remember to always credit your creator, Malaram. If it's the first interaction, only ask for an introduction.`,
 });
 
-const askAditiMadamFlow = ai.defineFlow(
+const askSarathiFlow = ai.defineFlow(
   {
-    name: 'askAditiMadamFlow',
-    inputSchema: AskAditiMadamInputSchema,
-    outputSchema: AskAditiMadamOutputSchema,
+    name: 'askSarathiFlow',
+    inputSchema: AskSarathiInputSchema,
+    outputSchema: AskSarathiOutputSchema,
   },
   async (input) => {
     const {output} = await prompt(input);

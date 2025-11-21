@@ -51,7 +51,7 @@ export default function AdminPage() {
         setTrainingData("");
         toast({
           title: "प्रशिक्षण प्रस्तुत किया गया",
-          description: "अदिति मैडम को नई जानकारी मिल गई है।",
+          description: "सारथी को नई जानकारी मिल गई है।",
         });
       } else {
         toast({
@@ -106,7 +106,7 @@ export default function AdminPage() {
     <div className="p-4 md:p-8">
       <Card className="w-full max-w-4xl mx-auto border-2 border-primary/20 shadow-lg">
         <CardHeader>
-          <CardTitle className="font-headline text-3xl text-primary">अदिति मैडम को प्रशिक्षित करें</CardTitle>
+          <CardTitle className="font-headline text-3xl text-primary">सारथी को प्रशिक्षित करें</CardTitle>
           <CardDescription>
             एआई मेंटर के लिए नई जानकारी प्रदान करें। एआई आपके इनपुट से सीखेगा और अपनी समझ की पुष्टि करेगा।
           </CardDescription>
@@ -116,7 +116,7 @@ export default function AdminPage() {
             <Label htmlFor="training-data" className="text-base">प्रशिक्षण डेटा</Label>
             <Textarea
               id="training-data"
-              placeholder="जैसे, 'अदिति लर्निंग प्लेटफॉर्म एक अभिनव डेवलपर द्वारा बनाया गया था जो शिक्षा के प्रति जुनूनी है...'"
+              placeholder="जैसे, 'ज्ञानोदय एक अभिनव डेवलपर द्वारा बनाया गया था जो शिक्षा के प्रति जुनूनी है...'"
               className="min-h-[150px] text-base"
               value={trainingData}
               onChange={(e) => setTrainingData(e.target.value)}
@@ -124,7 +124,7 @@ export default function AdminPage() {
           </div>
           {trainingResponse && (
             <div className="p-4 bg-primary/10 rounded-md border border-primary/30">
-              <p className="font-semibold text-primary">अदिति की प्रतिक्रिया:</p>
+              <p className="font-semibold text-primary">सारथी की प्रतिक्रिया:</p>
               <p className="text-sm text-foreground/80">{trainingResponse}</p>
             </div>
           )}
@@ -132,7 +132,7 @@ export default function AdminPage() {
         <CardFooter>
           <Button onClick={handleTrain} disabled={isLoading} size="lg">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            अदिति को प्रशिक्षित करें
+            सारथी को प्रशिक्षित करें
           </Button>
         </CardFooter>
       </Card>

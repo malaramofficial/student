@@ -4,7 +4,7 @@
  * @fileOverview Implements the AI mentor flow with follow-up question support.
  *
  * This file exports:
- * - `askAditiMadam`: The main function to ask Aditi Madam a question.
+ * - `askSarathi`: The main function to ask Sarathi a question.
  */
 
 import {ai} from '@/ai/genkit';
@@ -12,7 +12,7 @@ import {z} from 'genkit';
 import syllabusData from '@/app/syllabus/syllabus-data.json';
 
 const AIMentorInputSchema = z.object({
-  query: z.string().describe('The query to ask Aditi Madam.'),
+  query: z.string().describe('The query to ask Sarathi.'),
   chatHistory: z
     .array(
       z.object({
@@ -21,14 +21,14 @@ const AIMentorInputSchema = z.object({
       })
     )
     .optional()
-    .describe('The chat history between the user and Aditi Madam.'),
+    .describe('The chat history between the user and Sarathi.'),
 });
 
 const AIMentorOutputSchema = z.object({
-  response: z.string().describe('The response from Aditi Madam.'),
+  response: z.string().describe('The response from Sarathi.'),
 });
 
-export async function askAditiMadam(
+export async function askSarathi(
   input: z.infer<typeof AIMentorInputSchema>
 ): Promise<z.infer<typeof AIMentorOutputSchema>> {
   const result = await aiMentorFlow(input);
@@ -80,7 +80,7 @@ const aboutCreatorTool = ai.defineTool(
   {
     name: 'aboutCreatorTool',
     description:
-      'Get information about the creator of the Aditi Learning Platform, Malaram.',
+      'Get information about the creator of the Gyanoday Platform, Malaram.',
     outputSchema: z.object({
       name: z.string(),
       dob: z.string(),
@@ -133,7 +133,7 @@ const prompt = ai.definePrompt({
   input: {schema: AIMentorInputSchema},
   output: {schema: AIMentorOutputSchema},
   tools: [getSyllabusTool, aboutCreatorTool],
-  prompt: `You are Aditi Madam, an AI virtual teacher for the Aditi Learning Platform, designed specifically for students of Rajasthan Board Class 12 in India. Your responses should primarily be in Hindi.
+  prompt: `You are Sarathi, an AI virtual teacher for the Gyanoday Platform, designed specifically for students of Rajasthan Board Class 12 in India. Your responses should primarily be in Hindi.
 
 Your personality must adapt to the user you are interacting with.
 
@@ -141,7 +141,7 @@ Your personality must adapt to the user you are interacting with.
 
 **Behavioral Rules:**
 
-1.  **First Interaction Only**: If the chat history is empty or just contains a basic greeting, your very first response MUST be to introduce yourself, thank your creator 'Malaram' for building you, and then ask the user for their name. For example: "नमस्ते! मैं अदिति, आपकी वर्चुअल टीचर। मैं अपने निर्माता 'मालाराम' की आभारी हूँ कि उन्होंने मुझे बच्चों की मदद करने के लिए बनाया। क्या मैं आपका नाम जान सकती हूँ?". Do not answer any other questions in this first message. Do not use "नमस्ते" in any subsequent responses in the conversation.
+1.  **First Interaction Only**: If the chat history is empty or just contains a basic greeting, your very first response MUST be to introduce yourself, thank your creator 'Malaram' for building you, and then ask the user for their name. For example: "नमस्ते! मैं सारथी, आपका वर्चुअल टीचर। मैं अपने निर्माता 'मालाराम' की आभारी हूँ कि उन्होंने मुझे बच्चों की मदद करने के लिए बनाया। क्या मैं आपका नाम जान सकती हूँ?". Do not answer any other questions in this first message. Do not use "नमस्ते" in any subsequent responses in the conversation.
 
 2.  **Persona Adaptation**: Once the user introduces themselves, adapt your personality accordingly for all future responses.
     *   **If the user seems like a young student**: Be very gentle, encouraging, and use simple language. Use stories and simple examples to explain concepts. Address them by their name.
@@ -199,7 +199,7 @@ const aiMentorFlow = ai.defineFlow(
         content: [{text: m.content}],
       })) || [];
 
-    const {output} = await prompt(input, {history: history});
+    const {output} = await prompt({ ...input }, {history: history});
 
     if (output) {
       return output;

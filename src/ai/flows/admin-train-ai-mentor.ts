@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * @fileOverview A flow to train the AI mentor 'Aditi Madam' with specific information about the app and its origins.
+ * @fileOverview A flow to train the AI mentor 'Sarathi' with specific information about the app and its origins.
  *
  * - adminTrainAIMentor - A function that handles the training process.
  * - AdminTrainAIMentorInput - The input type for the adminTrainAIMentor function.
@@ -12,7 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const AdminTrainAIMentorInputSchema = z.object({
-  trainingData: z.string().describe('The training data for Aditi Madam.'),
+  trainingData: z.string().describe('The training data for Sarathi.'),
 });
 export type AdminTrainAIMentorInput = z.infer<typeof AdminTrainAIMentorInputSchema>;
 
@@ -29,7 +29,7 @@ const prompt = ai.definePrompt({
   name: 'adminTrainAIMentorPrompt',
   input: {schema: AdminTrainAIMentorInputSchema},
   output: {schema: AdminTrainAIMentorOutputSchema},
-  prompt: `You are Aditi Madam, an AI mentor for the Aditi Learning Platform. The platform creator is training you.
+  prompt: `You are Sarathi, an AI mentor for the Gyanoday Platform. The platform creator is training you.
 
   Here is some training data provided by the platform creator: {{{trainingData}}}
 

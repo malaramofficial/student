@@ -76,7 +76,7 @@ export default function Home() {
       <div className="flex flex-col gap-8">
         <div className="p-6 md:p-8">
           <h1 className="text-3xl md:text-4xl font-bold font-headline text-primary animate-fade-in-down">
-            {studentName ? `${studentName}, ` : ""}अदिति लर्निंग में आपका स्वागत है
+            {studentName ? `${studentName}, ` : ""}ज्ञानोदय में आपका स्वागत है
           </h1>
           <p className="mt-2 text-muted-foreground animate-fade-in-up">
             इंटरैक्टिव सीखने और प्रगति की ट्रैकिंग के लिए आपका केंद्रीकृत हब।
@@ -88,7 +88,7 @@ export default function Home() {
             href="/ai-teacher"
             icon={<Bot className="w-8 h-8 text-primary" />}
             title="एआई वर्चुअल शिक्षक"
-            description="प्रश्न पूछें और अपनी एआई मेंटर अदिति मैडम से तुरंत सहायता प्राप्त करें।"
+            description="प्रश्न पूछें और अपने एआई मेंटर सारथी से तुरंत सहायता प्राप्त करें।"
           />
           <DashboardCard
             href="/mock-tests"

@@ -140,9 +140,9 @@ export default function AITeacherPage() {
           {messages.length === 0 && (
              <div className="text-center p-8 rounded-lg">
                 <Bot className="mx-auto h-16 w-16 text-primary/70" />
-                <h2 className="mt-4 text-2xl font-semibold font-headline">अदिति मैडम से पूछें</h2>
+                <h2 className="mt-4 text-2xl font-semibold font-headline">सारथी से पूछें</h2>
                 <p className="mt-2 text-muted-foreground">
-                  मैं आपकी एआई वर्चुअल शिक्षक हूँ। अपनी पढ़ाई के बारे में मुझसे कुछ भी पूछें!
+                  मैं आपका एआई वर्चुअल शिक्षक हूँ। अपनी पढ़ाई के बारे में मुझसे कुछ भी पूछें!
                 </p>
              </div>
           )}
@@ -150,7 +150,7 @@ export default function AITeacherPage() {
             <div key={index} className={cn("flex items-start gap-4", message.role === 'user' ? 'justify-end' : '')}>
               {message.role === 'assistant' && (
                 <Avatar className="border-2 border-primary/50">
-                  {aditiAvatar && <Image src={aditiAvatar.imageUrl} alt="Aditi Madam" width={40} height={40} data-ai-hint={aditiAvatar.imageHint} />}
+                  {aditiAvatar && <Image src={aditiAvatar.imageUrl} alt="Sarathi" width={40} height={40} data-ai-hint={aditiAvatar.imageHint} />}
                   <AvatarFallback><Bot /></AvatarFallback>
                 </Avatar>
               )}
@@ -176,7 +176,7 @@ export default function AITeacherPage() {
           {isLoading && messages[messages.length-1]?.role === 'user' && (
             <div className="flex items-start gap-4">
               <Avatar className="border-2 border-primary/50">
-                  {aditiAvatar && <Image src={aditiAvatar.imageUrl} alt="Aditi Madam" width={40} height={40} data-ai-hint={aditiAvatar.imageHint} />}
+                  {aditiAvatar && <Image src={aditiAvatar.imageUrl} alt="Sarathi" width={40} height={40} data-ai-hint={aditiAvatar.imageHint} />}
                   <AvatarFallback><Bot /></AvatarFallback>
               </Avatar>
               <div className="max-w-[75%] rounded-lg p-3 text-sm bg-muted text-muted-foreground">

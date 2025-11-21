@@ -30,7 +30,7 @@ export function Header() {
   const router = useRouter();
   const { isMobile } = useSidebar();
   const [isMounted, setIsMounted] = useState(false);
-  const title = pageTitles[pathname] || "अदिति लर्निंग";
+  const title = pageTitles[pathname] || "ज्ञानोदय";
 
   useEffect(() => {
     setIsMounted(true);

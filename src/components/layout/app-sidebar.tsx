@@ -38,7 +38,7 @@ export function AppSidebar() {
         <Link href="/" className="flex items-center gap-2.5 px-2">
           <BookOpenCheck className="w-8 h-8 text-sidebar-primary" />
           <span className="font-bold text-xl font-headline text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-            अदिति लर्निंग
+            ज्ञानोदय
           </span>
         </Link>
       </SidebarHeader>

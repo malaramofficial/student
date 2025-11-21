@@ -29,7 +29,7 @@ import {
 
 import { z } from 'zod';
 import mockResults from '@/app/results/mock-results.json';
-import { askAditiMadam } from '@/ai/ai-mentor-follow-up-questions';
+import { askSarathi } from '@/ai/ai-mentor-follow-up-questions';
 
 // Define types for better type safety
 type SubjectResult = {
@@ -78,7 +78,7 @@ export async function getAIResponse(input: {
     chatHistory: parsedInput.data.chatHistory,
   };
   try {
-    const result = await askAditiMadam(flowInput);
+    const result = await askSarathi(flowInput);
     return { success: true, answer: result.response };
   } catch (error) {
     console.error('Error in getAIResponse:', error);

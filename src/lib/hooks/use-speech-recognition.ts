@@ -3,6 +3,10 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
+type UseSpeechRecognitionOptions = {
+  onSpeechEnd: (transcript: string) => void;
+};
+
 type SpeechRecognitionHook = {
   transcript: string;
   isListening: boolean;
@@ -10,6 +14,7 @@ type SpeechRecognitionHook = {
   stopListening: () => void;
   hasRecognitionSupport: boolean;
   error: string | null;
+  resetTranscript: () => void;
 };
 
 declare global {
@@ -19,23 +24,30 @@ declare global {
   }
 }
 
-export const useSpeechRecognition = (): SpeechRecognitionHook => {
+export const useSpeechRecognition = ({ onSpeechEnd }: UseSpeechRecognitionOptions): SpeechRecognitionHook => {
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const speechEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const finalTranscriptRef = useRef('');
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
-      setIsListening(false);
     }
+  }, []);
+  
+  const resetTranscript = useCallback(() => {
+    finalTranscriptRef.current = '';
+    setTranscript('');
   }, []);
 
   const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
       try {
-        setTranscript(''); // Clear previous transcript before starting
+        resetTranscript();
         recognitionRef.current.start();
         setIsListening(true);
       } catch (err) {
@@ -45,7 +57,7 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
         }
       }
     }
-  }, [isListening]);
+  }, [isListening, resetTranscript]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -64,13 +76,25 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
     recognition.lang = 'hi-IN';
 
     recognition.onresult = (event) => {
-      let final_transcript = '';
-      for (let i = 0; i < event.results.length; ++i) {
+      if (speechEndTimeoutRef.current) {
+        clearTimeout(speechEndTimeoutRef.current);
+      }
+
+      let interim_transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-            final_transcript += event.results[i][0].transcript;
+          finalTranscriptRef.current += event.results[i][0].transcript;
+        } else {
+          interim_transcript += event.results[i][0].transcript;
         }
       }
-      setTranscript(final_transcript);
+      setTranscript(finalTranscriptRef.current + interim_transcript);
+      
+      speechEndTimeoutRef.current = setTimeout(() => {
+         if (finalTranscriptRef.current.trim()) {
+           onSpeechEnd(finalTranscriptRef.current.trim());
+         }
+      }, 3000);
     };
 
     recognition.onstart = () => {
@@ -80,8 +104,6 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
 
     recognition.onerror = (event) => {
       if (event.error === 'no-speech' || event.error === 'audio-capture') {
-        // These are common, non-critical errors. We can ignore them.
-        setIsListening(false);
         return; 
       }
       if (event.error === 'not-allowed') {
@@ -95,6 +117,9 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
     };
     
     recognition.onend = () => {
+      if (speechEndTimeoutRef.current) {
+          clearTimeout(speechEndTimeoutRef.current);
+      }
       setIsListening(false);
     };
     
@@ -106,7 +131,11 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
             recognitionRef.current.onstart = null;
             recognitionRef.current.stop();
         }
+        if (speechEndTimeoutRef.current) {
+            clearTimeout(speechEndTimeoutRef.current);
+        }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {
@@ -116,7 +145,6 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
     stopListening,
     hasRecognitionSupport: !!(typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)),
     error,
+    resetTranscript,
   };
 };
-
-    

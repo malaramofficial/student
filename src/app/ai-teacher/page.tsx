@@ -21,6 +21,8 @@ type Message = {
   content: string;
 };
 
+type ConversationStatus = 'idle' | 'listening' | 'thinking' | 'speaking';
+
 export default function AITeacherPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -30,6 +32,7 @@ export default function AITeacherPage() {
   const [isClient, setIsClient] = useState(false);
   const [mode, setMode] = useState<'student' | 'public'>('student');
   const [isConversationMode, setIsConversationMode] = useState(false);
+  const [conversationStatus, setConversationStatus] = useState<ConversationStatus>('idle');
   
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -37,6 +40,8 @@ export default function AITeacherPage() {
 
   const handleAIResponse = useCallback(async (query: string) => {
     if (!query.trim() || isLoading) return;
+    
+    setConversationStatus('thinking');
 
     const userMessage: Message = { role: 'user', content: query };
     setMessages(prev => [...prev, userMessage]);
@@ -118,16 +123,22 @@ export default function AITeacherPage() {
   
   useEffect(() => {
     if (audioUrl && audioRef.current) {
+      setConversationStatus('speaking');
       audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
     }
   }, [audioUrl]);
 
   useEffect(() => {
-    // Only update the input with transcript if not in conversation mode or if listening
     if (!isConversationMode || isListening) {
       setInput(transcript);
     }
   }, [transcript, isConversationMode, isListening]);
+  
+  useEffect(() => {
+    if(isConversationMode && isListening){
+      setConversationStatus('listening');
+    }
+  }, [isConversationMode, isListening]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,6 +159,8 @@ export default function AITeacherPage() {
   const handleAudioEnded = () => {
     if (isConversationMode) {
       startListening();
+    } else {
+      setConversationStatus('idle');
     }
   };
   
@@ -159,10 +172,48 @@ export default function AITeacherPage() {
 
     if (isPublic) {
         startListening();
+        setConversationStatus('listening');
     } else {
         if (isListening) {
             stopListening();
         }
+        setConversationStatus('idle');
+    }
+  };
+
+  const ConversationStatusIndicator = () => {
+    if (!isConversationMode) return null;
+    
+    switch (conversationStatus) {
+      case 'listening':
+        return (
+          <div className="flex items-center gap-2 text-sm text-red-500 animate-pulse">
+            <Mic className="h-4 w-4" />
+            <span>सुन रही हूँ...</span>
+          </div>
+        );
+      case 'thinking':
+        return (
+          <div className="flex items-center gap-2 text-sm text-blue-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>प्रतिक्रिया तैयार की जा रही है...</span>
+          </div>
+        );
+      case 'speaking':
+        return (
+          <div className="flex items-center gap-2 text-sm text-green-500">
+            <Volume2 className="h-4 w-4" />
+            <span>सारथी बोल रही है...</span>
+          </div>
+        );
+      case 'idle':
+      default:
+        return (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Mic className="h-4 w-4" />
+            <span>कन्वर्सेशन मोड सक्रिय है</span>
+          </div>
+        );
     }
   };
 
@@ -180,12 +231,7 @@ export default function AITeacherPage() {
                 />
                 <Label htmlFor="mode-switch" className={cn(mode === 'public' && 'text-primary font-semibold')}>सार्वजनिक मोड</Label>
             </div>
-            {isConversationMode && (
-                <div className={cn("flex items-center gap-2 text-sm", isListening ? "text-red-500 animate-pulse" : "text-blue-500")}>
-                    <Mic className="h-4 w-4" />
-                    <span>{isListening ? "सुन रही हूँ..." : "कन्वर्सेशन मोड सक्रिय है"}</span>
-                </div>
-            )}
+            <ConversationStatusIndicator />
         </div>
        </div>
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>

@@ -131,7 +131,7 @@ const aboutCreatorTool = ai.defineTool(
         dob: '10 Oct 2001',
         location: 'Village Panchayat डऊकियों की बेरी, मीठा बेरी, Tehsil Nokhra, District Barmer, Rajasthan – 344033',
         bloodGroup: 'A+',
-        coreIdentity: 'Values logic, science, and experience-based thinking. Not associated with religious/faith/caste-based identity. Agrees with most ideas of Osho Rajneesh (individual freedom, consciousness, independent thinking, experiential truth).',
+        coreIdentity: 'Values logic, science, and experience-based thinking. Not associated with religious/faith/caste-based identity. Agrees with most ideas of Osho Rajneesh (individual freedom, consciousness, experiential truth).',
         interests: [
           'Technology, electronics, machines, systems',
           'Opening devices/machines to understand internal mechanisms',

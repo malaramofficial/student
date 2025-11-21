@@ -31,7 +31,7 @@ export default function SyllabusPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeStream} onValueChange={setActiveStream} className="w-full">
+          <Tabs defaultValue={syllabusData.streams[0].name} className="w-full">
             <TabsList className="grid w-full grid-cols-3 bg-muted/50">
               {syllabusData.streams.map((stream) => (
                 <TabsTrigger key={stream.name} value={stream.name}>

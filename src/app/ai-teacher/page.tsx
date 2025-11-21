@@ -35,16 +35,6 @@ export default function AITeacherPage() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const handleSpeechEnd = useCallback(async (finalTranscript: string) => {
-      if (finalTranscript && isConversationMode) {
-        await handleAIResponse(finalTranscript);
-      }
-  }, [isConversationMode, handleAIResponse]);
-  
-  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition({ 
-    onSpeechEnd: handleSpeechEnd
-  });
-
   const handleAIResponse = useCallback(async (query: string) => {
     if (!query.trim() || isLoading) return;
 
@@ -54,7 +44,7 @@ export default function AITeacherPage() {
     setIsLoading(true);
     setAudioUrl(null);
     setInput('');
-    resetTranscript();
+    // resetTranscript() is called within the hook now
 
     const chatHistory = [...messages, userMessage].map(msg => ({ role: msg.role, content: msg.content }));
     
@@ -66,13 +56,13 @@ export default function AITeacherPage() {
             setMessages(prev => [...prev, assistantMessage]);
 
             setIsAudioLoading(true);
-            const audioResponse = await getAudioResponse({ text: aiResponse.answer });
+            const audioResponse = await getAudioResponse({ text: aiResponse.answer, voice: 'female' });
             if (audioResponse && audioResponse.success && audioResponse.audio) {
                 setAudioUrl(audioResponse.audio);
             } else {
                  toast({ variant: 'destructive', title: 'Audio Error', description: audioResponse?.error || 'Failed to generate audio.' });
                  if (isConversationMode) {
-                    startListening();
+                    // This will be handled by the audio onEnded event
                  }
             }
             setIsAudioLoading(false);
@@ -82,19 +72,29 @@ export default function AITeacherPage() {
             const errorMessage: Message = { role: 'assistant', content: "क्षमा करें, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया पुन: प्रयास करें।" };
             setMessages(prev => [...prev, errorMessage]);
             if (isConversationMode) {
-                startListening();
+                // This will be handled by the audio onEnded event
             }
         }
     } catch(e) {
         toast({ variant: 'destructive', title: 'An unexpected error occurred.', description: (e as Error).message });
         if (isConversationMode) {
-            startListening();
+           // This will be handled by the audio onEnded event
         }
     } finally {
         setIsLoading(false);
     }
-  }, [isLoading, toast, resetTranscript, messages, mode, isConversationMode, startListening]);
+  }, [isLoading, toast, messages, mode, isConversationMode]);
+
+  const handleSpeechEnd = useCallback(async (finalTranscript: string) => {
+      if (finalTranscript && isConversationMode) {
+        await handleAIResponse(finalTranscript);
+      }
+  }, [isConversationMode, handleAIResponse]);
   
+  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition({ 
+    onSpeechEnd: handleSpeechEnd
+  });
+
   const sarathiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
 
   useEffect(() => {
@@ -131,6 +131,7 @@ export default function AITeacherPage() {
     if (!input.trim() || isLoading) return;
     if (isListening) stopListening();
     await handleAIResponse(input);
+    resetTranscript();
   };
   
   const toggleListening = () => {
@@ -151,11 +152,12 @@ export default function AITeacherPage() {
     const newMode = isPublic ? 'public' : 'student';
     setMode(newMode);
     
-    if (newMode === 'public') {
-        setIsConversationMode(true);
+    // Automatically manage conversation mode based on public mode
+    setIsConversationMode(isPublic);
+
+    if (isPublic) {
         startListening();
     } else {
-        setIsConversationMode(false);
         if (isListening) {
             stopListening();
         }
@@ -241,7 +243,7 @@ export default function AITeacherPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={isListening ? "सुन रही हूँ..." : (isConversationMode ? "कन्वर्सेशन मोड से बाहर निकलने के लिए स्विच बंद करें" : "अपना प्रश्न टाइप करें या माइक का उपयोग करें")}
-            disabled={isLoading || (isListening && isConversationMode)}
+            disabled={isLoading || (isConversationMode && isListening)}
             className="flex-1"
           />
           {isClient && hasRecognitionSupport && !isConversationMode && (
@@ -258,5 +260,6 @@ export default function AITeacherPage() {
     </div>
   );
 }
+
 
     

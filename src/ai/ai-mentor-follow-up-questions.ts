@@ -8,6 +8,7 @@
  */
 
 import {ai} from '@/ai/genkit';
+import { run } from 'genkit';
 import {z} from 'genkit';
 import syllabusData from '@/app/syllabus/syllabus-data.json';
 
@@ -192,8 +193,8 @@ const aiMentorFlow = ai.defineFlow(
     outputSchema: AIMentorOutputSchema,
   },
   async (input) => {
-    // ai.run automatically handles tool calling and re-running the prompt.
-    const output = await ai.run(prompt, input);
+    // run automatically handles tool calling and re-running the prompt.
+    const output = await run(prompt, input);
     
     if (output) {
       return output;

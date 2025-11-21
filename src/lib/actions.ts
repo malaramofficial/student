@@ -92,6 +92,7 @@ export async function getAIResponse(input: {
 
 const getAudioResponseSchema = z.object({
   text: z.string(),
+  voice: z.enum(['male', 'female']).optional(),
 });
 
 export async function getAudioResponse(input: TextToSpeechConversionInput) {
@@ -262,5 +263,3 @@ export async function evaluateWrittenExam(input: EvaluateWrittenExamInput) {
     return { success: false, error: errorMessage };
   }
 }
-
-    

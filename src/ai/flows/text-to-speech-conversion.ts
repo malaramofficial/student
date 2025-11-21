@@ -13,6 +13,7 @@ import wav from 'wav';
 
 const TextToSpeechConversionInputSchema = z.object({
   text: z.string().describe('The text to convert to speech (Hindi or English).'),
+  voice: z.enum(['male', 'female']).default('female').describe('The voice to use for the speech.'),
 });
 export type TextToSpeechConversionInput = z.infer<typeof TextToSpeechConversionInputSchema>;
 
@@ -32,13 +33,15 @@ const textToSpeechConversionFlow = ai.defineFlow(
     outputSchema: TextToSpeechConversionOutputSchema,
   },
   async (input) => {
+    const voiceName = input.voice === 'male' ? 'Algenib' : 'Achernar';
+
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.5-flash-tts-preview',
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Achernar' },
+            prebuiltVoiceConfig: { voiceName: voiceName },
           },
         },
       },

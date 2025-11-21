@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { ModeToggle } from "../mode-toggle";
 import { Button } from "../ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const pageTitles: { [key: string]: string } = {
   "/": "डैशबोर्ड",
@@ -26,14 +27,26 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { isMobile } = useSidebar();
+  const [isMounted, setIsMounted] = useState(false);
   const title = pageTitles[pathname] || "अदिति लर्निंग प्लेटफॉर्म";
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const handleBack = () => {
+    if (isMounted) {
+      router.back();
+    }
+  };
+
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
       <div className={cn("md:hidden", { "invisible": !isMobile })}>
         <SidebarTrigger />
       </div>
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBack}>
         <ArrowLeft />
         <span className="sr-only">वापस</span>
       </Button>

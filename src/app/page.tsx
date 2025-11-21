@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { BotMessageSquare, ClipboardList, FileText, BookOpen, GraduationCap, Speech } from 'lucide-react';
 
 export default function DashboardPage() {
   const [name, setName] = useState('');
@@ -77,7 +78,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="h-32 bg-muted rounded-md flex items-center justify-center">
-                  <p className="text-sm text-muted-foreground">लाइव प्रश्नोत्तर सत्र</p>
+                  <BotMessageSquare className="w-12 h-12 text-primary/70" />
                 </div>
               </CardContent>
               <CardFooter>
@@ -92,7 +93,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="h-32 bg-muted rounded-md flex items-center justify-center">
-                  <p className="text-sm text-muted-foreground">विषय-वार टेस्ट</p>
+                   <ClipboardList className="w-12 h-12 text-primary/70" />
                 </div>
               </CardContent>
               <CardFooter>
@@ -107,7 +108,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="h-32 bg-muted rounded-md flex items-center justify-center">
-                  <p className="text-sm text-muted-foreground">उत्तर लिखने का अभ्यास करें</p>
+                   <FileText className="w-12 h-12 text-primary/70" />
                 </div>
               </CardContent>
               <CardFooter>
@@ -122,7 +123,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="h-32 bg-muted rounded-md flex items-center justify-center">
-                  <p className="text-sm text-muted-foreground">नवीनतम पाठ्यक्रम</p>
+                  <BookOpen className="w-12 h-12 text-primary/70" />
                 </div>
               </CardContent>
               <CardFooter>
@@ -137,7 +138,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="h-32 bg-muted rounded-md flex items-center justify-center">
-                  <p className="text-sm text-muted-foreground">रोल नंबर से खोजें</p>
+                   <GraduationCap className="w-12 h-12 text-primary/70" />
                 </div>
               </CardContent>
               <CardFooter>
@@ -152,7 +153,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="h-32 bg-muted rounded-md flex items-center justify-center">
-                  <p className="text-sm text-muted-foreground">टेक्स्ट को ऑडियो में बदलें</p>
+                  <Speech className="w-12 h-12 text-primary/70" />
                 </div>
               </CardContent>
               <CardFooter>

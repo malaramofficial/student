@@ -209,7 +209,7 @@ export default function AITeacherPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-56px)] flex flex-col p-4">
+    <div className="h-[calc(100vh-56px)] flex flex-col p-4 animate-fade-in-up">
       <Card className="flex-1 flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>

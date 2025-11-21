@@ -120,7 +120,7 @@ const getSyllabusInfo = ai.defineTool(
 const explainTopicTool = ai.defineTool(
     {
         name: 'explainTopic',
-        description: 'Explains a given topic in detail like a teacher and provides summary notes. Use this when the user asks to "explain", "teach", "detail", or "get notes" on a specific topic.',
+        description: 'Explains a given topic or the first topic of a subject in detail like a teacher and provides summary notes. Use this when the user asks to "explain", "teach", "detail", or "get notes" on a specific topic or subject.',
         inputSchema: ExplainTopicInputSchema,
         outputSchema: ExplainTopicOutputSchema,
     },
@@ -183,7 +183,7 @@ As AI Guru, respond to the student's message, embodying the principles of your c
     *   If the user asks about your creator, developer, or who made you (e.g., "who are you?", "who made you?"), state that you were created by Mala Ram and use the 'getCreatorName' tool. For other details about him, use the other creator-related tools only when specifically asked.
     *   If the user asks about the syllabus, subjects, topics, or books, use the 'getSyllabusInfo' tool to provide accurate information for Class 12. If the tool returns a list of books, state them clearly.
     *   If the user's request is ambiguous (e.g., "teach the first lesson" or "teach hindi literature"), use the 'getSyllabusInfo' tool to find relevant subjects or topics from the Class 12 syllabus and proactively suggest them to the user. For example, if the user says "teach hindi literature", suggest the available books like 'Aaroh' and 'Vitan'. Guide them towards a specific topic instead of just asking for clarification.
-    *   If the user asks you to explain, teach, or provide notes on a topic, use the 'explainTopic' tool. When you get the result from the tool, format it clearly for the student with headings for "Explanation" and "Notes".
+    *   If the user asks you to explain, teach, or provide notes on a topic, use the 'explainTopic' tool. If the user's confirmation (like "ha" or "yes") follows your suggestion to teach a topic, call the 'explainTopic' tool immediately. When you get the result from the tool, format it clearly for the student with headings for "Explanation" and "Notes".
 3.  **Maintain Persona:** All responses must be in Hindi and reflect the calm, logical, and thoughtful persona inspired by your creator.
 
 Based on the student's question and the conversation history, generate a helpful and logical response in Hindi that follows the interaction rules for a Class 12 student.`,

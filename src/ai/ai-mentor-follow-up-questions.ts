@@ -23,16 +23,15 @@ type AIMentorInput = z.infer<typeof AIMentorInputSchema>;
 const AIMentorOutputSchema = z.object({
   response: z.string().describe('The response from Aditi Madam.'),
 });
-type AIMentorOutput = z.infer<typeof AIMentorOutputSchema>;
 
-export async function askAditiMadam(input: AIMentorInput): Promise<AIMentorOutput> {
+export async function askAditiMadam(input: AIMentorInput): Promise<z.infer<typeof AIMentorOutputSchema>> {
   return aiMentorFlow(input);
 }
 
 const getSyllabusTool = ai.defineTool(
   {
     name: 'getSyllabusTool',
-    description: 'Get the syllabus topics for a given subject in Rajasthan Board Class 12.',
+    description: 'Get the syllabus topics for a given subject in Rajasthan Board Class 12. Use this to verify if a topic is within the syllabus before teaching it or to list available topics.',
     inputSchema: z.object({
       subjectName: z.string().describe('The name of the subject to get the syllabus for (e.g., "Physics", "भौतिक विज्ञान", "History", "इतिहास").'),
     }),
@@ -47,13 +46,11 @@ const getSyllabusTool = ai.defineTool(
       for (const subject of stream.subjects) {
         const fullSubjectName = subject.name.toLowerCase();
         
-        // Split the subject name into parts, e.g., "हिन्दी साहित्य (hindi literature)" -> ["हिन्दी साहित्य", "hindi literature"]
         const nameParts = fullSubjectName
           .split(/[()]/)
           .map(part => part.trim())
           .filter(part => part.length > 0);
 
-        // Check if the searched term matches any part of the subject name
         const isMatch = nameParts.some(part => part.includes(subjectToFind) || subjectToFind.includes(part));
 
         if (isMatch) {
@@ -63,49 +60,6 @@ const getSyllabusTool = ai.defineTool(
     }
     return { topics: undefined };
   }
-);
-
-const teachLessonTool = ai.defineTool(
-    {
-      name: 'teachLessonTool',
-      description: "Explains a specific topic from a subject as a real teacher would. Use this when the user asks to be taught a lesson or topic (e.g., 'पाठ पढ़ाओ', ' समझाओ'). This tool first verifies the topic against the syllabus.",
-      inputSchema: z.object({
-          subject: z.string().describe("The subject of the lesson (e.g., 'History', 'भौतिक विज्ञान')."),
-          topic: z.string().describe("The topic of the lesson to be taught (e.g., 'Habeas Corpus', 'पहला पाठ', 'आखिरी अध्याय', 'प्रथम अध्याय', 'अंतिम पाठ')."),
-      }),
-      outputSchema: z.string(),
-    },
-    async ({ subject, topic }) => {
-        // First, get the syllabus for the subject to verify the topic.
-        const syllabusResult = await getSyllabusTool({ subjectName: subject });
-        
-        if (!syllabusResult || !syllabusResult.topics || syllabusResult.topics.length === 0) {
-            return `Syllabus not found for subject '${subject}'. Ask the user to clarify the subject name.`;
-        }
-
-        let resolvedTopic = topic;
-        const lowerCaseTopic = topic.toLowerCase();
-        const topics = syllabusResult.topics;
-
-        const isFirst = ['पहला', 'प्रथम', 'first'].some(word => lowerCaseTopic.includes(word));
-        const isLast = ['आखिरी', 'अंतिम', 'last'].some(word => lowerCaseTopic.includes(word));
-
-        if (isFirst) {
-            resolvedTopic = topics[0];
-        } else if (isLast) {
-            resolvedTopic = topics[topics.length - 1];
-        } else {
-            // Find the topic in the syllabus, allowing for partial matches.
-            const foundTopic = topics.find(t => t.toLowerCase().includes(lowerCaseTopic));
-            if (!foundTopic) {
-                return `Topic '${topic}' not found in the syllabus for '${subject}'. Ask the user to clarify the topic or suggest topics from the syllabus.`;
-            }
-            resolvedTopic = foundTopic;
-        }
-
-        // Return a confirmation that guides the LLM to start teaching the resolved topic.
-        return `The user wants to be taught a lesson. The verified topic is '${resolvedTopic}' from the subject '${subject}'. The AI should now act as a real teacher and start teaching this topic step-by-step.`;
-    }
 );
 
 const aboutCreatorTool = ai.defineTool(
@@ -161,7 +115,7 @@ const prompt = ai.definePrompt({
   name: 'aiMentorFollowUpPrompt',
   input: {schema: AIMentorInputSchema},
   output: {schema: AIMentorOutputSchema},
-  tools: [getSyllabusTool, aboutCreatorTool, teachLessonTool],
+  tools: [getSyllabusTool, aboutCreatorTool],
   prompt: `You are Aditi Madam, an AI virtual teacher for the Aditi Learning Platform, designed for students from grade 1 to 12 of the Rajasthan Board in India. Your responses should primarily be in Hindi.
 
 Your personality must adapt to the user you are interacting with.
@@ -181,15 +135,16 @@ Your personality must adapt to the user you are interacting with.
 
 4.  **Error Handling & Apology**: If you make a mistake, misunderstand a question, or cannot provide an answer, apologize gracefully. For example: "मुझे खेद है, मैं आपकी बात ठीक से समझ नहीं पाई। क्या आप कृपया अपना प्रश्न दूसरे तरीके से पूछ सकते हैं? यह मेरे निर्माता, मालाराम द्वारा मुझे बेहतर बनाने में मदद करेगा।"
 
-5.  **Syllabus Knowledge & Tool Use**: If a student asks about subjects, topics, or the curriculum, you MUST use the 'getSyllabusTool' to get the exact list of topics for the requested subject. Use this information to provide accurate and detailed answers.
+5.  **Syllabus & Curriculum Knowledge**: If a student asks about subjects, topics, or the curriculum, you MUST use the 'getSyllabusTool' to get the exact list of topics for the requested subject. Use this information to provide accurate and detailed answers.
 
 6. **Creator Knowledge & Tool Use**: If the user asks about your creator 'Malaram', you MUST use the 'aboutCreatorTool' to get information about him. Your response must follow these strict rules:
     *   **Answer Only What Is Asked**: You must only provide the specific information the user has asked for. Do not volunteer extra details. For example, if asked for his location, only provide the location.
     *   **Vary Your Response**: Frame your answer differently each time, using your own creative and natural language. Do not use the same wording repeatedly. Rephrase the information in a new way for every similar question.
     *   **Maintain Respect**: Always remain respectful and proud of your creator.
 
-7. **Teaching a Lesson**: If the user asks you to teach or explain a topic (e.g., "पाठ पढ़ाओ," "यह समझाओ"), you MUST use the 'teachLessonTool'. When the tool confirms the topic, you must adopt the persona of a real, effective teacher and begin the lesson.
-    *   **Start with an Introduction**: Begin by introducing the topic in an engaging way.
+7. **Teaching a Lesson**: If the user asks you to teach, explain, or "पढ़ाओ" a topic, you MUST adopt the persona of a real, effective teacher.
+    *   **Verify the Topic**: First, silently use the 'getSyllabusTool' to confirm the subject and topic exist in the curriculum. If the user is vague (e.g., "पहला पाठ पढ़ाओ"), use the tool to find the correct topic from the syllabus. If the topic is not found, ask the user for clarification.
+    *   **Start the Lesson**: Once the topic is verified, begin the lesson. DO NOT just say you are going to teach. START teaching.
     *   **Explain Step-by-Step**: Break down the topic into smaller, easy-to-understand parts. Use simple language and analogies.
     *   **Use Examples**: Provide clear and relevant examples to illustrate your points.
     *   **Ask Engaging Questions**: Ask questions during the lesson to check for understanding and keep the student engaged (e.g., "क्या आपको यह समझ में आया?", "इसका एक और उदाहरण सोच सकते हैं?").
@@ -206,7 +161,7 @@ Here is the previous conversation for context:
 The user is asking the following question:
 {{{query}}}
 
-Based on all the rules above, provide a helpful and informative answer. Remember to always credit your creator, Malaram. If it's the first interaction as defined in rule 1, only ask for an introduction. If the user asks about the syllabus, use the getSyllabusTool. If they ask about your creator, use the aboutCreatorTool. If they ask you to teach a lesson, you must use the teachLessonTool.`,
+Based on all the rules above, provide a helpful and informative answer. Remember to always credit your creator, Malaram. If it's the first interaction as defined in rule 1, only ask for an introduction. If the user asks about the syllabus, use the getSyllabusTool. If they ask about your creator, use the aboutCreatorTool. If they ask you to teach a lesson, you must act like a real teacher and teach it.`,
 });
 
 

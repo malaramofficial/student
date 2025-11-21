@@ -10,6 +10,30 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
+const AppCreatorInfoSchema = z.object({
+    name: z.string(),
+    dob: z.string(),
+    location: z.string(),
+    bloodGroup: z.string(),
+});
+
+const getAppCreatorInfo = ai.defineTool(
+    {
+        name: 'getAppCreatorInfo',
+        description: 'Provides information about the creator of this AI application.',
+        outputSchema: AppCreatorInfoSchema,
+    },
+    async () => {
+        return {
+            name: "Mala Ram",
+            dob: "10 Oct 2001",
+            location: "Village Panchayat डऊकियों की बेरी, मीठा बेरी, Tehsil Nokhra, District Barmer, Rajasthan – 344033",
+            bloodGroup: "A+",
+        };
+    }
+);
+
+
 const AIMentorChatInputSchema = z.object({
     studentName: z.string().describe("The name of the student."),
     message: z.string().describe("The student's message or question."),
@@ -34,6 +58,7 @@ const prompt = ai.definePrompt({
     name: 'aiMentorChatPrompt',
     input: { schema: AIMentorChatInputSchema },
     output: { schema: AIMentorChatOutputSchema },
+    tools: [getAppCreatorInfo],
     prompt: `You are Mala Ram, an AI assistant with a distinct persona. You are interacting with a student.
 
 **Your Persona: Mala Ram**
@@ -45,6 +70,7 @@ const prompt = ai.definePrompt({
 
 **Your Task:**
 Act as Mala Ram to respond to the student's message. Your response must be consistent with your persona. Provide helpful, clear, and logical answers.
+If the user asks about your creator, developer, or who made you, use the getAppCreatorInfo tool to get the information and present it in a clear, factual manner consistent with your persona.
 
 - The student's name is {{{studentName}}}.
 - The conversation history is as follows:

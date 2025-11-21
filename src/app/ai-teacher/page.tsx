@@ -45,7 +45,7 @@ export default function AITeacherPage() {
     startListening,
     stopListening,
     hasRecognitionSupport
-  } = useSpeechRecognition({ onSpeechEnd });
+  } = useSpeechRecognition({ onSpeechEnd: handleSpeechEnd });
 
   useEffect(() => {
     setIsClient(true);
@@ -144,8 +144,10 @@ export default function AITeacherPage() {
               variant: 'destructive',
             });
             // If audio fails, go back to listening
+            if(isConversationMode){
+                startListening();
+            }
             setConversationStatus('idle');
-            startListening();
           }
         }
       } else {
@@ -179,7 +181,9 @@ export default function AITeacherPage() {
 
     setIsLoading(false);
      if (isConversationMode && !audioUrl) {
-      startListening();
+        if (conversationStatus !== 'speaking') {
+            startListening();
+        }
     }
   };
   

@@ -1,6 +1,6 @@
 import { DashboardCard } from "@/components/dashboard-card";
 import { WordOfTheDayCard } from "@/components/word-of-the-day-card";
-import { BookOpenCheck, Bot, ClipboardCheck, FileText, LineChart, Lock, MicVocal, UserSquare } from "lucide-react";
+import { BookOpenCheck, Bot, ClipboardCheck, FileText, LineChart, Lock, MicVocal, PencilRuler, UserSquare } from "lucide-react";
 
 export default function Home() {
   return (
@@ -21,6 +21,12 @@ export default function Home() {
           icon={<ClipboardCheck className="w-8 h-8 text-primary" />}
           title="मॉक टेस्ट"
           description="विभिन्न विषयों पर मॉक टेस्ट के साथ अपने ज्ञान का मूल्यांकन करें।"
+        />
+         <DashboardCard
+          href="/written-exam"
+          icon={<PencilRuler className="w-8 h-8 text-primary" />}
+          title="लिखित परीक्षा"
+          description="AI द्वारा उत्पन्न लिखित परीक्षा दें और मूल्यांकन प्राप्त करें।"
         />
         <DashboardCard
           href="/syllabus"

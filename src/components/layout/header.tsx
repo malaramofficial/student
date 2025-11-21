@@ -11,6 +11,7 @@ import { ArrowLeft } from "lucide-react";
 const pageTitles: { [key: string]: string } = {
   "/": "डैशबोर्ड",
   "/mock-tests": "मॉक टेस्ट",
+  "/written-exam": "लिखित परीक्षा",
   "/progress-tracker": "प्रगति ट्रैकर",
   "/ai-teacher": "एआई वर्चुअल शिक्षक",
   "/speech-generator": "भाषण जनरेटर",

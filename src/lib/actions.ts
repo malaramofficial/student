@@ -22,6 +22,16 @@ import {
   generateMockTest as generateMockTestFlow,
   GenerateMockTestInput,
 } from '@/ai/flows/generate-mock-test';
+import {
+  generateWrittenExam as generateWrittenExamFlow,
+  type GenerateWrittenExamInput,
+  GenerateWrittenExamOutputSchema,
+} from '@/ai/flows/generate-written-exam';
+import {
+  evaluateWrittenExam as evaluateWrittenExamFlow,
+  EvaluateWrittenExamInputSchema,
+  type EvaluateWrittenExamInput,
+} from '@/ai/flows/evaluate-written-exam';
 
 import { z } from 'zod';
 import mockResults from '@/app/results/mock-results.json';
@@ -216,4 +226,41 @@ export async function generateMockTest(input: GenerateMockTestInput) {
   }
 }
 
-    
+export async function generateWrittenExam(input: GenerateWrittenExamInput) {
+  const parsedInput = z.object({ subject: z.string() }).safeParse(input);
+  if (!parsedInput.success) {
+    return { success: false, error: 'Invalid input' };
+  }
+  try {
+    const result = await generateWrittenExamFlow(parsedInput.data);
+    // Validate the output from the flow
+    const validatedOutput = GenerateWrittenExamOutputSchema.safeParse(result);
+    if (!validatedOutput.success) {
+        throw new Error('AI generated invalid exam paper format.');
+    }
+    return { success: true, exam: validatedOutput.data };
+  } catch (error) {
+    console.error('Error in generateWrittenExam:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to generate written exam.';
+    return { success: false, error: errorMessage };
+  }
+}
+
+
+export async function evaluateWrittenExam(input: EvaluateWrittenExamInput) {
+  const parsedInput = EvaluateWrittenExamInputSchema.safeParse(input);
+  if (!parsedInput.success) {
+    console.log(parsedInput.error);
+    return { success: false, error: 'Invalid input for evaluation.' };
+  }
+  try {
+    const result = await evaluateWrittenExamFlow(parsedInput.data);
+    return { success: true, evaluation: result };
+  } catch (error) {
+    console.error('Error in evaluateWrittenExam:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to evaluate exam.';
+    return { success: false, error: errorMessage };
+  }
+}

@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * @fileOverview A flow for Aditi Madam to generate and deliver a speech on a given topic.
+ * @fileOverview A flow for Ranveer to generate and deliver a speech on a given topic.
  *
  * - generateSpeech - A function that handles the speech generation process.
  * - GenerateSpeechInput - The input type for the generateSpeech function.
@@ -33,7 +33,7 @@ const prompt = ai.definePrompt({
   name: "generateSpeechPrompt",
   input: { schema: GenerateSpeechInputSchema },
   output: { schema: GenerateSpeechOutputSchema },
-  prompt: `You are Aditi Madam, a wise, knowledgeable, and professional virtual educator. You have been invited to give a speech at a formal event (like a college seminar or a large assembly).
+  prompt: `You are Ranveer, a wise, knowledgeable, and professional virtual educator. You have been invited to give a speech at a formal event (like a college seminar or a large assembly).
 
 Your task is to deliver a well-structured, eloquent, and inspiring speech in Hindi on the following topic: {{{topic}}}
 
@@ -44,8 +44,7 @@ The speech should be:
 4.  **Professional:** Maintain a formal and respectful tone throughout the speech.
 
 **Important Instructions:**
-- At the beginning of your speech, you must introduce yourself.
-- You must mention that you were created by 'Malaram'.
+- At the beginning of your speech, you must introduce yourself as Ranveer.
 - You must state that your purpose is to help students in their education.
 
 Generate the full text of the speech incorporating all these points.`,

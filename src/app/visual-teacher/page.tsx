@@ -118,7 +118,7 @@ export default function VisualTeacherPage() {
               <UserSquare /> विजुअल टीचर
             </CardTitle>
             <CardDescription>
-              अदिति मैडम को भाषण देते हुए देखें। एक विषय चुनें और 'भाषण तैयार करें' पर क्लिक करें।
+              रणवीर को भाषण देते हुए देखें। एक विषय चुनें और 'भाषण तैयार करें' पर क्लिक करें।
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -159,7 +159,7 @@ export default function VisualTeacherPage() {
            {visualTeacherAvatar ? (
              <Image 
                 src={visualTeacherAvatar.imageUrl}
-                alt="Aditi Madam"
+                alt="Ranveer"
                 fill
                 className={cn("object-contain object-bottom transition-transform duration-1000", isPlaying ? "scale-105" : "scale-100")}
                 priority

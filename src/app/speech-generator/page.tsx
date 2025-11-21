@@ -40,7 +40,7 @@ export default function SpeechGeneratorPage() {
       setSpeech(response.speech);
       toast({
         title: 'भाषण तैयार है',
-        description: 'अदिति मैडम द्वारा आपका भाषण उत्पन्न किया गया है।',
+        description: 'आपका भाषण उत्पन्न किया गया है।',
       });
       // Now convert the generated speech to audio
       setIsAudioLoading(true);
@@ -75,7 +75,7 @@ export default function SpeechGeneratorPage() {
     if (audioUrl) {
       const link = document.createElement('a');
       link.href = audioUrl;
-      link.download = 'aditi-madam-speech.wav';
+      link.download = 'ranveer-speech.wav';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -90,7 +90,7 @@ export default function SpeechGeneratorPage() {
             <MicVocal /> भाषण जनरेटर
           </CardTitle>
           <CardDescription>
-            अदिति मैडम के लिए एक भाषण का विषय प्रदान करें। वह एक प्रेरक और जानकारीपूर्ण भाषण तैयार करेंगी।
+            भाषण के लिए एक विषय प्रदान करें। AI एक प्रेरक और जानकारीपूर्ण भाषण तैयार करेगा।
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -109,7 +109,7 @@ export default function SpeechGeneratorPage() {
             <div className="space-y-4">
                 <div className="p-4 bg-muted rounded-lg">
                     <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-semibold">अदिति मैडम का भाषण</h3>
+                        <h3 className="font-semibold">रणवीर का भाषण</h3>
                         <div className="flex items-center gap-2">
                             {isAudioLoading ? (
                                 <Button variant="outline" size="icon" disabled>

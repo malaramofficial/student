@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -180,9 +181,9 @@ export default function AITeacherPage() {
                 <Label htmlFor="mode-switch" className={cn(mode === 'public' && 'text-primary font-semibold')}>सार्वजनिक मोड</Label>
             </div>
             {isConversationMode && (
-                <div className="flex items-center gap-2 text-sm text-blue-500 animate-pulse">
+                <div className={cn("flex items-center gap-2 text-sm", isListening ? "text-red-500 animate-pulse" : "text-blue-500")}>
                     <Mic className="h-4 w-4" />
-                    <span>कन्वर्सेशन मोड सक्रिय है...</span>
+                    <span>{isListening ? "सुन रही हूँ..." : "कन्वर्सेशन मोड सक्रिय है"}</span>
                 </div>
             )}
         </div>

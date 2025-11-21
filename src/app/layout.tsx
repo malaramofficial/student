@@ -17,7 +17,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'अदिति लर्निंग प्लेटफॉर्म',
+  title: 'अदिति लर्निंग',
   description: 'छात्रों को सीखने और बढ़ने के लिए एक इंटरैक्टिव प्लेटफॉर्म।',
   icons: {
     icon: "/favicon.ico",

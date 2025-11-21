@@ -4,7 +4,14 @@ import {
   textToSpeechConversion,
   TextToSpeechConversionInput,
 } from '@/ai/flows/text-to-speech-conversion';
-
+import {
+  aiMentorChat,
+  AIMentorChatInput,
+} from '@/ai/flows/ai-mentor-chat-flow';
+import {
+  getInitialAIResponse,
+  GetInitialAIResponseInput,
+} from '@/ai/flows/ai-mentor-initial-prompt';
 import { z } from 'zod';
 
 const getAudioResponseSchema = z.object({
@@ -29,6 +36,32 @@ export async function getAudioResponse(input: TextToSpeechConversionInput) {
       error instanceof Error
         ? error.message
         : 'Failed to convert text to speech.';
+    return { success: false, error: errorMessage };
+  }
+}
+
+export async function getInitialAIResponseAction(
+  input: GetInitialAIResponseInput
+) {
+  try {
+    const result = await getInitialAIResponse(input);
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error in getInitialAIResponseAction:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to get initial response.';
+    return { success: false, error: errorMessage };
+  }
+}
+
+export async function getAIChatResponseAction(input: AIMentorChatInput) {
+  try {
+    const result = await aiMentorChat(input);
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error in getAIChatResponseAction:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to get chat response.';
     return { success: false, error: errorMessage };
   }
 }

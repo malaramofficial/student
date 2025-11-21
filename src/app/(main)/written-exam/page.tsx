@@ -31,9 +31,15 @@ type Question = {
   marks: number;
 };
 
+type Section = {
+  name: string;
+  description?: string;
+  questions: Question[];
+};
+
 type Subject = {
   name: string;
-  questions: Question[];
+  sections: Section[];
 };
 
 type Answer = {
@@ -75,26 +81,28 @@ export default function WrittenExamPage() {
 
   const handleStartTest = () => {
     if (selectedSubject) {
-      const currentQuestions = subjects.find(
+      const currentSubjectData = subjects.find(
         (s) => s.name === selectedSubject
-      )?.questions;
-      if (currentQuestions) {
-        setAnswers(
-          currentQuestions.map((q) => ({
-            question: q.question,
-            answer: '',
-            marks: q.marks,
-          }))
+      );
+      if (currentSubjectData && currentSubjectData.sections) {
+        const allQuestions = currentSubjectData.sections.flatMap(section => 
+            section.questions.map(q => ({
+                question: q.question,
+                answer: '',
+                marks: q.marks
+            }))
         );
+        setAnswers(allQuestions);
         setTestStarted(true);
         setMarksheet(null);
       }
     }
   };
   
-  const handleAnswerChange = (index: number, value: string) => {
-    const newAnswers = [...answers];
-    newAnswers[index].answer = value;
+  const handleAnswerChange = (question: string, value: string) => {
+    const newAnswers = answers.map(a => 
+        a.question === question ? { ...a, answer: value } : a
+    );
     setAnswers(newAnswers);
   };
 
@@ -111,6 +119,7 @@ export default function WrittenExamPage() {
       const response = await evaluateAnswersAction({ answers });
       if(response.success && response.data) {
         setMarksheet(response.data);
+        setTestStarted(false); // To show marksheet view
       } else {
         toast({
             variant: "destructive",
@@ -121,18 +130,19 @@ export default function WrittenExamPage() {
       setIsLoading(false);
   }
 
-  const handleEndTest = () => {
+  const handleRestartTest = () => {
       setTestStarted(false);
       setSelectedStream('');
       setSelectedSubject('');
       setMarksheet(null);
+      setAnswers([]);
   }
 
   if (!isClient) return null;
 
-  const currentQuestions = subjects.find(
+  const currentSubjectData = subjects.find(
     (s) => s.name === selectedSubject
-  )?.questions;
+  );
   
   const availableSubjects =
     streams.find((s) => s.name === selectedStream)?.subjects || [];
@@ -153,8 +163,8 @@ export default function WrittenExamPage() {
          <div className="flex justify-center items-start p-4 md:p-8 min-h-[calc(100vh-8rem)]">
             <Card className="w-full max-w-4xl bg-transparent border-0 md:border md:bg-card shadow-none md:shadow-sm">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><BookCheck /> परीक्षा परिणाम</CardTitle>
-                    <CardDescription>AI द्वारा आपके उत्तरों का मूल्यांकन।</CardDescription>
+                    <CardTitle className="flex items-center gap-2"><BookCheck /> परीक्षा परिणाम: {selectedSubject}</CardTitle>
+                    <CardDescription>AI द्वारा आपके उत्तरों का विस्तृत मूल्यांकन।</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="text-center p-4 bg-muted rounded-lg">
@@ -164,12 +174,12 @@ export default function WrittenExamPage() {
                     {marksheet.results.map((result, index) => (
                         <div key={index} className="border-b border-border pb-4 last:border-b-0">
                             <p className="font-semibold">प्रश्न {index + 1}: {result.question}</p>
-                            <div className="mt-2 p-3 bg-gray-50/5 dark:bg-gray-800/20 rounded-md">
+                            <div className="mt-2 p-3 bg-muted/30 rounded-md">
                                <p className="font-semibold text-sm text-muted-foreground">आपका उत्तर:</p>
-                               <p className="text-sm whitespace-pre-wrap">{result.answer}</p>
+                               <p className="text-sm whitespace-pre-wrap">{result.answer || "(उत्तर नहीं दिया गया)"}</p>
                             </div>
                             <div className="mt-3 p-3 bg-blue-900/20 rounded-md">
-                                <p className="font-semibold text-sm">AI प्रतिक्रिया:</p>
+                                <p className="font-semibold text-sm text-primary">AI प्रतिक्रिया:</p>
                                 <p className="text-sm">{result.feedback}</p>
                                 <p className="text-right font-bold text-secondary mt-2">दिए गए अंक: {result.marksAwarded}</p>
                             </div>
@@ -177,7 +187,7 @@ export default function WrittenExamPage() {
                     ))}
                 </CardContent>
                 <CardFooter className="justify-center">
-                     <Button onClick={handleEndTest} variant="secondary">नई परीक्षा शुरू करें</Button>
+                     <Button onClick={handleRestartTest} variant="secondary">नई परीक्षा शुरू करें</Button>
                 </CardFooter>
             </Card>
          </div>
@@ -191,7 +201,7 @@ export default function WrittenExamPage() {
             <CardHeader>
             <CardTitle className="flex items-center gap-2"><FileText />लिखित परीक्षा</CardTitle>
             <CardDescription>
-                लंबे उत्तर वाले प्रश्नों के उत्तर लिखकर अपनी तैयारी का अभ्यास करें।
+                लंबे उत्तर वाले प्रश्नों के उत्तर लिखकर अपनी तैयारी का अभ्यास करें। यह बोर्ड परीक्षा के पैटर्न पर आधारित है।
             </CardDescription>
             </CardHeader>
             <CardContent>
@@ -247,7 +257,7 @@ export default function WrittenExamPage() {
                 </Button>
             </CardFooter>
          </Card>
-      ) : currentQuestions && currentQuestions.length > 0 ? (
+      ) : currentSubjectData ? (
         <div className="w-full max-w-4xl border-2 border-dashed border-border p-4 sm:p-6 md:p-8 rounded-lg bg-card">
             {/* Exam Header */}
             <div className="text-center border-b-2 border-border pb-4 mb-4">
@@ -272,22 +282,33 @@ export default function WrittenExamPage() {
                 </ol>
             </div>
 
-            {/* Questions */}
+            {/* Questions by Section */}
             <div className="space-y-8">
-              {answers.map((ans, index) => (
-                <div key={index} className="space-y-3 border-t border-border/50 pt-6">
-                  <div className="flex justify-between items-baseline">
-                    <p className="font-semibold text-base">
-                        प्रश्न {index + 1}: {ans.question}
-                    </p>
-                    <p className="text-sm text-muted-foreground font-medium shrink-0 ml-4">({ans.marks} अंक)</p>
+              {currentSubjectData.sections.map((section, sectionIndex) => (
+                <div key={sectionIndex}>
+                  <h3 className="text-lg font-bold border-b-2 border-primary mb-4 pb-2">{section.name}</h3>
+                  {section.description && <p className="text-sm text-muted-foreground mb-4">{section.description}</p>}
+                  <div className="space-y-8">
+                    {section.questions.map((q, qIndex) => {
+                        const answer = answers.find(a => a.question === q.question);
+                        return (
+                            <div key={qIndex} className="space-y-3 border-t border-border/50 pt-6">
+                                <div className="flex justify-between items-baseline">
+                                    <p className="font-semibold text-base">
+                                        प्रश्न {answers.findIndex(a => a.question === q.question) + 1}: {q.question}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground font-medium shrink-0 ml-4">({q.marks} अंक)</p>
+                                </div>
+                                <Textarea 
+                                    placeholder="अपना उत्तर यहाँ लिखें..." 
+                                    className="min-h-[150px] bg-transparent focus:bg-muted/30"
+                                    value={answer?.answer || ''}
+                                    onChange={(e) => handleAnswerChange(q.question, e.target.value)}
+                                />
+                            </div>
+                        );
+                    })}
                   </div>
-                  <Textarea 
-                    placeholder="अपना उत्तर यहाँ लिखें..." 
-                    className="min-h-[150px] bg-transparent focus:bg-muted/30"
-                    value={ans.answer}
-                    onChange={(e) => handleAnswerChange(index, e.target.value)}
-                  />
                 </div>
               ))}
             </div>
@@ -295,7 +316,7 @@ export default function WrittenExamPage() {
             {/* Footer and Submit button */}
             <div className="flex justify-center mt-8 pt-6 border-t-2 border-dashed border-border">
                 <div className="flex gap-4">
-                    <Button onClick={handleEndTest} variant="destructive">
+                    <Button onClick={handleRestartTest} variant="destructive">
                         अभ्यास समाप्त करें
                     </Button>
                     <Button onClick={handleSubmitExam} >
@@ -310,5 +331,3 @@ export default function WrittenExamPage() {
     </div>
   );
 }
-
-    

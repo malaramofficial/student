@@ -22,7 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import questionsData from '../../written-exam/written-questions.json';
 import syllabusData from '../../syllabus/syllabus-data.json';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText, Loader2, BookCheck, ClipboardPaste, Clock } from 'lucide-react';
 import { evaluateAnswersAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 
@@ -136,6 +136,8 @@ export default function WrittenExamPage() {
   
   const availableSubjects =
     streams.find((s) => s.name === selectedStream)?.subjects || [];
+  
+  const totalMarks = answers.reduce((acc, a) => acc + a.marks, 0);
 
   if (isLoading) {
     return (
@@ -151,7 +153,7 @@ export default function WrittenExamPage() {
          <div className="flex justify-center items-start p-4 md:p-8 min-h-[calc(100vh-8rem)]">
             <Card className="w-full max-w-4xl bg-transparent border-0 md:border md:bg-card shadow-none md:shadow-sm">
                 <CardHeader>
-                    <CardTitle>परीक्षा परिणाम</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><BookCheck /> परीक्षा परिणाम</CardTitle>
                     <CardDescription>AI द्वारा आपके उत्तरों का मूल्यांकन।</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -160,11 +162,11 @@ export default function WrittenExamPage() {
                          <p className="mt-2 text-muted-foreground font-semibold">समग्र प्रतिक्रिया: <span className="text-foreground">{marksheet.overallFeedback}</span></p>
                     </div>
                     {marksheet.results.map((result, index) => (
-                        <div key={index} className="border-b border-border pb-4">
+                        <div key={index} className="border-b border-border pb-4 last:border-b-0">
                             <p className="font-semibold">प्रश्न {index + 1}: {result.question}</p>
                             <div className="mt-2 p-3 bg-gray-50/5 dark:bg-gray-800/20 rounded-md">
                                <p className="font-semibold text-sm text-muted-foreground">आपका उत्तर:</p>
-                               <p className="text-sm">{result.answer}</p>
+                               <p className="text-sm whitespace-pre-wrap">{result.answer}</p>
                             </div>
                             <div className="mt-3 p-3 bg-blue-900/20 rounded-md">
                                 <p className="font-semibold text-sm">AI प्रतिक्रिया:</p>
@@ -183,105 +185,130 @@ export default function WrittenExamPage() {
   }
 
   return (
-    <div className="flex justify-center items-start p-4 min-h-[calc(100vh-8rem)]">
-      <Card className="w-full max-w-4xl bg-transparent border-0 md:border md:bg-card shadow-none md:shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><FileText />लिखित परीक्षा</CardTitle>
-          <CardDescription>
-            लंबे उत्तर वाले प्रश्नों के उत्तर लिखकर अपनी तैयारी का अभ्यास करें।
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!testStarted ? (
-            <div className="space-y-4 max-w-sm mx-auto">
-              <div>
-                <Label>स्ट्रीम चुनें</Label>
-                <Select
-                  value={selectedStream}
-                  onValueChange={(value) => {
-                    setSelectedStream(value);
-                    setSelectedSubject('');
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="एक स्ट्रीम चुनें" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {streams.map((stream) => (
-                      <SelectItem key={stream.name} value={stream.name}>
-                        {stream.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {selectedStream && (
+    <div className="flex justify-center items-start p-4 md:p-6 min-h-[calc(100vh-8rem)]">
+      {!testStarted ? (
+         <Card className="w-full max-w-2xl bg-transparent border-0 md:border md:bg-card shadow-none md:shadow-sm">
+            <CardHeader>
+            <CardTitle className="flex items-center gap-2"><FileText />लिखित परीक्षा</CardTitle>
+            <CardDescription>
+                लंबे उत्तर वाले प्रश्नों के उत्तर लिखकर अपनी तैयारी का अभ्यास करें।
+            </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4 max-w-sm mx-auto">
                 <div>
-                  <Label>विषय चुनें</Label>
-                  <Select
-                    value={selectedSubject}
-                    onValueChange={setSelectedSubject}
-                  >
+                    <Label>स्ट्रीम चुनें</Label>
+                    <Select
+                    value={selectedStream}
+                    onValueChange={(value) => {
+                        setSelectedStream(value);
+                        setSelectedSubject('');
+                    }}
+                    >
                     <SelectTrigger>
-                      <SelectValue placeholder="एक विषय चुनें" />
+                        <SelectValue placeholder="एक स्ट्रीम चुनें" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableSubjects.map((subject) => (
-                        subjects.some(s => s.name === subject.name) && (
-                            <SelectItem key={subject.name} value={subject.name}>
-                                {subject.name}
-                            </SelectItem>
-                        )
-                      ))}
+                        {streams.map((stream) => (
+                        <SelectItem key={stream.name} value={stream.name}>
+                            {stream.name}
+                        </SelectItem>
+                        ))}
                     </SelectContent>
-                  </Select>
+                    </Select>
                 </div>
-              )}
+                {selectedStream && (
+                    <div>
+                    <Label>विषय चुनें</Label>
+                    <Select
+                        value={selectedSubject}
+                        onValueChange={setSelectedSubject}
+                    >
+                        <SelectTrigger>
+                        <SelectValue placeholder="एक विषय चुनें" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {availableSubjects.map((subject) => (
+                            subjects.some(s => s.name === subject.name) && (
+                                <SelectItem key={subject.name} value={subject.name}>
+                                    {subject.name}
+                                </SelectItem>
+                            )
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    </div>
+                )}
+                </div>
+            </CardContent>
+            <CardFooter className="flex justify-center mt-6">
+                <Button onClick={handleStartTest} disabled={!selectedSubject}>
+                    अभ्यास शुरू करें
+                </Button>
+            </CardFooter>
+         </Card>
+      ) : currentQuestions && currentQuestions.length > 0 ? (
+        <div className="w-full max-w-4xl border-2 border-dashed border-border p-4 sm:p-6 md:p-8 rounded-lg bg-card">
+            {/* Exam Header */}
+            <div className="text-center border-b-2 border-border pb-4 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold">माध्यमिक शिक्षा बोर्ड, राजस्थान</h2>
+                <h3 className="text-lg sm:text-xl font-semibold">उच्च माध्यमिक परीक्षा - 2024 (अभ्यास)</h3>
             </div>
-          ) : currentQuestions && currentQuestions.length > 0 ? (
+            <div className="flex justify-between items-center text-sm font-medium mb-6">
+                <span className="font-bold">विषय: {selectedSubject}</span>
+                <div className="flex items-center gap-4">
+                    <span>पूर्णांक: {totalMarks}</span>
+                    <span className="flex items-center gap-1"><Clock className="w-4 h-4"/> समय: 3 घंटे 15 मिनट</span>
+                </div>
+            </div>
+
+            {/* Instructions */}
+            <div className="mb-8 p-3 bg-muted/50 rounded-md">
+                <h4 className="font-bold mb-2 flex items-center gap-2"><ClipboardPaste className="w-4 h-4" /> परीक्षार्थियों के लिए सामान्य निर्देश:</h4>
+                <ol className="list-decimal list-inside text-xs space-y-1 text-muted-foreground">
+                    <li>सभी प्रश्न अनिवार्य हैं।</li>
+                    <li>प्रत्येक प्रश्न के अंक उसके सामने अंकित हैं।</li>
+                    <li>अपना उत्तर निर्धारित स्थान पर ही लिखें।</li>
+                </ol>
+            </div>
+
+            {/* Questions */}
             <div className="space-y-8">
-               <div className="flex justify-between items-baseline">
-                <h3 className="text-xl font-semibold text-center">{selectedSubject}</h3>
-                <p className="text-sm font-bold">कुल अंक: {answers.reduce((acc, a) => acc + a.marks, 0)}</p>
-               </div>
               {answers.map((ans, index) => (
-                <div key={index} className="space-y-3">
+                <div key={index} className="space-y-3 border-t border-border/50 pt-6">
                   <div className="flex justify-between items-baseline">
                     <p className="font-semibold text-base">
                         प्रश्न {index + 1}: {ans.question}
                     </p>
-                    <p className="text-sm text-muted-foreground font-medium">({ans.marks} अंक)</p>
+                    <p className="text-sm text-muted-foreground font-medium shrink-0 ml-4">({ans.marks} अंक)</p>
                   </div>
                   <Textarea 
                     placeholder="अपना उत्तर यहाँ लिखें..." 
-                    className="min-h-[120px]"
+                    className="min-h-[150px] bg-transparent focus:bg-muted/30"
                     value={ans.answer}
                     onChange={(e) => handleAnswerChange(index, e.target.value)}
                   />
                 </div>
               ))}
             </div>
-          ) : (
-             <p className="text-center text-muted-foreground">इस विषय के लिए कोई प्रश्न उपलब्ध नहीं है।</p>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-center mt-6">
-          {!testStarted ? (
-            <Button onClick={handleStartTest} disabled={!selectedSubject}>
-              अभ्यास शुरू करें
-            </Button>
-          ) : (
-            <div className="flex gap-4">
-                <Button onClick={handleEndTest} variant="destructive">
-                  अभ्यास समाप्त करें
-                </Button>
-                <Button onClick={handleSubmitExam} >
-                    परीक्षा जमा करें
-                </Button>
+            
+            {/* Footer and Submit button */}
+            <div className="flex justify-center mt-8 pt-6 border-t-2 border-dashed border-border">
+                <div className="flex gap-4">
+                    <Button onClick={handleEndTest} variant="destructive">
+                        अभ्यास समाप्त करें
+                    </Button>
+                    <Button onClick={handleSubmitExam} >
+                        परीक्षा जमा करें
+                    </Button>
+                </div>
             </div>
-          )}
-        </CardFooter>
-      </Card>
+        </div>
+      ) : (
+         <p className="text-center text-muted-foreground">इस विषय के लिए कोई प्रश्न उपलब्ध नहीं है।</p>
+      )}
     </div>
   );
 }
+
+    

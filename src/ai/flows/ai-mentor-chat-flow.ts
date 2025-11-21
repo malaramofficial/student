@@ -1,3 +1,5 @@
+
+'use server';
 /**
  * @fileOverview This file defines the AI Mentor chat flow.
  *
@@ -9,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import syllabusData from '@/app/syllabus/syllabus-data.json';
-import { explainTopic, ExplainTopicInputSchema, ExplainTopicOutputSchema } from './explain-topic-flow';
+import { explainTopic, ExplainTopicInput, ExplainTopicOutput } from './explain-topic-flow';
 
 const getCreatorName = ai.defineTool(
     {
@@ -115,6 +117,23 @@ const getSyllabusInfo = ai.defineTool(
         return "Could not find the requested syllabus information. Please specify a stream or subject.";
     }
 );
+
+const ExplainTopicInputSchema = z.object({
+  topic: z.string().describe('The topic to be explained. If not provided, assume the first topic of the given subject.'),
+  subject: z.string().optional().describe('The subject the topic belongs to.'),
+});
+const ExplainTopicOutputSchema = z.object({
+  explanation: z
+    .string()
+    .describe(
+      'A detailed, step-by-step explanation of the topic, presented as if by a real teacher. It should be clear, simple, and logical.'
+    ),
+  notes: z
+    .string()
+    .describe(
+      'Concise, easy-to-remember notes covering the main points of the topic.'
+    ),
+});
 
 
 const explainTopicTool = ai.defineTool(

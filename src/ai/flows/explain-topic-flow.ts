@@ -1,3 +1,5 @@
+
+'use server';
 /**
  * @fileOverview This file defines the flow for explaining a topic and generating notes.
  *
@@ -9,13 +11,13 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const ExplainTopicInputSchema = z.object({
+const ExplainTopicInputSchema = z.object({
   topic: z.string().describe('The topic to be explained. If not provided, assume the first topic of the given subject.'),
   subject: z.string().optional().describe('The subject the topic belongs to.'),
 });
 export type ExplainTopicInput = z.infer<typeof ExplainTopicInputSchema>;
 
-export const ExplainTopicOutputSchema = z.object({
+const ExplainTopicOutputSchema = z.object({
   explanation: z
     .string()
     .describe(

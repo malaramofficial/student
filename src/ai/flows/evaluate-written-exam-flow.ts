@@ -16,7 +16,7 @@ const AnswerSchema = z.object({
   marks: z.number().describe('The maximum marks for the question.'),
 });
 
-export const EvaluateWrittenExamInputSchema = z.object({
+const EvaluateWrittenExamInputSchema = z.object({
   answers: z.array(AnswerSchema).describe('An array of questions and the student\'s answers.'),
 });
 export type EvaluateWrittenExamInput = z.infer<typeof EvaluateWrittenExamInputSchema>;
@@ -28,7 +28,7 @@ const EvaluationResultSchema = z.object({
     feedback: z.string().describe('Detailed, constructive feedback on the answer, explaining why the marks were awarded and how the student can improve.'),
 });
 
-export const EvaluateWrittenExamOutputSchema = z.object({
+const EvaluateWrittenExamOutputSchema = z.object({
   results: z.array(EvaluationResultSchema).describe('An array containing the evaluation for each answer.'),
   totalAwardedMarks: z.number().describe('The sum of all marks awarded.'),
   totalMarks: z.number().describe('The total maximum marks for the exam.'),

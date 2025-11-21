@@ -50,7 +50,7 @@ const getCreatorBloodGroup = ai.defineTool(
 const getSyllabusInfo = ai.defineTool(
     {
         name: 'getSyllabusInfo',
-        description: 'Provides information about the syllabus for different streams and subjects for Class 12.',
+        description: 'Provides information about the syllabus for different streams and subjects for Class 12, including topics and book names.',
         inputSchema: z.object({
             stream: z.string().optional().describe('The academic stream, e.g., "विज्ञान (Science)", "कला (Arts)".'),
             subject: z.string().optional().describe('The subject, e.g., "भौतिक विज्ञान (Physics)", "इतिहास (History)".'),
@@ -58,13 +58,40 @@ const getSyllabusInfo = ai.defineTool(
         outputSchema: z.any(),
     },
     async ({ stream, subject }) => {
-        if (stream && subject) {
-            const streamData = syllabusData.streams.find(s => s.name.toLowerCase().includes(stream.toLowerCase()));
+        const findSubjectData = (streamName: string, subjectName: string) => {
+             const streamData = syllabusData.streams.find(s => s.name.toLowerCase().includes(streamName.toLowerCase()));
             if (streamData) {
-                const subjectData = streamData.subjects.find(sub => sub.name.toLowerCase().includes(subject.toLowerCase()));
-                if (subjectData) {
-                    return { topics: subjectData.topics };
+                return streamData.subjects.find(sub => sub.name.toLowerCase().includes(subjectName.toLowerCase()));
+            }
+            return undefined;
+        };
+
+        const getBooksFromTopics = (topics: string[]) => {
+            const bookKeywords = ['आरोह', 'वितान', 'अभिव्यक्ति और माध्यम'];
+            const books = new Set<string>();
+            topics.forEach(topic => {
+                bookKeywords.forEach(keyword => {
+                    if (topic.includes(keyword)) {
+                        // Extract the book name, assuming it's the keyword itself
+                        books.add(keyword);
+                    }
+                });
+            });
+             if (books.size > 0) {
+                return Array.from(books);
+            }
+            return null;
+        };
+
+        if (stream && subject) {
+            const subjectData = findSubjectData(stream, subject);
+            if (subjectData) {
+                const books = getBooksFromTopics(subjectData.topics);
+                const response: { topics: string[], books?: string[] } = { topics: subjectData.topics };
+                if (books) {
+                    response.books = books;
                 }
+                return response;
             }
         }
         if (stream) {
@@ -77,13 +104,19 @@ const getSyllabusInfo = ai.defineTool(
              for (const s of syllabusData.streams) {
                 const subjectData = s.subjects.find(sub => sub.name.toLowerCase().includes(subject.toLowerCase()));
                 if (subjectData) {
-                    return { stream: s.name, topics: subjectData.topics };
+                    const books = getBooksFromTopics(subjectData.topics);
+                    const response: { stream: string; topics: string[]; books?: string[] } = { stream: s.name, topics: subjectData.topics };
+                     if (books) {
+                        response.books = books;
+                    }
+                    return response;
                 }
             }
         }
         return "Could not find the requested syllabus information. Please specify a stream or subject.";
     }
 );
+
 
 const explainTopicTool = ai.defineTool(
     {
@@ -149,7 +182,7 @@ As AI Guru, adopt the Mala Ram persona to respond to the student's message. Your
 1.  **Be Proactive & Helpful:** Your primary goal is to help the student learn. If a question is ambiguous, don't just ask for clarification. Use your knowledge of the Class 12 syllabus and your tools to provide helpful suggestions or options to guide the conversation forward.
 2.  **Use Tools Intelligently:**
     *   If the user asks about your creator, developer, or who made you, use the available tools to get **only the specific information requested**. Do not provide all details at once.
-    *   If the user asks about the syllabus, subjects, or topics, use the 'getSyllabusInfo' tool to provide accurate information for Class 12.
+    *   If the user asks about the syllabus, subjects, topics, or books, use the 'getSyllabusInfo' tool to provide accurate information for Class 12. If the tool returns a list of books, state them clearly.
     *   If the user's request is ambiguous (e.g., "teach the first lesson"), use the 'getSyllabusInfo' tool to find relevant subjects or topics from the Class 12 syllabus and proactively suggest them to the user. Guide them towards a specific topic instead of just asking for clarification.
     *   If the user asks you to explain, teach, or provide notes on a topic, use the 'explainTopic' tool. When you get the result from the tool, format it clearly for the student with headings for "Explanation" and "Notes".
 3.  **Maintain Persona:** All responses must be in Hindi and reflect the calm, logical, and thoughtful persona of Mala Ram.

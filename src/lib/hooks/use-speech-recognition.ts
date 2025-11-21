@@ -29,6 +29,7 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const speechEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const finalTranscriptRef = useRef('');
   
   const stableOnSpeechEnd = useCallback((finalTranscript: string) => {
     if (onSpeechEnd) {
@@ -64,25 +65,29 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
         }
       }
       
+      finalTranscriptRef.current = final_transcript;
       setTranscript(final_transcript + interim_transcript);
 
-      // Reset the timer every time a new result comes in
       if (speechEndTimeoutRef.current) {
         clearTimeout(speechEndTimeoutRef.current);
       }
+      
       speechEndTimeoutRef.current = setTimeout(() => {
-        // If there's no new result for 1.5s, consider it the end of speech
-        const currentTranscript = (final_transcript + interim_transcript).trim();
+        const currentTranscript = (finalTranscriptRef.current + interim_transcript).trim();
         if (currentTranscript) {
           stableOnSpeechEnd(currentTranscript);
-          setIsListening(false);
-          recognition.stop();
+          if (recognitionRef.current) {
+            recognitionRef.current.stop();
+          }
         }
-      }, 1500); // 1.5-second delay
+      }, 3000); // 3-second delay for a more natural pause
     };
 
     recognition.onerror = (event) => {
-      if (event.error === 'no-speech' || event.error === 'audio-capture') return;
+      if (event.error === 'no-speech' || event.error === 'audio-capture') {
+        // Ignore "no-speech" errors which can happen if the user doesn't speak.
+        return;
+      }
       if (event.error === 'not-allowed') {
         setError("माइक्रोफ़ोन की अनुमति आवश्यक है।");
       } else if (event.error === 'network') {
@@ -116,14 +121,19 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
   const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
       resetTranscript();
+      finalTranscriptRef.current = '';
       try {
         recognitionRef.current.start();
         setIsListening(true);
         setError(null);
       } catch (err) {
-        console.error("स्पीच रिकग्निशन शुरू करने में त्रुटि:", err);
         // This can happen if recognition is already started, which is a recoverable state.
-        setIsListening(false);
+        if ((err as DOMException).name === 'InvalidStateError') {
+            console.warn("Speech recognition already started.");
+        } else {
+            console.error("स्पीच रिकग्निशन शुरू करने में त्रुटि:", err);
+            setIsListening(false);
+        }
       }
     }
   }, [isListening]);
@@ -144,6 +154,7 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
 
   const resetTranscript = useCallback(() => {
     setTranscript('');
+    finalTranscriptRef.current = '';
   }, []);
 
   return {

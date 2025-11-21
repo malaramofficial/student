@@ -35,51 +35,6 @@ export default function AITeacherPage() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
-  const handleSpeechEnd = useCallback(async (finalTranscript: string) => {
-      if (finalTranscript) {
-          // Only auto-submit in conversation mode
-          if (isConversationMode) {
-              await handleAIResponse(finalTranscript);
-          }
-      }
-  }, [isConversationMode]);
-  
-  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition({ 
-    onSpeechEnd: handleSpeechEnd
-  });
-
-  const sarathiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-  
-  useEffect(() => {
-    if(speechError) {
-      toast({ variant: 'destructive', title: 'Speech Recognition Error', description: speechError });
-      setIsConversationMode(false); // Turn off conversation mode on error
-    }
-  }, [speechError, toast]);
-
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
-    }
-  }, [messages]);
-  
-  useEffect(() => {
-    if (audioUrl && audioRef.current) {
-      audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
-    }
-  }, [audioUrl]);
-
-  useEffect(() => {
-    // Update input field as user speaks, but only if not in conversation mode listening
-    if (!isConversationMode || (isConversationMode && !isListening) ) {
-      setInput(transcript);
-    }
-  }, [transcript, isConversationMode, isListening]);
-
   const handleAIResponse = useCallback(async (query: string) => {
     if (!query.trim() || isLoading) return;
 
@@ -129,7 +84,49 @@ export default function AITeacherPage() {
         setIsLoading(false);
     }
   }, [isLoading, toast, resetTranscript, messages, mode, isConversationMode, startListening]);
+  
+  const handleSpeechEnd = useCallback(async (finalTranscript: string) => {
+      if (finalTranscript) {
+          if (isConversationMode) {
+              await handleAIResponse(finalTranscript);
+          }
+      }
+  }, [isConversationMode, handleAIResponse]);
+  
+  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition({ 
+    onSpeechEnd: handleSpeechEnd
+  });
 
+  const sarathiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  useEffect(() => {
+    if(speechError) {
+      toast({ variant: 'destructive', title: 'Speech Recognition Error', description: speechError });
+      setIsConversationMode(false); // Turn off conversation mode on error
+    }
+  }, [speechError, toast]);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [messages]);
+  
+  useEffect(() => {
+    if (audioUrl && audioRef.current) {
+      audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
+    }
+  }, [audioUrl]);
+
+  useEffect(() => {
+    if (isListening || !isConversationMode) {
+      setInput(transcript);
+    }
+  }, [transcript, isListening, isConversationMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,16 +138,29 @@ export default function AITeacherPage() {
   const toggleListening = () => {
     if (isListening) {
       stopListening();
-      if(isConversationMode) setIsConversationMode(false);
     } else {
       startListening();
-      if(mode === 'public') setIsConversationMode(true);
     }
   };
 
   const handleAudioEnded = () => {
     if (isConversationMode) {
       startListening();
+    }
+  };
+  
+  const handleModeChange = (isPublic: boolean) => {
+    const newMode = isPublic ? 'public' : 'student';
+    setMode(newMode);
+    
+    if (newMode === 'public') {
+        setIsConversationMode(true);
+        startListening();
+    } else {
+        setIsConversationMode(false);
+        if (isListening) {
+            stopListening();
+        }
     }
   };
 
@@ -163,11 +173,7 @@ export default function AITeacherPage() {
                 <Switch
                     id="mode-switch"
                     checked={mode === 'public'}
-                    onCheckedChange={(checked) => {
-                        setMode(checked ? 'public' : 'student');
-                        setIsConversationMode(false);
-                        if(isListening) stopListening();
-                    }}
+                    onCheckedChange={handleModeChange}
                     aria-label="Toggle between Student and Public mode"
                 />
                 <Label htmlFor="mode-switch" className={cn(mode === 'public' && 'text-primary font-semibold')}>सार्वजनिक मोड</Label>
@@ -236,13 +242,13 @@ export default function AITeacherPage() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={isListening ? "सुन रही हूँ..." : (isConversationMode ? "कन्वर्सेशन मोड से बाहर निकलने के लिए स्टॉप दबाएँ" : "अपना प्रश्न टाइप करें या माइक का उपयोग करें")}
+            placeholder={isListening ? "सुन रही हूँ..." : (isConversationMode ? "कन्वर्सेशन मोड से बाहर निकलने के लिए स्विच बंद करें" : "अपना प्रश्न टाइप करें या माइक का उपयोग करें")}
             disabled={isLoading || (isListening && isConversationMode)}
             className="flex-1"
           />
-          {isClient && hasRecognitionSupport && (
+          {isClient && hasRecognitionSupport && !isConversationMode && (
             <Button type="button" size="icon" variant={isListening ? "destructive" : "outline"} onClick={toggleListening}>
-               {isListening ? (isConversationMode ? <MicOff /> : <StopCircle />) : <Mic />}
+               {isListening ? <StopCircle /> : <Mic />}
             </Button>
           )}
           <Button type="submit" size="icon" disabled={isLoading || !input.trim() || isConversationMode}>

@@ -1,8 +1,7 @@
-
 export default function Template({ children }: { children: React.ReactNode }) {
   return (
-    <main>
+    <div className="animate-fade-in-up">
         {children}
-    </main>
+    </div>
   );
 }

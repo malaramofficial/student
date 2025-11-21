@@ -4,76 +4,66 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 84% 5%;
-    --card: 210 40% 98%;
-    --card-foreground: 222 84% 5%;
-    --popover: 210 40% 98%;
-    --popover-foreground: 222 84% 5%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 48 96% 89%;
-    --secondary-foreground: 48 95% 25%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 48 96% 89%;
-    --accent-foreground: 48 95% 25%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 217 91% 60%;
-    --chart-1: 217 91% 60%;
-    --chart-2: 48 96% 89%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-
-    --sidebar-background: 222 84% 5%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 48 96% 89%;
-    --sidebar-primary-foreground: 222 84% 5%;
-    --sidebar-accent: 217 91% 60%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 217 91% 60%;
-  }
-
-  .dark {
-    --background: 222 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --background: 220 23% 11%; /* #141A29 - Cards */
+    --foreground: 225 21% 92%; /* #E9ECF6 - Text */
+    
+    --card: 220 23% 11%; /* #141A29 */
+    --card-foreground: 225 21% 92%; /* #E9ECF6 */
+    
     --popover: 222 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 48 96% 89%;
+    
+    --primary: 42 97% 75%; /* #FCD77F - Soft Gold */
     --primary-foreground: 222 84% 5%;
-    --secondary: 217 91% 60%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 48 96% 89%;
-    --chart-1: 217 91% 60%;
-    --chart-2: 48 96% 89%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    
+    --secondary: 226 100% 77%; /* #6A8FFF - Calm Indigo */
+    --secondary-foreground: 222 84% 5%;
+    
+    --muted: 220 23% 20%; /* Darker muted */
+    --muted-foreground: 225 10% 65%;
+    
+    --accent: 226 100% 77%; /* Calm Indigo as accent */
+    --accent-foreground: 222 84% 5%;
 
-    --sidebar-background: 222 84% 4.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 48 96% 89%;
-    --sidebar-primary-foreground: 222 84% 5%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 48 96% 89%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 23% 20%;
+    --input: 220 23% 15%;
+    --ring: 42 97% 75%; /* Soft Gold for rings */
+
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    /* Base theme is dark, so dark is the same as root */
+    --background: 222 47% 8%; /* #0B101C - Midnight Indigo */
+    --foreground: 225 21% 92%; /* #E9ECF6 - Text */
+    
+    --card: 220 23% 11%; /* #141A29 */
+    --card-foreground: 225 21% 92%; /* #E9ECF6 */
+    
+    --popover: 222 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 42 97% 75%; /* #FCD77F - Soft Gold */
+    --primary-foreground: 222 84% 5%;
+    
+    --secondary: 226 100% 77%; /* #6A8FFF - Calm Indigo */
+    --secondary-foreground: 222 84% 5%;
+    
+    --muted: 220 23% 20%; /* Darker muted */
+    --muted-foreground: 225 10% 65%;
+    
+    --accent: 226 100% 77%; /* Calm Indigo as accent */
+    --accent-foreground: 222 84% 5%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 23% 20%;
+    --input: 220 23% 15%;
+    --ring: 42 97% 75%; /* Soft Gold for rings */
   }
 }
 

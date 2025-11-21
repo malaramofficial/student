@@ -1,26 +1,23 @@
 import type { Metadata } from "next";
-import { Poppins, PT_Sans } from "next/font/google";
+import { Poppins, Mukta } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "@/components/theme-provider";
-import { SidebarProvider, Sidebar, SidebarInset } from "@/components/ui/sidebar";
-import SidebarNav from "@/components/layout/sidebar-nav";
-import Header from "@/components/layout/header";
+import { ThemeProvider } from "@/app/theme-provider";
 
-const ptSans = PT_Sans({
-  subsets: ["latin"],
+const mukta = Mukta({
+  subsets: ["latin", "devanagari"],
   weight: ["400", "700"],
-  variable: "--font-pt-sans",
+  variable: "--font-mukta",
 });
 
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["400", "600", "700", "800"],
   variable: "--font-poppins",
 });
 
 export const metadata: Metadata = {
-  title: "राजस्थान बोर्ड AI सहायक",
+  title: "Rajasthan AI Scholar",
   description: "कक्षा 12 के छात्रों के लिए एआई-संचालित शिक्षण मंच।",
   icons: {
     icon: "/favicon.ico",
@@ -35,23 +32,15 @@ export default function RootLayout({
   return (
     <html lang="hi" suppressHydrationWarning>
       <body
-        className={`${ptSans.variable} ${poppins.variable} font-body antialiased`}
+        className={`${mukta.variable} ${poppins.variable} font-body antialiased`}
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider>
-            <Sidebar>
-              <SidebarNav />
-            </Sidebar>
-            <SidebarInset>
-               <Header />
-              {children}
-            </SidebarInset>
-          </SidebarProvider>
+          {children}
           <Toaster />
         </ThemeProvider>
       </body>

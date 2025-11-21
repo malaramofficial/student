@@ -42,12 +42,21 @@ const getSyllabusTool = ai.defineTool(
   },
   async (input) => {
     const subjectToFind = input.subjectName.toLowerCase().trim();
+
     for (const stream of syllabusData.streams) {
       for (const subject of stream.subjects) {
-        // Normalize the full subject name from the JSON file
         const fullSubjectName = subject.name.toLowerCase();
-        // Check for a match
-        if (fullSubjectName.includes(subjectToFind)) {
+        
+        // Split the subject name into parts, e.g., "हिन्दी साहित्य (hindi literature)" -> ["हिन्दी साहित्य", "hindi literature"]
+        const nameParts = fullSubjectName
+          .split(/[()]/)
+          .map(part => part.trim())
+          .filter(part => part.length > 0);
+
+        // Check if the searched term matches any part of the subject name
+        const isMatch = nameParts.some(part => part.includes(subjectToFind) || subjectToFind.includes(part));
+
+        if (isMatch) {
           return { topics: subject.topics };
         }
       }

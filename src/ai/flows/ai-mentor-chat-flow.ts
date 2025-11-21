@@ -49,6 +49,24 @@ const getCreatorBloodGroup = ai.defineTool(
     async () => "A+"
 );
 
+const getCreatorEmail = ai.defineTool(
+    {
+        name: 'getCreatorEmail',
+        description: "Provides the email address of the AI application's creator.",
+        outputSchema: z.string(),
+    },
+    async () => "malaramofficial@gmail.com"
+);
+
+const getCreatorInstagram = ai.defineTool(
+    {
+        name: 'getCreatorInstagram',
+        description: "Provides the Instagram profile link of the AI application's creator.",
+        outputSchema: z.string(),
+    },
+    async () => "https://www.instagram.com/malaramofficial?igsh=YTgwbWhuY3NjYnhu"
+);
+
 const getSyllabusInfo = ai.defineTool(
     {
         name: 'getSyllabusInfo',
@@ -173,7 +191,7 @@ const prompt = ai.definePrompt({
     name: 'aiMentorChatPrompt',
     input: { schema: AIMentorChatInputSchema },
     output: { schema: AIMentorChatOutputSchema },
-    tools: [getCreatorName, getCreatorDOB, getCreatorLocation, getCreatorBloodGroup, getSyllabusInfo, explainTopicTool],
+    tools: [getCreatorName, getCreatorDOB, getCreatorLocation, getCreatorBloodGroup, getCreatorEmail, getCreatorInstagram, getSyllabusInfo, explainTopicTool],
     prompt: `You are an AI assistant named AI Guru. Your creator is Mala Ram. While you are not Mala Ram, you must adopt his core principles and thinking style to interact with a student.
 
 **Your Core Role: You are an expert AI tutor for Rajasthan Board Class 12.** While your primary focus is the Class 12 syllabus, which you should use as a core reference, you are not strictly limited to it. Feel free to provide additional, relevant information or explain related concepts to foster deeper understanding and curiosity.
@@ -199,7 +217,7 @@ As AI Guru, respond to the student's message, embodying the principles of your c
 **Interaction Rules:**
 1.  **Be Proactive & Helpful:** Your primary goal is to help the student learn. If a question is ambiguous, don't just ask for clarification. Use your knowledge of the Class 12 syllabus and your tools to provide helpful suggestions or options to guide the conversation forward.
 2.  **Use Tools Intelligently:**
-    *   If the user asks about your creator, developer, or who made you (e.g., "who are you?", "who made you?"), state that you were created by Mala Ram and use the 'getCreatorName' tool. For other details about him, use the other creator-related tools only when specifically asked.
+    *   If the user asks about your creator, developer, or who made you (e.g., "who are you?", "who made you?"), state that you were created by Mala Ram and use the 'getCreatorName' tool. For other details about him, use the other creator-related tools only when specifically asked. If they ask for contact details like email or Instagram, use the 'getCreatorEmail' and 'getCreatorInstagram' tools.
     *   If the user asks about the syllabus, subjects, topics, or books, use the 'getSyllabusInfo' tool to provide accurate information for Class 12. If the tool returns a list of books, state them clearly.
     *   If the user's request is ambiguous (e.g., "teach the first lesson" or "teach hindi literature"), use the 'getSyllabusInfo' tool to find relevant subjects or topics from the Class 12 syllabus and proactively suggest them to the user. For example, if the user says "teach hindi literature", suggest the available books like 'Aaroh' and 'Vitan'. Guide them towards a specific topic instead of just asking for clarification.
     *   If the user asks you to explain, teach, or provide notes on a topic, use the 'explainTopic' tool. If the user's confirmation (like "ha" or "yes") follows your suggestion to teach a topic, call the 'explainTopic' tool immediately. When you get the result from the tool, format it clearly for the student with headings for "Explanation" and "Notes".

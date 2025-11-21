@@ -21,15 +21,38 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import questionsData from './written-questions.json';
 import syllabusData from '../syllabus/syllabus-data.json';
-import { FileText } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
+import { evaluateAnswersAction } from '@/lib/actions';
+import { useToast } from '@/hooks/use-toast';
 
 type Question = {
   question: string;
+  marks: number;
 };
 
 type Subject = {
   name: string;
   questions: Question[];
+};
+
+type Answer = {
+  question: string;
+  answer: string;
+  marks: number;
+};
+
+type EvaluationResult = {
+  question: string;
+  answer: string;
+  marksAwarded: number;
+  feedback: string;
+};
+
+type Marksheet = {
+  results: EvaluationResult[];
+  totalAwardedMarks: number;
+  totalMarks: number;
+  overallFeedback: string;
 };
 
 const subjects: Subject[] = questionsData.subjects;
@@ -40,6 +63,10 @@ export default function WrittenExamPage() {
   const [selectedSubject, setSelectedSubject] = useState<string>('');
   const [testStarted, setTestStarted] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [answers, setAnswers] = useState<Answer[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [marksheet, setMarksheet] = useState<Marksheet | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsClient(true);
@@ -47,14 +74,57 @@ export default function WrittenExamPage() {
 
   const handleStartTest = () => {
     if (selectedSubject) {
-      setTestStarted(true);
+      const currentQuestions = subjects.find(
+        (s) => s.name === selectedSubject
+      )?.questions;
+      if (currentQuestions) {
+        setAnswers(
+          currentQuestions.map((q) => ({
+            question: q.question,
+            answer: '',
+            marks: q.marks,
+          }))
+        );
+        setTestStarted(true);
+        setMarksheet(null);
+      }
     }
   };
   
+  const handleAnswerChange = (index: number, value: string) => {
+    const newAnswers = [...answers];
+    newAnswers[index].answer = value;
+    setAnswers(newAnswers);
+  };
+
+  const handleSubmitExam = async () => {
+      if (answers.some(a => !a.answer.trim())) {
+        toast({
+            variant: "destructive",
+            title: "अधूरे उत्तर",
+            description: "कृपया परीक्षा जमा करने से पहले सभी प्रश्नों के उत्तर दें।"
+        });
+        return;
+      }
+      setIsLoading(true);
+      const response = await evaluateAnswersAction({ answers });
+      if(response.success && response.data) {
+        setMarksheet(response.data);
+      } else {
+        toast({
+            variant: "destructive",
+            title: "मूल्यांकन विफल",
+            description: response.error || "उत्तरों का मूल्यांकन करते समय एक त्रुटि हुई।"
+        });
+      }
+      setIsLoading(false);
+  }
+
   const handleEndTest = () => {
       setTestStarted(false);
       setSelectedStream('');
       setSelectedSubject('');
+      setMarksheet(null);
   }
 
   if (!isClient) return null;
@@ -65,6 +135,51 @@ export default function WrittenExamPage() {
   
   const availableSubjects =
     streams.find((s) => s.name === selectedStream)?.subjects || [];
+
+  if (isLoading) {
+    return (
+        <div className="flex flex-col gap-4 justify-center items-center h-[calc(100vh-56px)]">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="text-lg text-muted-foreground">AI आपके उत्तरों की जाँच कर रहा है... कृपया प्रतीक्षा करें।</p>
+        </div>
+    )
+  }
+
+  if (marksheet) {
+    return (
+         <div className="flex justify-center items-start p-4 md:p-8 min-h-[calc(100vh-56px)] animate-fade-in-up">
+            <Card className="w-full max-w-4xl">
+                <CardHeader>
+                    <CardTitle>परीक्षा परिणाम</CardTitle>
+                    <CardDescription>AI द्वारा आपके उत्तरों का मूल्यांकन।</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="text-center p-4 bg-muted rounded-lg">
+                        <h3 className="text-xl font-bold">कुल अंक: {marksheet.totalAwardedMarks} / {marksheet.totalMarks}</h3>
+                         <p className="mt-2 text-muted-foreground font-semibold">समग्र प्रतिक्रिया: <span className="text-foreground">{marksheet.overallFeedback}</span></p>
+                    </div>
+                    {marksheet.results.map((result, index) => (
+                        <div key={index} className="border-b pb-4">
+                            <p className="font-semibold">प्रश्न {index + 1}: {result.question}</p>
+                            <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+                               <p className="font-semibold text-sm text-muted-foreground">आपका उत्तर:</p>
+                               <p className="text-sm">{result.answer}</p>
+                            </div>
+                            <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+                                <p className="font-semibold text-sm">AI प्रतिक्रिया:</p>
+                                <p className="text-sm">{result.feedback}</p>
+                                <p className="text-right font-bold text-blue-600 dark:text-blue-400 mt-2">दिए गए अंक: {result.marksAwarded}</p>
+                            </div>
+                        </div>
+                    ))}
+                </CardContent>
+                <CardFooter className="justify-center">
+                     <Button onClick={handleEndTest} variant="secondary">नई परीक्षा शुरू करें</Button>
+                </CardFooter>
+            </Card>
+         </div>
+    )
+  }
 
   return (
     <div className="flex justify-center items-start p-4 min-h-[calc(100vh-56px)] animate-fade-in-up">
@@ -124,13 +239,24 @@ export default function WrittenExamPage() {
             </div>
           ) : currentQuestions && currentQuestions.length > 0 ? (
             <div className="space-y-8">
-               <h3 className="text-xl font-semibold text-center">{selectedSubject}</h3>
-              {currentQuestions.map((q, index) => (
+               <div className="flex justify-between items-baseline">
+                <h3 className="text-xl font-semibold text-center">{selectedSubject}</h3>
+                <p className="text-sm font-bold">कुल अंक: {answers.reduce((acc, a) => acc + a.marks, 0)}</p>
+               </div>
+              {answers.map((ans, index) => (
                 <div key={index} className="space-y-3">
-                  <p className="font-semibold text-base">
-                    प्रश्न {index + 1}: {q.question}
-                  </p>
-                  <Textarea placeholder="अपना उत्तर यहाँ लिखें..." className="min-h-[120px]"/>
+                  <div className="flex justify-between items-baseline">
+                    <p className="font-semibold text-base">
+                        प्रश्न {index + 1}: {ans.question}
+                    </p>
+                    <p className="text-sm text-muted-foreground font-medium">({ans.marks} अंक)</p>
+                  </div>
+                  <Textarea 
+                    placeholder="अपना उत्तर यहाँ लिखें..." 
+                    className="min-h-[120px]"
+                    value={ans.answer}
+                    onChange={(e) => handleAnswerChange(index, e.target.value)}
+                  />
                 </div>
               ))}
             </div>
@@ -138,15 +264,20 @@ export default function WrittenExamPage() {
              <p className="text-center text-muted-foreground">इस विषय के लिए कोई प्रश्न उपलब्ध नहीं है।</p>
           )}
         </CardContent>
-        <CardFooter className="flex justify-center">
+        <CardFooter className="flex justify-center mt-6">
           {!testStarted ? (
             <Button onClick={handleStartTest} disabled={!selectedSubject}>
               अभ्यास शुरू करें
             </Button>
           ) : (
-            <Button onClick={handleEndTest} variant="destructive">
-              अभ्यास समाप्त करें
-            </Button>
+            <div className="flex gap-4">
+                <Button onClick={handleEndTest} variant="destructive">
+                  अभ्यास समाप्त करें
+                </Button>
+                <Button onClick={handleSubmitExam} >
+                    परीक्षा जमा करें
+                </Button>
+            </div>
           )}
         </CardFooter>
       </Card>

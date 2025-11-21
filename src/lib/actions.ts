@@ -12,6 +12,10 @@ import {
   getInitialAIResponse,
   GetInitialAIResponseInput,
 } from '@/ai/flows/ai-mentor-initial-prompt';
+import {
+  evaluateWrittenExam,
+  EvaluateWrittenExamInput,
+} from '@/ai/flows/evaluate-written-exam-flow';
 import { z } from 'zod';
 
 const getAudioResponseSchema = z.object({
@@ -64,4 +68,16 @@ export async function getAIChatResponseAction(input: AIMentorChatInput) {
       error instanceof Error ? error.message : 'Failed to get chat response.';
     return { success: false, error: errorMessage };
   }
+}
+
+export async function evaluateAnswersAction(input: EvaluateWrittenExamInput) {
+    try {
+        const result = await evaluateWrittenExam(input);
+        return { success: true, data: result };
+    } catch (error) {
+        console.error('Error in evaluateAnswersAction:', error);
+        const errorMessage =
+        error instanceof Error ? error.message : 'Failed to evaluate answers.';
+        return { success: false, error: errorMessage };
+    }
 }

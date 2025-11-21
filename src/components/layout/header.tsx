@@ -6,8 +6,9 @@ import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { ModeToggle } from "../mode-toggle";
 import { Button } from "../ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Home } from "lucide-react";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 const pageTitles: { [key: string]: string } = {
   "/": "डैशबोर्ड",
@@ -49,6 +50,12 @@ export function Header() {
       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBack}>
         <ArrowLeft />
         <span className="sr-only">वापस</span>
+      </Button>
+      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+        <Link href="/">
+          <Home />
+          <span className="sr-only">होम</span>
+        </Link>
       </Button>
       <h1 className="text-lg font-semibold md:text-xl font-headline">{title}</h1>
       <div className="ml-auto md:hidden">

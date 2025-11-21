@@ -103,7 +103,7 @@ Number of Questions: {{{numQuestions}}}
 Syllabus Topics:
 {{{syllabus}}}
 
-Please generate {{{numQuestions}}} multiple-choice questions based on the provided syllabus topics.
+Please generate {{{numQuestions}}} multiple-choice questions. You MUST base these questions strictly on the provided syllabus topics. Do not invent or include information from outside this syllabus.
 For each question:
 1.  The question must be in clear Hindi.
 2.  Provide exactly 4 options.

@@ -179,6 +179,10 @@ export type AIMentorChatInput = z.infer<typeof AIMentorChatInputSchema>;
 
 const AIMentorChatOutputSchema = z.object({
   reply: z.string().describe("The AI mentor's reply to the student."),
+  action: z.object({
+    type: z.literal('redirect').describe("The type of action to perform."),
+    url: z.string().url().describe("The URL to redirect to."),
+  }).optional().describe("An optional action for the client to perform, like a redirect.")
 });
 export type AIMentorChatOutput = z.infer<typeof AIMentorChatOutputSchema>;
 
@@ -217,7 +221,9 @@ As AI Guru, respond to the student's message, embodying the principles of your c
 **Interaction Rules:**
 1.  **Be Proactive & Helpful:** Your primary goal is to help the student learn. If a question is ambiguous, don't just ask for clarification. Use your knowledge of the Class 12 syllabus and your tools to provide helpful suggestions or options to guide the conversation forward.
 2.  **Use Tools Intelligently:**
-    *   If the user asks about your creator, developer, or who made you (e.g., "who are you?", "who made you?"), state that you were created by Mala Ram and use the 'getCreatorName' tool. For other details about him, use the other creator-related tools only when specifically asked. If they ask for contact details like email or Instagram, use the 'getCreatorEmail' and 'getCreatorInstagram' tools.
+    *   If the user asks about your creator, developer, or who made you (e.g., "who are you?", "who made you?"), state that you were created by Mala Ram and use the 'getCreatorName' tool. For other details about him, use the other creator-related tools only when specifically asked.
+    *   If the user asks for the creator's email, use the 'getCreatorEmail' tool and provide the email in the text reply.
+    *   **Crucially:** If the user asks for the creator's Instagram ID, use the 'getCreatorInstagram' tool. Then, you MUST provide a reply like "ज़रूर, आप उन्हें इंस्टाग्राम पर फॉलो कर सकते हैं।" and you MUST set the 'action' output field with the type 'redirect' and the URL you received from the tool.
     *   If the user asks about the syllabus, subjects, topics, or books, use the 'getSyllabusInfo' tool to provide accurate information for Class 12. If the tool returns a list of books, state them clearly.
     *   If the user's request is ambiguous (e.g., "teach the first lesson" or "teach hindi literature"), use the 'getSyllabusInfo' tool to find relevant subjects or topics from the Class 12 syllabus and proactively suggest them to the user. For example, if the user says "teach hindi literature", suggest the available books like 'Aaroh' and 'Vitan'. Guide them towards a specific topic instead of just asking for clarification.
     *   If the user asks you to explain, teach, or provide notes on a topic, use the 'explainTopic' tool. If the user's confirmation (like "ha" or "yes") follows your suggestion to teach a topic, call the 'explainTopic' tool immediately. When you get the result from the tool, format it clearly for the student with headings for "Explanation" and "Notes".
@@ -239,3 +245,5 @@ const aiMentorChatFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

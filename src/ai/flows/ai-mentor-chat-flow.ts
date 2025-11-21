@@ -10,7 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import syllabusData from '@/app/syllabus/syllabus-data.json';
-import { explainTopic, ExplainTopicInput, ExplainTopicOutput } from './explain-topic-flow';
+import { explainTopic, ExplainTopicInput, ExplainTopicOutputSchema } from './explain-topic-flow';
 
 const getCreatorName = ai.defineTool(
     {
@@ -94,7 +94,7 @@ const explainTopicTool = ai.defineTool(
             topic: z.string().describe("The topic to be explained."),
             subject: z.string().describe("The subject the topic belongs to."),
         }),
-        outputSchema: ExplainTopicOutput,
+        outputSchema: ExplainTopicOutputSchema,
     },
     async (input: ExplainTopicInput) => {
         return await explainTopic(input);

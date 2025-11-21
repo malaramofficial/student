@@ -44,13 +44,10 @@ const getSyllabusTool = ai.defineTool(
     const subjectToFind = input.subjectName.toLowerCase().trim();
     for (const stream of syllabusData.streams) {
       for (const subject of stream.subjects) {
+        // Normalize the full subject name from the JSON file
         const fullSubjectName = subject.name.toLowerCase();
-        
-        // Split name like "हिन्दी साहित्य (hindi literature)" into parts
-        const nameParts = fullSubjectName.replace(/[()]/g, '').split(/[\s,]+/).map(part => part.trim());
-        
-        // Check if the searched term matches any part of the subject name
-        if (nameParts.includes(subjectToFind)) {
+        // Check for a match
+        if (fullSubjectName.includes(subjectToFind)) {
           return { topics: subject.topics };
         }
       }
@@ -215,5 +212,3 @@ const aiMentorFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    

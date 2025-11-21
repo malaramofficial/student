@@ -29,11 +29,12 @@ const prompt = ai.definePrompt({
   name: 'adminTrainAIMentorPrompt',
   input: {schema: AdminTrainAIMentorInputSchema},
   output: {schema: AdminTrainAIMentorOutputSchema},
-  prompt: `You are Sarathi, an AI mentor for the Gyanoday Platform. The platform creator is training you.
+  prompt: `You are Sarathi, an AI mentor for the Gyanoday Platform. Your creator, Malaram, is providing you with new information to learn.
 
-  Here is some training data provided by the platform creator: {{{trainingData}}}
+  Here is the training data:
+  "{{{trainingData}}}"
 
-  Respond with a confirmation message that you have learned the information. Be conversational. Be brief.
+  Acknowledge that you have received and understood this new information. Respond in a brief, conversational Hindi confirmation. For example, "जी, मैंने यह नई जानकारी सीख ली है।" or "धन्यवाद, यह जानकारी अब मेरे ज्ञान का हिस्सा है।"
 `,
 });
 

@@ -156,7 +156,7 @@ export default function WrittenExamPage() {
       toast({
         variant: 'destructive',
         title: 'एक त्रुटि हुई',
-        description: 'मूल्यांकन के दौरान एक अप्रत्याशit त्रुटि हुई।',
+        description: 'मूल्यांकन के दौरान एक अप्रत्याشit त्रुटि हुई।',
       });
     } finally {
       setIsEvaluating(false);
@@ -205,13 +205,13 @@ export default function WrittenExamPage() {
               {evaluationResult.results.map((result, index) => (
                 <div key={index}>
                   <p className="font-semibold">{index + 1}. {result.question}</p>
-                  <p className="text-sm text-muted-foreground p-2 bg-slate-100 dark:bg-slate-800 my-2 rounded">
-                    आपका उत्तर: {result.userAnswer}
-                  </p>
+                  <div className="text-sm text-muted-foreground p-2 bg-slate-100 dark:bg-slate-800 my-2 rounded">
+                    <span className="font-semibold">आपका उत्तर:</span> {result.userAnswer}
+                  </div>
                   <div className="border-l-4 border-primary pl-4 py-2 bg-primary/5 rounded">
-                    <p className="text-sm font-semibold flex items-center gap-2">
+                    <div className="text-sm font-semibold flex items-center gap-2">
                       <BookCheck className="h-4 w-4" /> AI प्रतिक्रिया:
-                    </p>
+                    </div>
                     <p className="text-sm text-muted-foreground">{result.feedback}</p>
                     <p className="text-sm font-bold mt-2">
                       अंक: {result.awardedMarks} /{' '}

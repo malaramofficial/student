@@ -28,8 +28,8 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
+  const speechEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   const stableOnSpeechEnd = useCallback((finalTranscript: string) => {
     if (onSpeechEnd) {
       onSpeechEnd(finalTranscript);
@@ -64,16 +64,21 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
         }
       }
       
-      setTranscript(prev => (final_transcript ? (prev + final_transcript) : prev) + interim_transcript);
+      setTranscript(final_transcript + interim_transcript);
 
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      // Reset the timer every time a new result comes in
+      if (speechEndTimeoutRef.current) {
+        clearTimeout(speechEndTimeoutRef.current);
       }
-      timeoutRef.current = setTimeout(() => {
-        if(isListening){
-            stopListening();
+      speechEndTimeoutRef.current = setTimeout(() => {
+        // If there's no new result for 1.5s, consider it the end of speech
+        const currentTranscript = (final_transcript + interim_transcript).trim();
+        if (currentTranscript) {
+          stableOnSpeechEnd(currentTranscript);
+          setIsListening(false);
+          recognition.stop();
         }
-      }, 1500);
+      }, 1500); // 1.5-second delay
     };
 
     recognition.onerror = (event) => {
@@ -90,15 +95,14 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     
     recognition.onend = () => {
       setIsListening(false);
-      const finalTranscript = transcript.trim();
-      if(finalTranscript){
-          stableOnSpeechEnd(finalTranscript);
+      if (speechEndTimeoutRef.current) {
+        clearTimeout(speechEndTimeoutRef.current);
       }
     };
     
     return () => {
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
+        if (speechEndTimeoutRef.current) {
+            clearTimeout(speechEndTimeoutRef.current);
         }
         if (recognitionRef.current) {
             recognitionRef.current.stop();
@@ -107,7 +111,6 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
             recognitionRef.current.onend = null;
         }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stableOnSpeechEnd]);
 
   const startListening = useCallback(() => {
@@ -119,6 +122,8 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
         setError(null);
       } catch (err) {
         console.error("स्पीच रिकग्निशन शुरू करने में त्रुटि:", err);
+        // This can happen if recognition is already started, which is a recoverable state.
+        setIsListening(false);
       }
     }
   }, [isListening]);
@@ -127,11 +132,15 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
       setIsListening(false); 
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      if (speechEndTimeoutRef.current) {
+        clearTimeout(speechEndTimeoutRef.current);
+      }
+      const finalTranscript = transcript.trim();
+      if(finalTranscript){
+          stableOnSpeechEnd(finalTranscript);
       }
     }
-  }, [isListening]);
+  }, [isListening, transcript, stableOnSpeechEnd]);
 
   const resetTranscript = useCallback(() => {
     setTranscript('');

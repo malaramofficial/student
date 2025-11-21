@@ -193,56 +193,22 @@ const aiMentorFlow = ai.defineFlow(
   },
   async (input) => {
     // Convert the chat history to the format expected by Genkit v1.x
-    const history = input.chatHistory?.map(m => ({
-      role: m.role,
-      content: [{ text: m.content }]
-    })) || [];
-    
-    let response = await ai.generate({
-      prompt: prompt.prompt,
-      history: history,
-      input: { query: input.query },
-      tools: [getSyllabusTool, aboutCreatorTool],
-      output: {
-        format: 'json',
-        schema: AIMentorOutputSchema
-      }
-    });
-    
-    for (let i = 0; i < 5; i++) { // Add a limit to prevent infinite loops
-      const toolRequest = response.toolRequest;
-      if (!toolRequest) {
-        break;
-      }
-      
-      const toolResponse = [];
-      for (const t of toolRequest.tools) {
-        const tool = ai.lookupTool(t.name);
-        if (!tool) {
-          throw new Error(`Tool not found: ${t.name}`);
-        }
-        const output = await tool(t.input);
-        toolResponse.push({ toolResult: { name: t.name, output } });
-      }
+    const history =
+      input.chatHistory?.map((m) => ({
+        role: m.role,
+        content: [{text: m.content}],
+      })) || [];
 
-      response = await ai.generate({
-        prompt: prompt.prompt,
-        history: response.history,
-        input: { query: input.query },
-        tools: [getSyllabusTool, aboutCreatorTool],
-        toolResponse,
-        output: {
-            format: 'json',
-            schema: AIMentorOutputSchema
-        }
-      });
+    const {output} = await prompt(input, {history: history});
+
+    if (output) {
+      return output;
     }
-    
-    if (response.output) {
-      return response.output;
-    }
-    
+
     // Fallback response in case something goes wrong.
-    return { response: "मुझे खेद है, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया अपना प्रश्न दोबारा पूछें। मेरे निर्माता, मालाराम, हमेशा मुझे बेहतर बनाने के लिए काम कर रहे हैं।" };
+    return {
+      response:
+        'मुझे खेद है, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया अपना प्रश्न दोबारा पूछें। मेरे निर्माता, मालाराम, हमेशा मुझे बेहतर बनाने के लिए काम कर रहे हैं।',
+    };
   }
 );

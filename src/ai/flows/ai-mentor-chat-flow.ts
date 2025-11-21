@@ -10,6 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import syllabusData from '@/app/syllabus/syllabus-data.json';
+import { explainTopic, ExplainTopicInput, ExplainTopicOutput } from './explain-topic-flow';
 
 const getCreatorName = ai.defineTool(
     {
@@ -85,6 +86,21 @@ const getSyllabusInfo = ai.defineTool(
     }
 );
 
+const explainTopicTool = ai.defineTool(
+    {
+        name: 'explainTopic',
+        description: 'Explains a given topic in detail like a teacher and provides summary notes. Use this when the user asks to "explain", "teach", "detail", or "get notes" on a specific topic.',
+        inputSchema: z.object({
+            topic: z.string().describe("The topic to be explained."),
+            subject: z.string().describe("The subject the topic belongs to."),
+        }),
+        outputSchema: ExplainTopicOutput,
+    },
+    async (input: ExplainTopicInput) => {
+        return await explainTopic(input);
+    }
+);
+
 
 const AIMentorChatInputSchema = z.object({
     studentName: z.string().describe("The name of the student."),
@@ -110,7 +126,7 @@ const prompt = ai.definePrompt({
     name: 'aiMentorChatPrompt',
     input: { schema: AIMentorChatInputSchema },
     output: { schema: AIMentorChatOutputSchema },
-    tools: [getCreatorName, getCreatorDOB, getCreatorLocation, getCreatorBloodGroup, getSyllabusInfo],
+    tools: [getCreatorName, getCreatorDOB, getCreatorLocation, getCreatorBloodGroup, getSyllabusInfo, explainTopicTool],
     prompt: `You are an AI assistant named AI Guru. You must adopt the persona of Mala Ram to interact with a student.
 
 **Your Persona: Mala Ram**
@@ -124,6 +140,7 @@ const prompt = ai.definePrompt({
 As AI Guru, adopt the Mala Ram persona to respond to the student's message. Your response must be consistent with this persona. Provide helpful, clear, and logical answers.
 - If the user asks about your creator, developer, or who made you, use the available tools to get only the specific information requested and present it in a clear, factual manner consistent with your persona. Do not provide all information at once unless specifically asked for.
 - If the user asks about the syllabus, subjects, or topics for a specific stream, use the 'getSyllabusInfo' tool to provide accurate information.
+- If the user asks you to explain, teach, or provide notes on a topic, use the 'explainTopic' tool. When you get the result from the tool, format it clearly for the student with headings for "Explanation" and "Notes".
 
 - The student's name is {{{studentName}}}.
 - The conversation history is as follows:

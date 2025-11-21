@@ -64,7 +64,7 @@ const teachLessonTool = ai.defineTool(
       description: "Explains a specific topic from a subject as a real teacher would. Use this when the user asks to be taught a lesson or topic (e.g., 'पाठ पढ़ाओ', ' समझाओ'). This tool first verifies the topic against the syllabus.",
       inputSchema: z.object({
           subject: z.string().describe("The subject of the lesson (e.g., 'History', 'भौतिक विज्ञान')."),
-          topic: z.string().describe("The topic of the lesson to be taught (e.g., 'Habeas Corpus', 'पहला पाठ', 'आखिरी अध्याय')."),
+          topic: z.string().describe("The topic of the lesson to be taught (e.g., 'Habeas Corpus', 'पहला पाठ', 'आखिरी अध्याय', 'प्रथम अध्याय', 'अंतिम पाठ')."),
       }),
       outputSchema: z.string(),
     },
@@ -80,9 +80,12 @@ const teachLessonTool = ai.defineTool(
         const lowerCaseTopic = topic.toLowerCase();
         const topics = syllabusResult.topics;
 
-        if (lowerCaseTopic.includes('पहला') || lowerCaseTopic.includes('first')) {
+        const isFirst = ['पहला', 'प्रथम', 'first'].some(word => lowerCaseTopic.includes(word));
+        const isLast = ['आखिरी', 'अंतिम', 'last'].some(word => lowerCaseTopic.includes(word));
+
+        if (isFirst) {
             resolvedTopic = topics[0];
-        } else if (lowerCaseTopic.includes('आखिरी') || lowerCaseTopic.includes('last')) {
+        } else if (isLast) {
             resolvedTopic = topics[topics.length - 1];
         } else {
             // Find the topic in the syllabus, allowing for partial matches.

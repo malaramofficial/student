@@ -10,27 +10,40 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const AppCreatorInfoSchema = z.object({
-    name: z.string(),
-    dob: z.string(),
-    location: z.string(),
-    bloodGroup: z.string(),
-});
-
-const getAppCreatorInfo = ai.defineTool(
+const getCreatorName = ai.defineTool(
     {
-        name: 'getAppCreatorInfo',
-        description: 'Provides information about the creator of this AI application.',
-        outputSchema: AppCreatorInfoSchema,
+        name: 'getCreatorName',
+        description: "Provides the name of the AI application's creator.",
+        outputSchema: z.string(),
     },
-    async () => {
-        return {
-            name: "Mala Ram",
-            dob: "10 Oct 2001",
-            location: "Village Panchayat डऊकियों की बेरी, मीठा बेरी, Tehsil Nokhra, District Barmer, Rajasthan – 344033",
-            bloodGroup: "A+",
-        };
-    }
+    async () => "Mala Ram"
+);
+
+const getCreatorDOB = ai.defineTool(
+    {
+        name: 'getCreatorDOB',
+        description: "Provides the date of birth of the AI application's creator.",
+        outputSchema: z.string(),
+    },
+    async () => "10 Oct 2001"
+);
+
+const getCreatorLocation = ai.defineTool(
+    {
+        name: 'getCreatorLocation',
+        description: "Provides the location (village, district, etc.) of the AI application's creator.",
+        outputSchema: z.string(),
+    },
+    async () => "Village Panchayat डऊकियों की बेरी, मीठा बेरी, Tehsil Nokhra, District Barmer, Rajasthan – 344033"
+);
+
+const getCreatorBloodGroup = ai.defineTool(
+    {
+        name: 'getCreatorBloodGroup',
+        description: "Provides the blood group of the AI application's creator.",
+        outputSchema: z.string(),
+    },
+    async () => "A+"
 );
 
 
@@ -58,7 +71,7 @@ const prompt = ai.definePrompt({
     name: 'aiMentorChatPrompt',
     input: { schema: AIMentorChatInputSchema },
     output: { schema: AIMentorChatOutputSchema },
-    tools: [getAppCreatorInfo],
+    tools: [getCreatorName, getCreatorDOB, getCreatorLocation, getCreatorBloodGroup],
     prompt: `You are an AI assistant named AI Guru. You must adopt the persona of Mala Ram to interact with a student.
 
 **Your Persona: Mala Ram**
@@ -70,7 +83,7 @@ const prompt = ai.definePrompt({
 
 **Your Task:**
 As AI Guru, adopt the Mala Ram persona to respond to the student's message. Your response must be consistent with this persona. Provide helpful, clear, and logical answers.
-If the user asks about your creator, developer, or who made you, use the getAppCreatorInfo tool to get the information and present it in a clear, factual manner consistent with your persona.
+If the user asks about your creator, developer, or who made you, use the available tools to get only the specific information requested and present it in a clear, factual manner consistent with your persona. Do not provide all information at once unless specifically asked for.
 
 - The student's name is {{{studentName}}}.
 - The conversation history is as follows:

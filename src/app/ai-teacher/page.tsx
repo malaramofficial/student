@@ -5,13 +5,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Loader2, Mic, Send, User, Volume2, StopCircle } from "lucide-react";
+import { Bot, Loader2, Mic, Send, User, Volume2, StopCircle, Info } from "lucide-react";
 import { getAIResponse, getAudioResponse } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { placeHolderImages } from "@/lib/placeholder-images";
 import { useSpeechRecognition } from "@/lib/hooks/use-speech-recognition";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 type Message = {
   role: 'user' | 'assistant';
@@ -25,11 +27,11 @@ export default function AITeacherPage() {
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [mode, setMode] = useState<'student' | 'public'>('student');
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
-  // onSpeechEnd कॉलबैक को सीधे handleAIResponse पर सेट करें
   const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError, resetTranscript } = useSpeechRecognition({ 
     onSpeechEnd: (finalTranscript: string) => {
         if (finalTranscript) {
@@ -62,7 +64,6 @@ export default function AITeacherPage() {
     }
   }, [audioUrl]);
 
-  // जब isListening बदलता है, तो इनपुट को अपडेट करें
   useEffect(() => {
     setInput(transcript);
   }, [transcript]);
@@ -76,12 +77,12 @@ export default function AITeacherPage() {
     
     setIsLoading(true);
     setAudioUrl(null);
-    resetTranscript(); // AI प्रतिक्रिया प्राप्त करने के बाद ट्रांसक्रिप्ट रीसेट करें
-    setInput(''); // इनपुट फ़ील्ड साफ़ करें
+    resetTranscript();
+    setInput('');
 
     const chatHistory = [...messages, userMessage].map(msg => ({ role: msg.role, content: msg.content }));
     
-    const aiResponsePromise = getAIResponse({ question: query, chatHistory });
+    const aiResponsePromise = getAIResponse({ question: query, chatHistory, mode });
     const audioResponsePromise = aiResponsePromise.then(response => {
         if (response.success && response.answer) {
             return getAudioResponse({ text: response.answer });
@@ -115,13 +116,13 @@ export default function AITeacherPage() {
     } finally {
         setIsLoading(false);
     }
-  }, [isLoading, toast, resetTranscript, messages]);
+  }, [isLoading, toast, resetTranscript, messages, mode]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-    stopListening(); // मैन्युअल सबमिट पर सुनना बंद करें
+    stopListening();
     handleAIResponse(input);
   };
   
@@ -135,6 +136,26 @@ export default function AITeacherPage() {
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col">
+       <div className="p-2 border-b bg-background/80 backdrop-blur-sm">
+        <div className="max-w-4xl mx-auto flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+                <Label htmlFor="mode-switch" className={cn(mode === 'student' && 'text-primary font-semibold')}>छात्र मोड</Label>
+                <Switch
+                    id="mode-switch"
+                    checked={mode === 'public'}
+                    onCheckedChange={(checked) => setMode(checked ? 'public' : 'student')}
+                    aria-label="Toggle between Student and Public mode"
+                />
+                <Label htmlFor="mode-switch" className={cn(mode === 'public' && 'text-primary font-semibold')}>सार्वजनिक मोड</Label>
+            </div>
+            {mode === 'public' && (
+                <div className="flex items-center gap-2 text-sm text-primary animate-fade-in-down">
+                    <Info className="h-4 w-4" />
+                    <span>सार्वजनिक मोड सक्रिय है</span>
+                </div>
+            )}
+        </div>
+       </div>
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="space-y-6 max-w-4xl mx-auto">
           {messages.length === 0 && (

@@ -54,6 +54,7 @@ type StudentResult = {
 
 const getAIResponseSchema = z.object({
   question: z.string(),
+  mode: z.enum(['student', 'public']).default('student'),
   chatHistory: z
     .array(
       z.object({
@@ -66,6 +67,7 @@ const getAIResponseSchema = z.object({
 
 export async function getAIResponse(input: {
   question: string;
+  mode?: 'student' | 'public';
   chatHistory?: { role: 'user' | 'assistant'; content: string }[];
 }) {
   const parsedInput = getAIResponseSchema.safeParse(input);
@@ -75,6 +77,7 @@ export async function getAIResponse(input: {
 
   const flowInput = {
     query: parsedInput.data.question,
+    mode: parsedInput.data.mode,
     chatHistory: parsedInput.data.chatHistory,
   };
   try {

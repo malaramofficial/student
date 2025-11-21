@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpenCheck, Bot, ClipboardCheck, FileText, Home, LineChart, Lock, Mic, MicVocal, PencilRuler, UserSquare } from "lucide-react";
+import { BookOpenCheck, Bot, ClipboardCheck, FileText, Home, LineChart, Lock, Mic, MicVocal, PencilRuler, Shield, UserSquare } from "lucide-react";
 import {
   SidebarContent,
   SidebarHeader,
@@ -28,6 +28,11 @@ const menuItems = [
   { href: "/text-to-speech", label: "टेक्स्ट-टू-स्पीच", icon: Mic },
   { href: "/admin", label: "एडमिन", icon: Lock },
 ];
+
+const legalItems = [
+    { href: "/privacy-policy", label: "Privacy Policy", icon: Shield },
+    { href: "/terms-of-service", label: "Terms of Service", icon: FileText },
+]
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -61,6 +66,25 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+        </SidebarMenu>
+         <SidebarMenu className="mt-auto">
+            {legalItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                    as={Link}
+                    href={item.href}
+                    isActive={pathname === item.href}
+                    tooltip={{ children: item.label, className: 'bg-sidebar-background text-sidebar-foreground border-sidebar-border' }}
+                    className={cn(
+                    "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
+                    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                >
+                    <item.icon />
+                    <span>{item.label}</span>
+                </SidebarMenuButton>
+                </SidebarMenuItem>
+            ))}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="items-center group-data-[collapsible=icon]:-ml-2">

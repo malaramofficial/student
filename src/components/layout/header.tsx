@@ -22,7 +22,9 @@ const pageTitles: { [key: string]: string } = {
   "/results": "परीक्षा परिणाम",
   "/visual-teacher": "विजुअल टीचर",
   "/text-to-speech": "टेक्स्ट-टू-स्पीच",
-  "/syllabus": "पाठ्यक्रम"
+  "/syllabus": "पाठ्यक्रम",
+  "/privacy-policy": "Privacy Policy",
+  "/terms-of-service": "Terms of Service"
 };
 
 export function Header() {

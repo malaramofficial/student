@@ -21,7 +21,7 @@ export default function AITeacherPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isConversationMode, setIsConversationMode] = useState(false);
-  const [studentName, setStudentName] = useState('');
+  const studentName = 'छात्र'; // Generic name
   const [conversationStatus, setConversationStatus] = useState<ConversationStatus>('idle');
   const [isClient, setIsClient] = useState(false);
 
@@ -93,12 +93,10 @@ export default function AITeacherPage() {
 
   useEffect(() => {
     setIsClient(true);
-    const storedName = localStorage.getItem('studentName') || 'छात्र';
-    setStudentName(storedName);
-
+    
     const fetchInitialMessage = async () => {
       setIsLoading(true);
-      const response = await getInitialAIResponseAction({ studentName: storedName });
+      const response = await getInitialAIResponseAction({ studentName });
       if (response.success && response.data) {
         setMessages([{ role: 'assistant', content: response.data.message }]);
       } else {

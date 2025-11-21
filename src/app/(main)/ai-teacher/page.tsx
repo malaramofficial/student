@@ -6,31 +6,57 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { getAIChatResponseAction, getInitialAIResponseAction } from '@/lib/actions';
-import { Loader2, Send, Bot } from 'lucide-react';
+import { getAIChatResponseAction, getInitialAIResponseAction, getAudioResponse } from '@/lib/actions';
+import { Loader2, Send, Bot, Volume2, Speaker } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type Message = {
   role: 'user' | 'assistant';
   content: string;
+  audioUrl?: string;
+  isSpeaking?: boolean;
 };
 
 export default function AITeacherPage() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTtsEnabled, setIsTtsEnabled] = useState(false);
+  const [voice, setVoice] = useState('female');
   const studentName = 'छात्र'; // Generic name
 
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const playAudio = useCallback((audioUrl: string, messageIndex: number) => {
+    if (audioRef.current) {
+      setMessages(prev => prev.map((msg, idx) => 
+        idx === messageIndex ? { ...msg, isSpeaking: true } : { ...msg, isSpeaking: false }
+      ));
+      
+      audioRef.current.src = audioUrl;
+      audioRef.current.play().catch(e => console.error("Audio play failed", e));
+
+      audioRef.current.onended = () => {
+        setMessages(prev => prev.map((msg, idx) => 
+          idx === messageIndex ? { ...msg, isSpeaking: false } : msg
+        ));
+      };
+    }
+  }, []);
 
   const handleSubmit = useCallback(async (userMessage: string) => {
     if (!userMessage.trim()) return;
 
     setIsLoading(true);
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
+    const newUserMessage: Message = { role: 'user', content: userMessage };
+    setMessages((prev) => [...prev, newUserMessage]);
     setInput('');
     
-    const history = messages.slice(-5);
+    const history = messages.slice(-5).map(m => ({ role: m.role, content: m.content }));
     const response = await getAIChatResponseAction({
       studentName,
       message: userMessage,
@@ -40,16 +66,37 @@ export default function AITeacherPage() {
     setIsLoading(false);
 
     if (response.success && response.data) {
-      const assistantMessage = response.data.reply;
-      setMessages((prev) => [...prev, { role: 'assistant', content: assistantMessage }]);
+      const assistantMessageContent = response.data.reply;
+      const newAssistantMessage: Message = { role: 'assistant', content: assistantMessageContent };
+      const assistantMessageIndex = messages.length + 1; // Index after user message is added
+      setMessages((prev) => [...prev, newAssistantMessage]);
+
+      if (isTtsEnabled) {
+        const audioResponse = await getAudioResponse({ text: assistantMessageContent, voice });
+        if (audioResponse.success && audioResponse.audio) {
+          setMessages(prev => prev.map((msg, idx) => 
+            idx === assistantMessageIndex ? { ...msg, audioUrl: audioResponse.audio } : msg
+          ));
+          playAudio(audioResponse.audio, assistantMessageIndex);
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'ऑडियो बनाने में विफल',
+            description: audioResponse.error || 'एक अज्ञात त्रुटि हुई।',
+          });
+        }
+      }
+
     } else {
       toast({
         variant: 'destructive',
         title: 'AI से प्रतिक्रिया प्राप्त करने में विफल',
         description: response.error || 'एक अज्ञात त्रुटि हुई।',
       });
+      // Rollback the user message if AI fails
+      setMessages(prev => prev.filter(m => m !== newUserMessage));
     }
-  }, [messages, studentName, toast]);
+  }, [messages, studentName, toast, isTtsEnabled, voice, playAudio]);
 
   useEffect(() => {
     const fetchInitialMessage = async () => {
@@ -86,11 +133,30 @@ export default function AITeacherPage() {
     <div className="h-[calc(100vh-8rem)] flex flex-col p-4">
       <Card className="flex-1 flex flex-col bg-transparent border-0 md:border md:bg-card shadow-none md:shadow-sm">
         <CardHeader>
-            <CardTitle className="font-headline text-xl flex items-center gap-2">
-              <Bot />
-              एआई गुरु
-            </CardTitle>
-            <CardDescription>आपका व्यक्तिगत एआई-सहायक ट्यूटर</CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="font-headline text-xl flex items-center gap-2">
+                  <Bot />
+                  एआई गुरु
+                </CardTitle>
+                <CardDescription>आपका व्यक्तिगत एआई-सहायक ट्यूटर</CardDescription>
+              </div>
+              <div className="flex items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                      <Switch id="tts-mode" checked={isTtsEnabled} onCheckedChange={setIsTtsEnabled} />
+                      <Label htmlFor="tts-mode" className="flex items-center gap-1"><Speaker size={16}/> स्पीकर मोड</Label>
+                  </div>
+                   <Select value={voice} onValueChange={setVoice} disabled={!isTtsEnabled}>
+                      <SelectTrigger className="w-[120px]">
+                          <SelectValue placeholder="आवाज़" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="female">महिला</SelectItem>
+                          <SelectItem value="male">पुरुष</SelectItem>
+                      </SelectContent>
+                  </Select>
+              </div>
+            </div>
         </CardHeader>
         <CardContent className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
           {messages.map((msg, index) => (
@@ -100,17 +166,27 @@ export default function AITeacherPage() {
             >
               {msg.role === 'assistant' && (
                 <div className="w-8 h-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shrink-0">
-                  <Bot size={20} />
+                  {msg.isSpeaking ? <Loader2 size={20} className="animate-spin" /> : <Bot size={20} />}
                 </div>
               )}
               <div
-                className={`max-w-md p-3 rounded-xl ${
+                className={`max-w-md p-3 rounded-xl relative group ${
                   msg.role === 'user'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted'
                 }`}
               >
                 <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</p>
+                {msg.role === 'assistant' && msg.audioUrl && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute -right-2 -top-2 h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => playAudio(msg.audioUrl!, index)}
+                  >
+                    <Volume2 size={16} />
+                  </Button>
+                )}
               </div>
             </div>
           ))}
@@ -141,6 +217,7 @@ export default function AITeacherPage() {
           </form>
         </CardFooter>
       </Card>
+      <audio ref={audioRef} className="hidden" />
     </div>
   );
 }

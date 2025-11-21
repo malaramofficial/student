@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -31,6 +31,17 @@ type ChartData = {
   score: number;
   averageScore: number;
 };
+
+const chartConfig = {
+  score: {
+    label: 'नवीनतम स्कोर',
+    color: 'hsl(var(--primary))',
+  },
+  averageScore: {
+    label: 'औसत स्कोर',
+    color: 'hsl(var(--accent))',
+  },
+} satisfies ChartConfig;
 
 export default function ProgressTrackerPage() {
   const [mockTestResults, setMockTestResults] = useState<MockTestResult[]>([]);
@@ -145,20 +156,22 @@ export default function ProgressTrackerPage() {
       <CardContent>
         <div className="h-[400px] w-full">
           {data.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="subject" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
-                <Tooltip
-                  cursor={{ fill: 'hsl(var(--muted))' }}
-                  content={<ChartTooltipContent />}
-                />
-                <Legend />
-                <Bar dataKey="score" name="नवीनतम स्कोर" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="averageScore" name="औसत स्कोर" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+             <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data} accessibilityLayer>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="subject" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent />}
+                    />
+                    <Legend />
+                    <Bar dataKey="score" name="नवीनतम स्कोर" fill="var(--color-score)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="averageScore" name="औसत स्कोर" fill="var(--color-averageScore)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+                </ResponsiveContainer>
+            </ChartContainer>
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               इस परीक्षा प्रकार के लिए कोई डेटा उपलब्ध नहीं है।

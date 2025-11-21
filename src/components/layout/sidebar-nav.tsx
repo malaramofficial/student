@@ -18,6 +18,7 @@ import {
   GraduationCap,
   Speech,
   FileText,
+  FileArchive,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -61,6 +62,17 @@ export default function SidebarNav() {
               >
                 <BotMessageSquare />
                 <span>एआई गुरु</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton
+                as={Link}
+                href="/previous-papers"
+                isActive={isActive('/previous-papers')}
+                tooltip="पिछले वर्ष के पेपर"
+              >
+                <FileArchive />
+                <span>पिछले वर्ष के पेपर</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>

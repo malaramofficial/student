@@ -23,6 +23,7 @@ export default function AITeacherPage() {
   const [isConversationMode, setIsConversationMode] = useState(false);
   const [studentName, setStudentName] = useState('');
   const [conversationStatus, setConversationStatus] = useState<ConversationStatus>('idle');
+  const [isClient, setIsClient] = useState(false);
 
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -33,10 +34,8 @@ export default function AITeacherPage() {
   const handleSpeechEnd = (transcript: string) => {
     if (transcript.trim()) {
       setInput(transcript);
-      if (isConversationMode) {
-        // Automatically send the message in conversation mode
-        handleSubmit(new Event('submit'), transcript);
-      }
+      // Automatically send the message in conversation mode
+      handleSubmit(new Event('submit'), transcript);
     }
   };
 
@@ -46,9 +45,10 @@ export default function AITeacherPage() {
     startListening,
     stopListening,
     hasRecognitionSupport
-  } = useSpeechRecognition({ onSpeechEnd: handleSpeechEnd });
+  } = useSpeechRecognition({ onSpeechEnd });
 
   useEffect(() => {
+    setIsClient(true);
     const storedName = localStorage.getItem('studentName') || 'छात्र';
     setStudentName(storedName);
 
@@ -82,12 +82,11 @@ export default function AITeacherPage() {
           clearTimeout(speechTimeoutRef.current);
         }
         speechTimeoutRef.current = setTimeout(() => {
-           if (transcript.trim()) {
+           if (transcript.trim() && conversationStatus === 'listening') {
              stopListening();
-             handleSubmit(new Event('submit'), transcript);
            }
         }, 3000);
-      } else {
+      } else if (conversationStatus !== 'thinking' && conversationStatus !== 'speaking') {
         setConversationStatus('idle');
       }
     } else {
@@ -99,7 +98,7 @@ export default function AITeacherPage() {
         clearTimeout(speechTimeoutRef.current);
       }
     };
-  }, [isListening, transcript, isConversationMode]);
+  }, [isListening, transcript, isConversationMode, conversationStatus, stopListening]);
 
   useEffect(() => {
     if (transcript) {
@@ -120,7 +119,7 @@ export default function AITeacherPage() {
         setConversationStatus('idle');
       };
     }
-  }, [audioUrl]);
+  }, [audioUrl, isConversationMode, startListening]);
 
   const handleAIResponse = async (userMessage: string) => {
       const history = messages.slice(-5);
@@ -145,7 +144,7 @@ export default function AITeacherPage() {
               variant: 'destructive',
             });
             // If audio fails, go back to listening
-            setConversationStatus('listening');
+            setConversationStatus('idle');
             startListening();
           }
         }
@@ -254,7 +253,7 @@ export default function AITeacherPage() {
               </div>
             </div>
           ))}
-           {isLoading && messages[messages.length-1].role === 'user' && (
+           {isLoading && messages.length > 0 && messages[messages.length-1].role === 'user' && (
             <div className="flex items-start gap-3 justify-start">
                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
                   <Bot size={20} />
@@ -274,7 +273,7 @@ export default function AITeacherPage() {
               onChange={(e) => setInput(e.target.value)}
               disabled={isLoading || isConversationMode}
             />
-             {hasRecognitionSupport && (
+             {isClient && hasRecognitionSupport && (
             <Button type="button" size="icon" variant={isConversationMode ? "destructive" : "outline"} onClick={toggleConversationMode} disabled={isLoading}>
                {isConversationMode ? <StopCircle /> : <Mic />}
             </Button>

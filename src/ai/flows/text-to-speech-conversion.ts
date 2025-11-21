@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview Converts text to speech using the Gemini TTS model.
  *

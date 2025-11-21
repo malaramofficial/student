@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview This file defines the AI Mentor chat flow.
  *
@@ -10,7 +9,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import syllabusData from '@/app/syllabus/syllabus-data.json';
-import { explainTopic, ExplainTopicInput, ExplainTopicOutputSchema } from './explain-topic-flow';
+import { explainTopic, ExplainTopicInputSchema, ExplainTopicOutputSchema } from './explain-topic-flow';
 
 const getCreatorName = ai.defineTool(
     {
@@ -90,13 +89,10 @@ const explainTopicTool = ai.defineTool(
     {
         name: 'explainTopic',
         description: 'Explains a given topic in detail like a teacher and provides summary notes. Use this when the user asks to "explain", "teach", "detail", or "get notes" on a specific topic.',
-        inputSchema: z.object({
-            topic: z.string().describe("The topic to be explained."),
-            subject: z.string().describe("The subject the topic belongs to."),
-        }),
+        inputSchema: ExplainTopicInputSchema,
         outputSchema: ExplainTopicOutputSchema,
     },
-    async (input: ExplainTopicInput) => {
+    async (input) => {
         return await explainTopic(input);
     }
 );

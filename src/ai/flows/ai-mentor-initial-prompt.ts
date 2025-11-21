@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview This file defines the flow for generating the initial greeting from the AI Mentor.
  *

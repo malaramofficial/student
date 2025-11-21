@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview This file defines the flow for explaining a topic and generating notes.
  *

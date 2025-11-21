@@ -8,7 +8,6 @@
  */
 
 import {ai} from '@/ai/genkit';
-import { run } from 'genkit';
 import {z} from 'genkit';
 import syllabusData from '@/app/syllabus/syllabus-data.json';
 
@@ -193,11 +192,36 @@ const aiMentorFlow = ai.defineFlow(
     outputSchema: AIMentorOutputSchema,
   },
   async (input) => {
-    // run automatically handles tool calling and re-running the prompt.
-    const output = await run(prompt, input);
+    let response = await ai.generate(prompt, {
+      history: input.chatHistory?.map(m => ({role: m.role, content: [{text: m.content}]})),
+      prompt: { query: input.query },
+    });
+
+    for (let i = 0; i < 5; i++) { // Add a limit to prevent infinite loops
+      const toolRequest = response.toolRequest;
+      if (!toolRequest) {
+        break;
+      }
+      
+      const toolResponse = [];
+      for (const t of toolRequest.tools) {
+        const tool = ai.lookupTool(t.name);
+        if (!tool) {
+          throw new Error(`Tool not found: ${t.name}`);
+        }
+        const output = await tool(t.input);
+        toolResponse.push({ toolResult: { name: t.name, output } });
+      }
+
+      response = await ai.generate(prompt, {
+        history: response.history,
+        prompt: { query: input.query },
+        toolResponse,
+      });
+    }
     
-    if (output) {
-      return output;
+    if (response.output) {
+      return response.output;
     }
     
     // Fallback response in case something goes wrong.

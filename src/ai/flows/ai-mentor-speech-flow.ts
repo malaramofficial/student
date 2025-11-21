@@ -45,7 +45,6 @@ The speech should be:
 
 **Important Instructions:**
 - At the beginning of your speech, you must introduce yourself as Ranveer.
-- You must state that your purpose is to help students in their education.
 
 Generate the full text of the speech incorporating all these points.`,
 });

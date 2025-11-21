@@ -35,11 +35,8 @@ export default function AITeacherPage() {
   
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const sendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
-  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError } = useSpeechRecognition();
-  
   const sarathiAvatar = placeHolderImages.find(img => img.id === 'aditi-avatar');
 
   useEffect(() => {
@@ -47,13 +44,10 @@ export default function AITeacherPage() {
   }, []);
 
   const handleAIResponse = useCallback(async (query: string) => {
-    if (!query.trim()) {
-        if(isConversationMode) startListening();
-        return;
-    };
+    if (!query.trim()) return;
 
-    setIsLoading(true);
     setConversationStatus('thinking');
+    setIsLoading(true);
     setAudioUrl(null);
     setInput('');
 
@@ -65,49 +59,48 @@ export default function AITeacherPage() {
     
     try {
         const aiResponse = await getAIResponse({ question: query, chatHistory, mode });
-        
         if (aiResponse.success && aiResponse.answer) {
             const assistantMessage: Message = { role: 'assistant', content: aiResponse.answer };
             setMessages(prev => [...prev, assistantMessage]);
 
-            const audioResponse = await getAudioResponse({ text: aiResponse.answer, voice: 'female' });
-            if (audioResponse?.success && audioResponse.audio) {
-                setAudioUrl(audioResponse.audio);
-            } else {
-                 toast({ variant: 'destructive', title: 'Audio Error', description: audioResponse?.error || 'Failed to generate audio.' });
-                 if (isConversationMode) {
-                    startListening();
-                 } else {
-                    setConversationStatus('idle');
-                 }
+            try {
+                const audioResponse = await getAudioResponse({ text: aiResponse.answer, voice: 'female' });
+                if (audioResponse?.success && audioResponse.audio) {
+                    setAudioUrl(audioResponse.audio);
+                } else {
+                     toast({ variant: 'destructive', title: 'Audio Error', description: audioResponse?.error || 'Failed to generate audio.' });
+                     if (isConversationMode) startListening(); else setConversationStatus('idle');
+                }
+            } catch (audioError) {
+                 toast({ variant: 'destructive', title: 'Audio Generation Error', description: (audioError as Error).message });
+                 if (isConversationMode) startListening(); else setConversationStatus('idle');
             }
         } else {
             toast({ variant: 'destructive', title: 'AI Error', description: aiResponse.error });
             const errorMessage: Message = { role: 'assistant', content: "क्षमा करें, मैं आपके अनुरोध को संसाधित नहीं कर सकी। कृपया पुन: प्रयास करें।" };
             setMessages(prev => [...prev, errorMessage]);
-            if (isConversationMode) {
-                startListening();
-            } else {
-                setConversationStatus('idle');
-            }
+            if (isConversationMode) startListening(); else setConversationStatus('idle');
         }
     } catch(e) {
         toast({ variant: 'destructive', title: 'An unexpected error occurred.', description: (e as Error).message });
-        if (isConversationMode) {
-           startListening();
-        } else {
-            setConversationStatus('idle');
-        }
+        if (isConversationMode) startListening(); else setConversationStatus('idle');
     } finally {
         setIsLoading(false);
     }
-  }, [messages, mode, isConversationMode, startListening, toast]);
-    
+  }, [messages, mode, isConversationMode, toast]);
+
+  const handleSpeechEnd = useCallback((finalTranscript: string) => {
+    if (finalTranscript.trim() && conversationStatus === 'listening') {
+      handleAIResponse(finalTranscript);
+    }
+  }, [conversationStatus, handleAIResponse]);
+
+  const { transcript, isListening, startListening, stopListening, hasRecognitionSupport, error: speechError } = useSpeechRecognition({ onSpeechEnd: handleSpeechEnd });
 
   useEffect(() => {
     if(speechError) {
       toast({ variant: 'destructive', title: 'Speech Recognition Error', description: speechError });
-      if(isConversationMode && (speechError === "माइक्रोफ़ोन की अनुमति आवश्यक है।" || speechError === "इस ब्राउज़र में स्पीच रिकग्निशन समर्थित नहीं है।")) {
+      if(isConversationMode && (speechError.includes("permission") || speechError.includes("not supported"))) {
           setIsConversationMode(false);
           setConversationStatus('idle');
           stopListening();
@@ -134,29 +127,12 @@ export default function AITeacherPage() {
   }, [transcript]);
 
   useEffect(() => {
-    if (isConversationMode) {
-      if(isListening) {
-        setConversationStatus('listening');
-      }
-
-      if (sendTimeoutRef.current) {
-        clearTimeout(sendTimeoutRef.current);
-      }
-
-      if (transcript && !isListening && conversationStatus === 'listening') {
-        sendTimeoutRef.current = setTimeout(() => {
-          handleAIResponse(transcript);
-        }, 3000);
-      }
+    if (isConversationMode && !isListening) {
+       setConversationStatus('idle');
+    } else if (isConversationMode && isListening) {
+       setConversationStatus('listening');
     }
-    
-    return () => {
-      if (sendTimeoutRef.current) {
-        clearTimeout(sendTimeoutRef.current);
-      }
-    };
-  }, [transcript, isListening, isConversationMode, handleAIResponse, conversationStatus]);
-
+  }, [isListening, isConversationMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,9 +142,10 @@ export default function AITeacherPage() {
 
   const handleAudioEnded = () => {
     setAudioUrl(null);
-    setConversationStatus('idle');
     if (isConversationMode) {
       startListening();
+    } else {
+      setConversationStatus('idle');
     }
   };
   
@@ -184,7 +161,6 @@ export default function AITeacherPage() {
     } else {
       stopListening();
       setInput('');
-      if (sendTimeoutRef.current) clearTimeout(sendTimeoutRef.current);
       setConversationStatus('idle');
     }
   }
@@ -304,7 +280,7 @@ export default function AITeacherPage() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={isConversationMode ? (isListening ? "सुन रही हूँ..." : "बोलने के लिए माइक्रोफ़ोन बटन दबाएँ...") : "अपना प्रश्न टाइप करें..."}
+            placeholder={isConversationMode ? "सुन रही हूँ..." : "अपना प्रश्न टाइप करें..."}
             disabled={isLoading || isConversationMode}
             className="flex-1"
           />
@@ -322,3 +298,5 @@ export default function AITeacherPage() {
     </div>
   );
 }
+
+    

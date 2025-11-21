@@ -1,3 +1,4 @@
+
 'use server';
 
 import {
@@ -16,6 +17,7 @@ import {
   evaluateWrittenExam,
   EvaluateWrittenExamInput,
 } from '@/ai/flows/evaluate-written-exam-flow';
+import { generateExamPaper } from '@/ai/flows/generate-exam-paper-flow';
 import { z } from 'zod';
 
 const getAudioResponseSchema = z.object({
@@ -78,6 +80,24 @@ export async function evaluateAnswersAction(input: EvaluateWrittenExamInput) {
         console.error('Error in evaluateAnswersAction:', error);
         const errorMessage =
         error instanceof Error ? error.message : 'Failed to evaluate answers.';
+        return { success: false, error: errorMessage };
+    }
+}
+
+const GeneratePaperInputSchema = z.object({
+    subject: z.string(),
+    stream: z.string(),
+});
+type GeneratePaperInput = z.infer<typeof GeneratePaperInputSchema>;
+
+export async function generatePaperAction(input: GeneratePaperInput) {
+    try {
+        const result = await generateExamPaper(input);
+        return { success: true, data: result };
+    } catch (error) {
+        console.error('Error in generatePaperAction:', error);
+        const errorMessage =
+        error instanceof Error ? error.message : 'Failed to generate paper.';
         return { success: false, error: errorMessage };
     }
 }

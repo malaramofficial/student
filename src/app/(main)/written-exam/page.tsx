@@ -22,8 +22,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import questionsData from '../../written-exam/written-questions.json';
 import syllabusData from '../../syllabus/syllabus-data.json';
-import { FileText, Loader2, BookCheck, ClipboardPaste, Clock } from 'lucide-react';
-import { evaluateAnswersAction } from '@/lib/actions';
+import { FileText, Loader2, BookCheck, ClipboardPaste, Clock, Sparkles } from 'lucide-react';
+import { evaluateAnswersAction, generatePaperAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 
 type Question = {
@@ -112,6 +112,7 @@ export default function WrittenExamPage() {
   const [isClient, setIsClient] = useState(false);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
   const [marksheet, setMarksheet] = useState<Marksheet | null>(null);
   const [currentTestSections, setCurrentTestSections] = useState<Section[]>([]);
   const { toast } = useToast();
@@ -120,20 +121,56 @@ export default function WrittenExamPage() {
     setIsClient(true);
   }, []);
 
+  const startTestWithPaper = (paper: { sections: Section[] }) => {
+    const allQuestions = paper.sections.flatMap(section => 
+        section.questions.map(q => ({
+            question: q.question,
+            answer: '',
+            marks: q.marks
+        }))
+    );
+    setAnswers(allQuestions);
+    setCurrentTestSections(paper.sections);
+    setTestStarted(true);
+    setMarksheet(null);
+  };
+
   const handleStartTest = () => {
     if (selectedSubject) {
       const currentSubjectData = subjects.find(
         (s) => s.name === selectedSubject
       );
       if (currentSubjectData && currentSubjectData.sections) {
-        const { allQuestions, randomizedSections } = getRandomizedQuestions(currentSubjectData);
-        setAnswers(allQuestions);
-        setCurrentTestSections(randomizedSections);
-        setTestStarted(true);
-        setMarksheet(null);
+        const { randomizedSections } = getRandomizedQuestions(currentSubjectData);
+        startTestWithPaper({ sections: randomizedSections });
       }
     }
   };
+
+  const handleGenerateAIPaper = async () => {
+    if (!selectedSubject || !selectedStream) return;
+
+    setIsLoading(true);
+    setLoadingMessage('AI आपके लिए एक नया प्रश्न पत्र तैयार कर रहा है...');
+
+    const response = await generatePaperAction({ subject: selectedSubject, stream: selectedStream });
+    
+    if (response.success && response.data) {
+        startTestWithPaper(response.data);
+        toast({
+            title: "AI ने पेपर बना दिया है!",
+            description: "आपकी परीक्षा अब शुरू हो सकती है।"
+        })
+    } else {
+        toast({
+            variant: "destructive",
+            title: "AI पेपर बनाने में विफल रहा",
+            description: response.error || "कृपया कुछ देर बाद पुनः प्रयास करें।"
+        });
+    }
+    setIsLoading(false);
+    setLoadingMessage('');
+  }
   
   const handleAnswerChange = (question: string, value: string) => {
     const newAnswers = answers.map(a => 
@@ -152,6 +189,7 @@ export default function WrittenExamPage() {
         return;
       }
       setIsLoading(true);
+      setLoadingMessage('AI आपके उत्तरों की जाँच कर रहा है... कृपया प्रतीक्षा करें।');
       const response = await evaluateAnswersAction({ answers });
       if(response.success && response.data) {
         setMarksheet(response.data);
@@ -164,6 +202,7 @@ export default function WrittenExamPage() {
         });
       }
       setIsLoading(false);
+      setLoadingMessage('');
   }
 
   const handleRestartTest = () => {
@@ -176,10 +215,6 @@ export default function WrittenExamPage() {
   }
 
   if (!isClient) return null;
-
-  const currentSubjectData = subjects.find(
-    (s) => s.name === selectedSubject
-  );
   
   const availableSubjects =
     streams.find((s) => s.name === selectedStream)?.subjects || [];
@@ -190,7 +225,7 @@ export default function WrittenExamPage() {
     return (
         <div className="flex flex-col gap-4 justify-center items-center h-[calc(100vh-8rem)]">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="text-lg text-muted-foreground">AI आपके उत्तरों की जाँच कर रहा है... कृपया प्रतीक्षा करें।</p>
+            <p className="text-lg text-muted-foreground">{loadingMessage}</p>
         </div>
     )
   }
@@ -288,9 +323,14 @@ export default function WrittenExamPage() {
                 )}
                 </div>
             </CardContent>
-            <CardFooter className="flex justify-center mt-6">
+            <CardFooter className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-6">
                 <Button onClick={handleStartTest} disabled={!selectedSubject}>
                     अभ्यास शुरू करें
+                </Button>
+                <span className="text-xs text-muted-foreground">या</span>
+                <Button onClick={handleGenerateAIPaper} disabled={!selectedSubject} variant="secondary">
+                   <Sparkles className="mr-2 h-4 w-4" />
+                    AI से पेपर बनवाएं
                 </Button>
             </CardFooter>
          </Card>

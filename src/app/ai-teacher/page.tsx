@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -29,15 +29,59 @@ export default function AITeacherPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const speechTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleSpeechEnd = (transcript: string) => {
-    if (transcript.trim()) {
-      setInput(transcript);
-      // Automatically send the message in conversation mode
-      handleSubmit(new Event('submit'), transcript);
+  const handleSubmit = useCallback(async (userMessage: string) => {
+    if (!userMessage.trim()) return;
+
+    setIsLoading(true);
+    setConversationStatus('thinking');
+    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
+    setInput('');
+    
+    const history = messages.slice(-5);
+    const response = await getAIChatResponseAction({
+      studentName,
+      message: userMessage,
+      history,
+    });
+
+    setIsLoading(false);
+
+    if (response.success && response.data) {
+      const assistantMessage = response.data.reply;
+      setMessages((prev) => [...prev, { role: 'assistant', content: assistantMessage }]);
+      
+      if (isConversationMode) {
+        setConversationStatus('speaking');
+        const audioResponse = await getAudioResponse({ text: assistantMessage, voice: 'female' });
+        if (audioResponse.success && audioResponse.audio) {
+          setAudioUrl(audioResponse.audio);
+        } else {
+           toast({
+            title: 'ऑडियो उत्पन्न करने में विफल रहा',
+            description: audioResponse.error || 'आप बातचीत जारी रख सकते हैं।',
+            variant: 'destructive',
+          });
+          setConversationStatus('idle');
+        }
+      } else {
+        setConversationStatus('idle');
+      }
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'AI से प्रतिक्रिया प्राप्त करने में विफल',
+        description: response.error || 'एक अज्ञात त्रुटि हुई।',
+      });
+      setConversationStatus('idle');
     }
-  };
+  }, [messages, studentName, isConversationMode, toast]);
+
+  const handleSpeechEnd = useCallback((transcript: string) => {
+    if (transcript.trim() && isConversationMode) {
+      handleSubmit(transcript);
+    }
+  }, [handleSubmit, isConversationMode]);
 
   const {
     transcript,
@@ -73,32 +117,18 @@ export default function AITeacherPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-  
-   useEffect(() => {
+
+  useEffect(() => {
     if (isConversationMode) {
       if (isListening) {
         setConversationStatus('listening');
-        if (speechTimeoutRef.current) {
-          clearTimeout(speechTimeoutRef.current);
-        }
-        speechTimeoutRef.current = setTimeout(() => {
-           if (transcript.trim() && conversationStatus === 'listening') {
-             stopListening();
-           }
-        }, 3000);
       } else if (conversationStatus !== 'thinking' && conversationStatus !== 'speaking') {
         setConversationStatus('idle');
       }
     } else {
        setConversationStatus('idle');
     }
-
-    return () => {
-      if (speechTimeoutRef.current) {
-        clearTimeout(speechTimeoutRef.current);
-      }
-    };
-  }, [isListening, transcript, isConversationMode, conversationStatus, stopListening]);
+  }, [isListening, isConversationMode, conversationStatus]);
 
   useEffect(() => {
     if (transcript) {
@@ -106,101 +136,58 @@ export default function AITeacherPage() {
     }
   }, [transcript]);
   
+  const startConversationCycle = useCallback(() => {
+    if (isConversationMode && conversationStatus === 'idle') {
+      startListening();
+    }
+  }, [isConversationMode, conversationStatus, startListening]);
+
   useEffect(() => {
     if (audioUrl && audioRef.current) {
       audioRef.current.src = audioUrl;
       audioRef.current.load();
-      audioRef.current.play().catch(e => console.error("Audio play failed:", e));
+      const playPromise = audioRef.current.play();
+      if(playPromise !== undefined){
+        playPromise.catch(e => console.error("Audio play failed:", e));
+      }
       
       audioRef.current.onended = () => {
-        if(isConversationMode){
-          startListening();
-        }
         setConversationStatus('idle');
       };
+    } else if (!audioUrl && !isLoading && isConversationMode) {
+        startConversationCycle();
     }
-  }, [audioUrl, isConversationMode, startListening]);
+  }, [audioUrl, isLoading, isConversationMode, startConversationCycle]);
 
-  const handleAIResponse = async (userMessage: string) => {
-      const history = messages.slice(-5);
-      const response = await getAIChatResponseAction({
-        studentName,
-        message: userMessage,
-        history,
-      });
-
-      if (response.success && response.data) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: response.data.reply }]);
-        
-        if (isConversationMode) {
-          setConversationStatus('speaking');
-          const audioResponse = await getAudioResponse({ text: response.data.reply, voice: 'female' });
-          if (audioResponse.success && audioResponse.audio) {
-            setAudioUrl(audioResponse.audio);
-          } else {
-             toast({
-              title: 'ऑडियो उत्पन्न करने में विफल रहा',
-              description: audioResponse.error || 'आप बातचीत जारी रख सकते हैं।',
-              variant: 'destructive',
-            });
-            // If audio fails, go back to listening
-            if(isConversationMode){
-                startListening();
-            }
-            setConversationStatus('idle');
-          }
-        }
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'AI से प्रतिक्रिया प्राप्त करने में विफल',
-          description: response.error || 'एक अज्ञात त्रुटि हुई।',
-        });
-        if(isConversationMode){
-          startListening(); // Re-start listening even if AI fails
-        }
-      }
-  }
+  // This effect ensures the conversation cycle continues
+  useEffect(() => {
+    if(conversationStatus === 'idle' && isConversationMode) {
+        startConversationCycle();
+    }
+  }, [conversationStatus, isConversationMode, startConversationCycle])
 
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement> | Event, messageToSend?: string) => {
-    if(e.preventDefault) e.preventDefault();
-    const userMessage = messageToSend || input;
-
-    if (!userMessage.trim()) return;
-
-    setIsLoading(true);
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
-    setInput('');
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if(isListening) stopListening();
-    if (speechTimeoutRef.current) clearTimeout(speechTimeoutRef.current);
-    
-    setConversationStatus('thinking');
-
-    await handleAIResponse(userMessage);
-
-    setIsLoading(false);
-     if (isConversationMode && !audioUrl) {
-        if (conversationStatus !== 'speaking') {
-            startListening();
-        }
-    }
+    handleSubmit(input);
   };
   
   const toggleConversationMode = () => {
     const newMode = !isConversationMode;
     setIsConversationMode(newMode);
     if(newMode){
+        setConversationStatus('idle');
         startListening();
         toast({
-            title: 'सार्वजनिक मोड सक्रिय',
+            title: 'बातचीत मोड सक्रिय',
             description: 'अब आप बोलकर सवाल पूछ सकते हैं।',
         });
     } else {
         stopListening();
-         if (speechTimeoutRef.current) clearTimeout(speechTimeoutRef.current);
+        setConversationStatus('idle');
         toast({
-            title: 'सार्वजनिक मोड निष्क्रिय',
+            title: 'बातचीत मोड निष्क्रिय',
             description: 'आप अब टाइप करके सवाल पूछ सकते हैं।',
         });
     }
@@ -220,7 +207,6 @@ export default function AITeacherPage() {
         return <div className="flex items-center gap-2 text-gray-500">निष्क्रिय</div>;
     }
   }
-
 
   return (
     <div className="h-[calc(100vh-56px)] flex flex-col p-4">
@@ -253,7 +239,7 @@ export default function AITeacherPage() {
                     : 'bg-muted'
                 }`}
               >
-                <p className="text-sm">{msg.content}</p>
+                <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</p>
               </div>
             </div>
           ))}
@@ -270,7 +256,7 @@ export default function AITeacherPage() {
           <div ref={messagesEndRef} />
         </CardContent>
         <CardFooter>
-          <form onSubmit={handleSubmit} className="flex gap-2 w-full">
+          <form onSubmit={handleFormSubmit} className="flex gap-2 w-full">
             <Input
               placeholder="आपका सवाल यहाँ टाइप करें..."
               value={input}
@@ -282,7 +268,7 @@ export default function AITeacherPage() {
                {isConversationMode ? <StopCircle /> : <Mic />}
             </Button>
           )}
-            <Button type="submit" size="icon" disabled={isLoading || !input.trim() || isConversationMode}>
+            <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
               <Send />
             </Button>
           </form>

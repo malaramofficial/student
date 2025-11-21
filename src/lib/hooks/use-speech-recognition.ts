@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface SpeechRecognitionHook {
   transcript: string;
@@ -15,7 +15,6 @@ interface UseSpeechRecognitionOptions {
   onSpeechEnd: (transcript: string) => void;
 }
 
-// A more robust check for SpeechRecognition
 const hasSpeechRecognitionSupport = () =>
   typeof window !== 'undefined' &&
   ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
@@ -27,7 +26,7 @@ export const useSpeechRecognition = ({ onSpeechEnd }: UseSpeechRecognitionOption
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const speechEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const transcriptRef = useRef(''); // Use ref to hold the latest transcript
+  const finalTranscriptRef = useRef('');
 
   useEffect(() => {
     if (!hasSpeechRecognitionSupport()) {
@@ -43,85 +42,81 @@ export const useSpeechRecognition = ({ onSpeechEnd }: UseSpeechRecognitionOption
     recognitionRef.current = recognition;
 
     recognition.onresult = (event) => {
-      let final_transcript = '';
       let interim_transcript = '';
-
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          final_transcript += event.results[i][0].transcript;
+          finalTranscriptRef.current += event.results[i][0].transcript;
         } else {
           interim_transcript += event.results[i][0].transcript;
         }
       }
       
-      const fullTranscript = transcriptRef.current + final_transcript + interim_transcript;
-      setTranscript(fullTranscript);
+      setTranscript(finalTranscriptRef.current + interim_transcript);
 
-      if (final_transcript.trim()) {
-        transcriptRef.current += final_transcript;
-      }
-      
-       // Reset timeout on any speech activity
+      // Reset timeout on any speech activity
       if (speechEndTimeoutRef.current) {
         clearTimeout(speechEndTimeoutRef.current);
       }
       speechEndTimeoutRef.current = setTimeout(() => {
-        if (isListening) {
-             onSpeechEnd(transcriptRef.current);
-             transcriptRef.current = '';
+        if(isListening) {
+          stopListening();
         }
-      }, 3000);
-
+      }, 2000); // 2-second silence timeout
     };
 
     recognition.onerror = (event) => {
-      setError(event.error);
+      if (event.error !== 'no-speech') {
+        setError(event.error);
+      }
     };
 
     recognition.onend = () => {
       setIsListening(false);
-      // Clean up timeout when recognition ends completely
-       if (speechEndTimeoutRef.current) {
+      if (speechEndTimeoutRef.current) {
         clearTimeout(speechEndTimeoutRef.current);
+      }
+      if (finalTranscriptRef.current.trim()) {
+        onSpeechEnd(finalTranscriptRef.current);
+        finalTranscriptRef.current = '';
+        setTranscript('');
       }
     };
 
     return () => {
-      recognition.stop();
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
       if (speechEndTimeoutRef.current) {
         clearTimeout(speechEndTimeoutRef.current);
       }
     };
-  }, [onSpeechEnd]);
+  }, [onSpeechEnd]); // isListening removed from dependencies
   
-  const startListening = () => {
+  const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
       try {
-        transcriptRef.current = '';
+        finalTranscriptRef.current = '';
         setTranscript('');
         recognitionRef.current.start();
         setIsListening(true);
         setError(null);
       } catch (err) {
          console.error("Error starting recognition:", err);
-         setError("Could not start speech recognition.");
+         if (err instanceof Error && err.name === 'NotAllowedError') {
+             setError("Microphone access denied.");
+         } else {
+             setError("Could not start speech recognition.");
+         }
       }
     }
-  };
+  }, [isListening]);
 
-  const stopListening = () => {
+  const stopListening = useCallback(() => {
     if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-       if (speechEndTimeoutRef.current) {
-        clearTimeout(speechEndTimeoutRef.current);
-      }
-       if (transcriptRef.current.trim()) {
-         onSpeechEnd(transcriptRef.current);
-         transcriptRef.current = '';
-      }
+        recognitionRef.current.stop();
+        setIsListening(false);
     }
-  };
+  }, [isListening]);
 
   return {
     transcript,

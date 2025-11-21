@@ -67,39 +67,37 @@ export default function TextToSpeechPage() {
   }
 
   return (
-    <div className="flex justify-center items-center p-4 min-h-[calc(100vh-56px)] bg-gray-50 dark:bg-gray-950 animate-fade-in-up">
-      <Card className="w-full max-w-xl shadow-2xl">
+    <div className="flex justify-center items-start p-4 min-h-[calc(100vh-56px)] animate-fade-in-up">
+      <Card className="w-full max-w-xl">
         <CardHeader>
-          <CardTitle className="font-headline text-2xl flex items-center gap-2 text-primary"><Mic />टेक्स्ट-टू-स्पीच</CardTitle>
+          <CardTitle className="font-headline text-2xl flex items-center gap-2"><Mic />टेक्स्ट-टू-स्पीच</CardTitle>
           <CardDescription>
             हिंदी या अंग्रेजी में टेक्स्ट टाइप या पेस्ट करें और इसे ऑडियो में बदलें। आप पुरुष या महिला की आवाज़ भी चुन सकते हैं।
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="text-input">आपका टेक्स्ट</Label>
-                <Textarea
-                  id="text-input"
-                  placeholder="यहां टेक्स्ट दर्ज करें..."
-                  className="min-h-[150px]"
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="voice-select">आवाज़ चुनें</Label>
-                <Select value={voice} onValueChange={setVoice} disabled={isLoading}>
-                    <SelectTrigger id="voice-select">
-                        <SelectValue placeholder="एक आवाज़ चुनें" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="female">महिला</SelectItem>
-                        <SelectItem value="male">पुरुष</SelectItem>
-                    </SelectContent>
-                </Select>
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="text-input">आपका टेक्स्ट</Label>
+            <Textarea
+              id="text-input"
+              placeholder="यहां टेक्स्ट दर्ज करें..."
+              className="min-h-[150px]"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="voice-select">आवाज़ चुनें</Label>
+            <Select value={voice} onValueChange={setVoice} disabled={isLoading}>
+                <SelectTrigger id="voice-select" className="w-[180px]">
+                    <SelectValue placeholder="एक आवाज़ चुनें" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="female">महिला</SelectItem>
+                    <SelectItem value="male">पुरुष</SelectItem>
+                </SelectContent>
+            </Select>
           </div>
           {audioUrl && (
             <div className="p-4 bg-muted rounded-lg flex items-center justify-center gap-4">

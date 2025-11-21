@@ -20,7 +20,7 @@ import { z } from 'zod';
 
 const getAudioResponseSchema = z.object({
   text: z.string(),
-  voice: z.enum(['male', 'female']).optional(),
+  voice: z.enum(['male', 'female']).default('female'),
 });
 
 export async function getAudioResponse(input: TextToSpeechConversionInput) {
@@ -34,7 +34,7 @@ export async function getAudioResponse(input: TextToSpeechConversionInput) {
   } catch (error) {
     console.error('Error in getAudioResponse:', error);
     if (error instanceof Error && error.message.includes('429')) {
-         return { success: false, error: 'Audio generation failed due to rate limits.' };
+         return { success: false, error: 'ऑडियो बनाने में दर-सीमा के कारण विफलता हुई।' };
     }
     const errorMessage =
       error instanceof Error

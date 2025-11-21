@@ -54,7 +54,6 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
     recognition.lang = 'hi-IN';
 
     recognition.onresult = (event) => {
-      // Always clear the previous timeout when new results come in.
       if (speechEndTimeoutRef.current) {
         clearTimeout(speechEndTimeoutRef.current);
       }
@@ -73,7 +72,6 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
       finalTranscriptRef.current = final_transcript;
       setTranscript(final_transcript + interim_transcript);
       
-      // Set a new timeout to trigger onSpeechEnd after a pause.
       speechEndTimeoutRef.current = setTimeout(() => {
         const currentTranscript = (finalTranscriptRef.current + interim_transcript).trim();
         if (currentTranscript) {
@@ -82,12 +80,11 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
              recognitionRef.current.stop();
           }
         }
-      }, 3000); // 3-second delay for a more natural pause
+      }, 3000); 
     };
 
     recognition.onerror = (event) => {
       if (event.error === 'no-speech' || event.error === 'audio-capture') {
-        // Ignore "no-speech" errors which can happen if the user doesn't speak.
         return;
       }
       if (event.error === 'not-allowed') {
@@ -131,7 +128,6 @@ export const useSpeechRecognition = ({ onSpeechEnd }: SpeechRecognitionOptions =
         setIsListening(true);
         setError(null);
       } catch (err) {
-        // This can happen if recognition is already started, which is a recoverable state.
         if ((err as DOMException).name === 'InvalidStateError') {
             console.warn("Speech recognition already started.");
         } else {

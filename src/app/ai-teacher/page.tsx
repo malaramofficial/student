@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -61,7 +60,6 @@ export default function AITeacherPage() {
             } else {
                  toast({ variant: 'destructive', title: 'Audio Error', description: audioResponse?.error || 'Failed to generate audio.' });
                  if (isConversationMode && audioRef.current) {
-                    // Manually trigger the audio ended event to restart listening
                     const event = new Event('ended');
                     audioRef.current.dispatchEvent(event);
                  }
@@ -156,14 +154,11 @@ export default function AITeacherPage() {
     const newMode = isPublic ? 'public' : 'student';
     setMode(newMode);
     
-    // Automatically manage conversation mode based on public mode
     setIsConversationMode(isPublic);
 
     if (isPublic) {
-        // Automatically start listening in public/conversation mode
         startListening();
     } else {
-        // Stop listening if we switch back to student mode
         if (isListening) {
             stopListening();
         }

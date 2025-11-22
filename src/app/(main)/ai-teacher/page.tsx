@@ -39,7 +39,7 @@ export default function AITeacherPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isTtsEnabled, setIsTtsEnabled] = useState(false);
-  const [voice, setVoice] = useState('female');
+  const [voice, setVoice] useState('female');
   const [redirectAction, setRedirectAction] = useState<RedirectAction | null>(null);
   const studentName = 'छात्र'; // Generic name
 
@@ -164,7 +164,7 @@ export default function AITeacherPage() {
           <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle className="font-headline text-xl flex items-center gap-2">
+                  <CardTitle className="font-headline text-2xl font-bold text-primary flex items-center gap-2">
                     <Bot />
                     एआई गुरु
                   </CardTitle>

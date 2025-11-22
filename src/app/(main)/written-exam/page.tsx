@@ -20,8 +20,8 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import questionsData from '../../written-exam/written-questions.json';
-import syllabusData from '../../syllabus/syllabus-data.json';
+import questionsData from '@/app/written-exam/written-questions.json';
+import syllabusData from '@/app/syllabus/syllabus-data.json';
 import { FileText, Loader2, BookCheck, ClipboardPaste, Clock, Sparkles } from 'lucide-react';
 import { evaluateAnswersAction, generatePaperAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';

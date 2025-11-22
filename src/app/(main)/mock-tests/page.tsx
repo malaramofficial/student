@@ -31,8 +31,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { CheckCircle, XCircle } from 'lucide-react';
-import questionsData from '../../mock-tests/questions.json';
-import syllabusData from '../../syllabus/syllabus-data.json';
+import questionsData from '@/app/mock-tests/questions.json';
+import syllabusData from '@/app/syllabus/syllabus-data.json';
 
 type Question = {
   question: string;

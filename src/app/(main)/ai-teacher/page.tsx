@@ -159,7 +159,7 @@ export default function AITeacherPage() {
 
   return (
     <>
-      <div className="h-[calc(100vh-8rem)] flex flex-col p-4">
+      <div className="flex flex-col p-4 pb-20 md:pb-4 min-h-[calc(100vh-theme(spacing.14))]">
         <Card className="flex-1 flex flex-col bg-transparent border-0 md:border md:bg-card shadow-none md:shadow-sm">
           <CardHeader>
               <div className="flex justify-between items-center">
@@ -269,5 +269,3 @@ export default function AITeacherPage() {
     </>
   );
 }
-
-    

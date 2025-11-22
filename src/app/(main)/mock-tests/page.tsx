@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -57,9 +57,9 @@ export default function MockTestsPage() {
   const [testStarted, setTestStarted] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     setIsClient(true);
-  });
+  }, []);
 
   const handleStartTest = () => {
     if (selectedSubject) {
@@ -93,7 +93,7 @@ export default function MockTestsPage() {
 
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
   };
 

@@ -93,7 +93,7 @@ export default function MockTestsPage() {
 
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
   };
 
@@ -264,21 +264,21 @@ export default function MockTestsPage() {
             <AlertDialogDescription>
               {score !== null && (
                 <div className="text-center p-4">
-                  <p className="text-lg">आपका स्कोर है:</p>
-                  <p
+                  <div className="text-lg">आपका स्कोर है:</div>
+                  <div
                     className={`text-4xl font-bold ${
                       score >= 33 ? 'text-green-500' : 'text-red-500'
                     }`}
                   >
                     {score.toFixed(2)}%
-                  </p>
-                  <p
+                  </div>
+                  <div
                     className={`mt-2 font-semibold ${
                       score >= 33 ? 'text-green-600' : 'text-red-600'
                     }`}
                   >
                     {score >= 33 ? 'बधाई हो, आप पास हैं!' : 'और मेहनत करें'}
-                  </p>
+                  </div>
                 </div>
               )}
             </AlertDialogDescription>

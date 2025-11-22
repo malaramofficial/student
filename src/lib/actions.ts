@@ -35,8 +35,8 @@ export async function getAudioResponse(input: TextToSpeechConversionInput) {
     return { success: true, audio: result.media };
   } catch (error) {
     console.error('Error in getAudioResponse:', error);
-    if (error instanceof Error && error.message.includes('429')) {
-         return { success: false, error: 'ऑडियो बनाने में दर-सीमा के कारण विफलता हुई।' };
+    if (error instanceof Error && (error.message.includes('429') || error.message.includes('Too Many Requests'))) {
+         return { success: false, error: 'ऑडियो बनाने में दर-सीमा के कारण विफलता हुई। कृपया कुछ देर बाद प्रयास करें।' };
     }
     const errorMessage =
       error instanceof Error
@@ -54,6 +54,9 @@ export async function getInitialAIResponseAction(
     return { success: true, data: result };
   } catch (error) {
     console.error('Error in getInitialAIResponseAction:', error);
+     if (error instanceof Error && (error.message.includes('429') || error.message.includes('Too Many Requests'))) {
+         return { success: false, error: 'AI से कनेक्ट करने में दर-सीमा के कारण विफलता हुई। कृपया कुछ देर बाद प्रयास करें।' };
+    }
     const errorMessage =
       error instanceof Error ? error.message : 'Failed to get initial response.';
     return { success: false, error: errorMessage };
@@ -66,6 +69,9 @@ export async function getAIChatResponseAction(input: AIMentorChatInput) {
     return { success: true, data: result };
   } catch (error) {
     console.error('Error in getAIChatResponseAction:', error);
+    if (error instanceof Error && (error.message.includes('429') || error.message.includes('Too Many Requests'))) {
+         return { success: false, error: 'AI से प्रतिक्रिया प्राप्त करने में दर-सीमा के कारण विफलता हुई। कृपया कुछ देर बाद प्रयास करें।' };
+    }
     const errorMessage =
       error instanceof Error ? error.message : 'Failed to get chat response.';
     return { success: false, error: errorMessage };
@@ -78,6 +84,9 @@ export async function evaluateAnswersAction(input: EvaluateWrittenExamInput) {
         return { success: true, data: result };
     } catch (error) {
         console.error('Error in evaluateAnswersAction:', error);
+        if (error instanceof Error && (error.message.includes('429') || error.message.includes('Too Many Requests'))) {
+            return { success: false, error: 'उत्तरों का मूल्यांकन करने में दर-सीमा के कारण विफलता हुई। कृपया कुछ देर बाद प्रयास करें।' };
+        }
         const errorMessage =
         error instanceof Error ? error.message : 'Failed to evaluate answers.';
         return { success: false, error: errorMessage };
@@ -96,6 +105,9 @@ export async function generatePaperAction(input: GeneratePaperInput) {
         return { success: true, data: result };
     } catch (error) {
         console.error('Error in generatePaperAction:', error);
+        if (error instanceof Error && (error.message.includes('429') || error.message.includes('Too Many Requests'))) {
+            return { success: false, error: 'प्रश्न पत्र बनाने में दर-सीमा के कारण विफलता हुई। कृपया कुछ देर बाद प्रयास करें।' };
+        }
         const errorMessage =
         error instanceof Error ? error.message : 'Failed to generate paper.';
         return { success: false, error: errorMessage };

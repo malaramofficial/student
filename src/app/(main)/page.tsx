@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -59,6 +60,34 @@ const FeatureCard = ({ title, description, icon, path }: FeatureCardProps) => {
     </Card>
   );
 };
+
+const AdBanner = () => {
+    const router = useRouter();
+    return (
+        <Card className="bg-gradient-to-r from-primary/80 to-secondary/80 text-primary-foreground p-6 rounded-2xl flex flex-col md:flex-row items-center gap-6">
+            <div className="flex-1 space-y-2">
+                <h3 className="text-xl font-bold">Mala Ram Official</h3>
+                <p className="text-sm text-primary-foreground/80">अपने पसंदीदा क्रिएटर के आधिकारिक मर्चेंडाइज के साथ अपने समर्थन दिखाएं।</p>
+                <Button 
+                    variant="secondary" 
+                    className="mt-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+                    onClick={() => router.push('https://www.instagram.com/malaramofficial')}
+                >
+                    अभी खरीदें
+                </Button>
+            </div>
+            <div className="relative w-32 h-32 md:w-36 md:h-36 shrink-0">
+                <Image
+                    src="https://picsum.photos/seed/adbanner/200/200"
+                    alt="Advertisement"
+                    fill
+                    className="object-cover rounded-lg"
+                    data-ai-hint="merchandise product"
+                />
+            </div>
+        </Card>
+    )
+}
 
 const quickActions = [
   { label: 'आज का पाठ', icon: <Book className="mr-2 h-4 w-4" />, path: '/syllabus' },
@@ -146,6 +175,8 @@ export default function DashboardPage() {
               </Card>
           </div>
 
+          {/* Ad Banner */}
+          <AdBanner />
 
           {/* Feature Cards Grid */}
           <div>

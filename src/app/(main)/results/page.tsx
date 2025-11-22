@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/table';
 import { Search, Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import resultsData from './mock-results.json';
+import resultsData from '@/app/results/mock-results.json';
 
 type ResultDetail = {
   subject: string;

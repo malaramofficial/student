@@ -39,7 +39,7 @@ export default function AITeacherPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isTtsEnabled, setIsTtsEnabled] = useState(false);
-  const [voice, setVoice] useState('female');
+  const [voice, setVoice] = useState('female');
   const [redirectAction, setRedirectAction] = useState<RedirectAction | null>(null);
   const studentName = 'छात्र'; // Generic name
 
